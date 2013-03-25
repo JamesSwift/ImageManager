@@ -1,37 +1,27 @@
-Swift Web Development Framework - Image Resizer v0.0.1
+Swift Web Development Framework - Image Resizer v0.0.2
 ==================
 
 
 A PHP class and set of functions to make automatically re-sizing images for your website simple and secure.
 
-More details coming soon.
+The code has just been roughly cut and pasted over form the main [SWDF](https://github.com/swiftoid/SWDF) repo for the moment. Updates should be coming soon to define a standardised API and documentation.
 
-## Licence (Simplified BSD License)
+## Branching Model
 
+The SWDF uses the branching/development model described [here](http://nvie.com/posts/a-successful-git-branching-model/).
 
-Copyright (c) 2013, James Swift  
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-- Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+If you wish to test the latest development version, checkout branch `develop`.
 
 ## Versioning
-
-The Swift Web Development Framework - Image Resizer will be maintained using Semantic Versioning guidelines.
 
 Releases will be numbered with the following format:
 
 `<major>.<minor>.<patch>`
 
-And constructed with the following guidelines:
+The current version number can be found at the top of the README.md file and the SWDF_image_resizer file.
 
-* Breaking backward compatibility bumps the major (and resets the minor and patch)
-* New additions without breaking backward compatibility bumps the minor (and resets the patch)
-* Bug fixes and misc changes bumps the patch
+For more information please visit [http://semver.org/](http://semver.org/).
 
-For more information on SemVer, please visit [http://semver.org/](http://semver.org/).
+## Licence (Simplified BSD License)
+
+For licensing details, see [LICENSE](https://github.com/swiftoid/SWDF_image_resizer/blob/master/LICENSE)

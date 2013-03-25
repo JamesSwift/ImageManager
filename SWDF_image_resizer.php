@@ -1,7 +1,7 @@
 <?php
 
 /*
- *	SWDF_image_resizer
+ *	SWDF_image_resizer - v0.0.2
  * 
  *	Copyright 2013 James Swift - See LICENSE for details
  * 
