@@ -3,7 +3,7 @@
 /*
  *	SWDF_image_resizer
  * 
- *	Copyleft 2013 James Swift 
+ *	Copyright 2013 James Swift - See LICENSE for details
  * 
  *	This script allows you to simply and securly automate the resizing of images
  *	on your website. It uses the GD2 PHP library. 
