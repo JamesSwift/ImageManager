@@ -167,24 +167,41 @@
 		}
 	}
 	
-	function SWDF_clean_image_cache($delete_fname=null){
+	function SWDF_clean_image_cache($delete_fname=null, $force=false){
 		global $_SWDF;
 
 		//Check image settings are loaded
 		if ($_SWDF['settings']['images']['settings_loaded']!==true){
-			require($_SWDF['paths']['root']."settings/images.php");
-		}		
+			return false;
+		}
 		
-		$dir=scandir($_SWDF['paths']['images_cache']);
-		foreach($dir as $file){
-			//Work out file-name
-			$fname=substr($file, 0, strpos($file, "["));
+		//Check caching is enabled (and configured)
+		if ($force===true || ( isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && isset($_SWDF['settings']['images']['cache_expiry']) && $_SWDF['settings']['images']['cache_expiry']!=null) ){
 			
-			//Determine whether to delete or not
-			if (is_file($_SWDF['paths']['images_cache'].$file) && (filemtime($_SWDF['paths']['images_cache'].$file)<time()-$_SWDF['settings']['images']['cache_expiry'] || $fname===$delete_fname) && substr($file,-5,5)=="cache"){
-				unlink($_SWDF['paths']['images_cache'].$file);
+			//Check cache directory exists
+			if (isset($_SWDF['paths']['images_cache']) && $_SWDF['paths']['images_cache']!==null && is_dir($_SWDF['paths']['images_cache']) ) {
+				
+				//Create list of files in cache directory
+				$dir=scandir($_SWDF['paths']['images_cache']);
+			
+				//Cycle through files and delete if appropriate
+				if (is_array($dir)){
+					foreach($dir as $file){
+						//Work out file-name
+						$fname=substr($file, 0, strpos($file, "["));
+
+						//Determine whether to delete or not
+						if (is_file($_SWDF['paths']['images_cache'].$file) && (filemtime($_SWDF['paths']['images_cache'].$file)<time()-$_SWDF['settings']['images']['cache_expiry'] || $fname===$delete_fname) && substr($file,-5,5)=="cache"){
+							unlink($_SWDF['paths']['images_cache'].$file);
+						}
+					}
+					return true;
+				}
 			}
 		}
+		
+		//Hmm, something went wrong
+		return false;
 	}
 
 	
@@ -468,7 +485,7 @@
 			//Create cache filename
 			$cache_file="";
 			if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
-				$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.$size['id'])."].cache";
+						$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.$size['id'])."].cache";
 				//check if it exists
 				//print gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';exit;
 				if (is_file($cache_file) && filemtime($cache_file)>filemtime($orig_img_path) && filemtime($cache_file)>time()-$_SWDF['settings']['images']['cache_expiry']){
