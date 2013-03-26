@@ -6,7 +6,7 @@
 	$_SWDF['settings']['images']['default_watermark_opacity']=90;			//If not specified in a size, use this opacity for watermarks. Values: 0-100
 	$_SWDF['settings']['images']['default_jpeg_quality']=90;			//If not specified in a size, use this value for jpeg compression.
 	
-	$_SWDF['paths']['images_cache']=$_SWDF['paths']['root']."cache/images/";	//The absolute path to the image cache location.
+	$_SWDF['paths']['images_cache']=$_SWDF['paths']['root']."cache/";		//The absolute path to the image cache location.
 	$_SWDF['settings']['images']['cache_resized']=true;				//Whether to store cached resized images or re-generate each time (strongly reccomended to be set to true, as resizing images is a slow process). Normally only useful for debugging.
 	$_SWDF['settings']['images']['cache_expiry']=60*60*2;				//The time in seconds to keep (and use) cached images.
 
@@ -84,7 +84,7 @@
  *	"opacity"	 int		The opacity of the watermark. Between 0 and 100. Default is defined in $_SWDF['settings']['images']['default_watermark_opacity']
  *	"scale"		 float		Scale the watermark. 1.0 = normal size. 0.5 = half size etc. Default is 1.0.
  *	"repeat"	 boolean	Repeat the watermark in a pattern? Ignores "v" and "h". Default false.
- * "disable_caching"	boolean		Use to overide $_SWDF['settings']['images']['cache_resized'] and prevent caching if required (note: you cannot enable caching if $_SWDF['settings']['images']['cache_resized'] is set to false). Default false.
+ * "disable_caching"	boolean		Use to override $_SWDF['settings']['images']['cache_resized'] and prevent caching if required (note: you cannot enable caching if $_SWDF['settings']['images']['cache_resized'] is set to false). Default false.
  */
 ////////////////////////////////////////////////////////////////
 // Image sizes
@@ -95,7 +95,7 @@
 		"method"=>"original"
 	);
 	
-	//Size 1 - resizes the image to fit insize a 1000x1000 box and adds a copyright watermark
+	//Size 1 - resizes the image to fit inside a 1000x1000 box and adds a copyright watermark
 	$_SWDF['settings']['images']['sizes']['1']=Array(
 		"id"=>1,
 		"method"=>"fit",
