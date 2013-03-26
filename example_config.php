@@ -7,7 +7,7 @@
 	$_SWDF['settings']['images']['default_jpeg_quality']=90;			//If not specified in a size, use this value for jpeg compression.
 	
 	$_SWDF['paths']['images_cache']=$_SWDF['paths']['root']."cache/";		//The absolute path to the image cache location.
-	$_SWDF['settings']['images']['cache_resized']=true;				//Whether to store cached resized images or re-generate each time (strongly reccomended to be set to true, as resizing images is a slow process). Normally only useful for debugging.
+	$_SWDF['settings']['images']['cache_resized']=false;				//Whether to store cached resized images or re-generate each time (strongly reccomended to be set to true, as resizing images is a slow process). Normally only useful for debugging.
 	$_SWDF['settings']['images']['cache_expiry']=60*60*2;				//The time in seconds to keep (and use) cached images.
 
 	$_SWDF['settings']['images']['settings_loaded']=true;				//Ignore this variable. It's just used by the SWDF to check this file has been loaded.
