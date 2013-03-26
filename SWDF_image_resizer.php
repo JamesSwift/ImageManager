@@ -22,10 +22,10 @@
  * 
  * The function takes a single config/data array which can have any of the follwing elements:
  * 
- * "path"		string		The relative path to the directory from $_SWDF['paths']['root']. Must end in "/".
- * "allow_sizes"	array|string	Sizes to allow. All other sizes will be blocked unless otherwise specified. To allow all sizes, set to string "all". Default is "all".
- * "deny_sizes"		array|string	Sizes to deny. All other sizes will be allowed unless otherwise specified. To block all sizes, set to string "all". By default, none are blocked.
- * "require_auth"	bool		When true, SWDF_image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.
+ * "path"		string		The relative path to the directory from $_SWDF['paths']['root']. Must end in "/".<br/>
+ * "allow_sizes"	array|string	Sizes to allow. All other sizes will be blocked unless otherwise specified. To allow all sizes, set to string "all". Default is "all".<br/>
+ * "deny_sizes"		array|string	Sizes to deny. All other sizes will be allowed unless otherwise specified. To block all sizes, set to string "all". By default, none are blocked.<br/>
+ * "require_auth"	bool		When true, SWDF_image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.<br/>
  * 
  * @example "example_config.php" See example usage.
  * 
