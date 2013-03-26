@@ -1,0 +1,102 @@
+This file provides some example implementations of the SWDF_image_resizer tool.
+
+The tool is split into two main parts:
+
+	- A class which actually does the image manipulations: SWDF_image_resizer
+	  Supports a variety of formats and can perform many different manipulations
+	  of images aside from basic resizing.
+
+	- A set of functions which allow you to secure which images on your system can 
+	  and can't be resized (or in what ways they can be altered).
+
+This later part is quite powerful, and is designed to be a drop in tool to completely
+manage all the images on a web site. It can restrict access to certain folders or 
+sizes, it supports caching of resized images to ease server load and even supports 
+features like automatically water-marking certain sizes or images in certain folders.
+
+The intended purpose of the SWDF_image_resizer tool is primarily this later function, 
+but the resizing class itself is left exposed in case you wish to write your own 
+security system and simply want a simple way to resize images on the fly.
+
+The examples below assume that your config file has already been set up. For details 
+on how to do this, see the example_config.php file. It also assumes a directory
+called "images/" with some pictures inside.
+
+
+####################################################################################
+####################################################################################
+
+The following example shows the most common use of the SWDF_image_resizer tool:
+
+###############
+#File: img.php
+
+<?php
+	//Load dependencies
+	require("SWDF_image_resizer.php");
+	require("config.php");
+
+	//Setup variables
+	$size=@$_GET['size'];
+	$img=@$_GET['img'];
+
+	//Make resize request
+	$result=SWDF_image_resizer_request($size,$img,false);
+
+	//Handle returned data, mapping headers etc. and output image
+	if (isset($result['status'])){
+		//Set HTTP status Code
+		header(":",null,$result['status']);
+
+		//Set headers
+		if (isset($result['headers']) && is_array($result['headers'])){
+			foreach($result['headers'] as $header){
+				header($header);
+			}
+		}
+
+		//Output image
+		if (isset($result['data'])){
+			print $result['data'];
+		}
+	} else {
+		//Something went wrong, trigger a 500 error
+		header(":",null,500);
+	}
+?>
+
+What's happening here? Basically it allows you to resize images on the fly. 
+
+Imagine you have a photo album you want to put on your website. Most cameras 
+produce photos that are far too large to sensibly embed on a web-page. Before you
+upload them, you could batch resize them all with a tool on your computer, but what 
+if at a later date you wanted the photos a slightly different size?
+
+With the above setup you could simply upload all your photos the server, specify 
+a size for them in the config file "sensible", then embed them on your pages 
+like so:
+
+<img src="img.php?size=sensible&img=images/album/holiday_pic_001.jpg" />
+
+You could perhaps specify a thumbnail size as well, and do:
+
+<a href="link_to_album.html">
+	My Holiday Album:<br/>
+	<img src="img.php?size=thumbnail&img=images/album/holiday_pic_001.jpg" />
+</a>
+
+The point is, the script will resize the images for you on the fly. It also has the 
+advantage that you change the size of every album image on your site, or perhaps 
+add a watermark, add an overlay etc. just by changing one setting in the config 
+file, instead of finding your source files then manually adjusting them all and 
+re-uploading everything.
+
+These are simplified uses. Web sites like picturebute.com use this system to manage 
+all their images in more complex ways, such as water-marking their images, resizing 
+images uploaded by users which will be printed on mugs etc.
+
+Hopefully, it's given you an idea of how the SWDF_image_resizer_request() function 
+can be used.
+
+####################################################################################
+####################################################################################
