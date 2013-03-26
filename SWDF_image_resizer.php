@@ -8,7 +8,7 @@
  *	This script allows you to simply and securly automate the resizing of images
  *	on your website. It uses the GD2 PHP library. 
  * 
- * 	For examples usages, see example_implementations.txt
+ * 	For examples usages, see examples.txt
  * 
  *	You are free to use this code in any way you wish, but please give credit if
  *	you can by linking to the github page for this project:
