@@ -564,7 +564,7 @@ function SWDF_image_resizer_request($size,$img,$authorized=false){
 				if ($size['watermark']['opacity']==""){
 					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
 				}
-				$resizer->add_watermark($size['watermark']['path'],$size['watermark']['v'],$size['watermark']['h'],$size['watermark']['opacity'],$size['watermark']['scale'],$size['watermark']['repeat'],50,50);
+				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],$size['watermark']['opacity'],$size['watermark']['scale'],$size['watermark']['repeat'],50,50);
 			}
 
 			//Render resized image
