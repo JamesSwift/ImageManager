@@ -12,7 +12,7 @@ To get a copy of this code, at your terminal type:
 
 ## Quick Start
 
-The SWDF_image_resizer comes with and example implementation. 
+The SWDF_image_resizer comes with an example implementation. 
 
 To test it out, copy the repository into a directory accessible by your web-server. In your web browser, you should then be able to navigate to:
 
