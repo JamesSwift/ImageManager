@@ -6,11 +6,21 @@ A PHP class and set of functions to make automatically re-sizing images for your
 
 This project's code has basically just been copied and pasted from the main [SWDF](https://github.com/swiftoid/SWDF) repo. Updates should be coming soon to define a standardised API and documentation, but for now the code is fairly usable.
 
-To use this code, at your terminal type:
+To get a copy of this code, at your terminal type:
 
 `git clone git://github.com/swiftoid/SWDF_image_resizer.git`
 
-Then investigate the `example_config.php.txt` and `example_implementations.txt` files for ready-to-use code samples.
+## Quick Start
+
+The SWDF_image_resizer comes with and example implementation. 
+
+To test it out, copy the repository into a directory accessible by your web-server. In your web browser, you should then be able to navigate to:
+
+`http://SERVER.COM/PATH_TO_REPO/example.php?size=2&img=images/example.jpg`
+
+This should produce a water-marked image.
+
+Next, investigate the file `example_config.php` and try creating new sizes.
 
 ## Branching Model
 
