@@ -10,6 +10,8 @@ To get a copy of this code, at your terminal type:
 
 `git clone git://github.com/swiftoid/SWDF_image_resizer.git`
 
+or alternatively you can [download a zipped version](https://github.com/swiftoid/SWDF_image_resizer/archive/master.zip).
+
 ## Quick Start
 
 The SWDF_image_resizer comes with an example implementation. 
