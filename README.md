@@ -16,7 +16,7 @@ The SWDF_image_resizer comes with and example implementation.
 
 To test it out, copy the repository into a directory accessible by your web-server. In your web browser, you should then be able to navigate to:
 
-`http://SERVER.COM/PATH_TO_REPO/example.php?size=2&img=images/example.jpg`
+`http://SERVER.COM/PATH_TO_REPO/example.php?size=1&img=images/example.jpg`
 
 This should produce a water-marked image.
 
