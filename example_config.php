@@ -3,7 +3,7 @@
 // Basic Image Settings:
  
 	$_SWDF['settings']['images']['default_size']=0;					//Used by make_img_link() function to choose a size if none is specified.
-	$_SWDF['settings']['images']['default_watermark_opacity']=90;			//If not specified in a size, use this opacity for watermarks. Values: 0-100
+	$_SWDF['settings']['images']['default_watermark_opacity']=20;			//If not specified in a size, use this opacity for watermarks. Values: 0-100
 	$_SWDF['settings']['images']['default_jpeg_quality']=90;			//If not specified in a size, use this value for jpeg compression.
 	
 	$_SWDF['paths']['images_cache']=$_SWDF['paths']['root']."cache/";		//The absolute path to the image cache location.
@@ -53,7 +53,7 @@
 	
 	SWDF_add_img_path(Array(
 		"path"=>"images/restricted/",
-		"deny_sizes"=>Array("0")
+		"deny_sizes"=>Array("0","2")
 	));
 	
 	
@@ -99,15 +99,13 @@
 	$_SWDF['settings']['images']['sizes']['1']=Array(
 		"id"=>1,
 		"method"=>"fit",
-		"width"=>300,
-		"height"=>300,
+		"width"=>400,
+		"height"=>800,
 		"watermark"=>Array(
 			"path"=>$_SWDF['paths']['root']."images/watermark.png",
-			"v"=>"center",
-			"h"=>"center",
-			"scale"=>0.5,
-			"opacity"=>50,
-			"repeat"=>true,
+			"scale"=>1.5,
+			"opacity"=>40,
+			"repeat"=>true
 		),
 	);
 	
