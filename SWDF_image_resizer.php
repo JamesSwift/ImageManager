@@ -27,11 +27,11 @@
 
 
 /**
- * Control access to specified path, with the specified settings.
+ * Control access the image resizer's acces to specified directory, with the specified settings.
  * 
  * The function takes a single config/data array which can have any of the follwing elements:
  * 
- * "path"		string		The relative path to the directory from $_SWDF['paths']['root']. Must end in "/".<br/>
+ * "path"		string		The path (relative to $_SWDF['paths']['root']) to the directory to be secured.<br/>
  * "allow_sizes"	array|string	Sizes to allow. All other sizes will be blocked unless otherwise specified. To allow all sizes, set to string "all". Default is "all".<br/>
  * "deny_sizes"		array|string	Sizes to deny. All other sizes will be allowed unless otherwise specified. To block all sizes, set to string "all". By default, none are blocked.<br/>
  * "require_auth"	bool		When true, SWDF_image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.<br/>
@@ -66,8 +66,45 @@ function SWDF_add_img_path($data){
 	return false;
 }
 
-function SWDF_add_user_img_path($path){
-	$_SESSION['_SWDF']['images']['paths'][$path['path']]=$path;
+/**
+ * Persistantly control access to specified path, with the specified settings.
+ * 
+ * This function is like SWDF_add_img_path, but instead of loading the data you 
+ * send into the $_SWDF settings variable, the data will be stored in the 
+ * $_SESSION['_SWDF'] settings variable. This allows directory settings specific 
+ * to a user's session to be persistantly stored between requests.
+ * 
+ * PLEASE NOTE: For security, settings in this vairable aren't automatically 
+ * loaded when using any of the SWDF_* functions. You must explicitly call 
+ * SWDF_load_user_img_paths() before using the functions, otherwise the user 
+ * paths you have defined will be ignored.
+ * 
+ * The function takes a single config/data array which can have any of the follwing elements:
+ * 
+ * "path"		string		The path (relative to $_SWDF['paths']['root']) to the directory to be secured.<br/>s
+ * "allow_sizes"	array|string	Sizes to allow. All other sizes will be blocked unless otherwise specified. To allow all sizes, set to string "all". Default is "all".<br/>
+ * "deny_sizes"		array|string	Sizes to deny. All other sizes will be allowed unless otherwise specified. To block all sizes, set to string "all". By default, none are blocked.<br/>
+ * "require_auth"	bool		When true, SWDF_image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.<br/>
+ * 
+ * 
+ * @param mixed[] $data	<p>An array containing the path to be added and settings to controll access to it.</p>
+ *			<p>[path=>string, allow_sizes=>array|string, deny_sizes=>array|string, require_auth=>bool]</p>
+ * 
+ * @return bool		<p>Returns true on success. If session has not been initiated or is disabled, will return false.</p>
+ */
+function SWDF_add_user_img_path($data){
+	//check if session has been initiated
+	if (session_status()===PHP_SESSION_ACTIVE && isset($_SESSION)){
+		//Normalize path to end with a /
+		$data['path'].="/";
+		$data['path']=str_replace(Array("\\","//"),"/",$data['path']);
+		
+		//Store the data in the sessions
+		$_SESSION['_SWDF']['images']['paths'][$data['path']]=$data;
+		
+		return true;
+	}
+	return false;
 }
 
 function SWDF_load_user_img_paths(){
