@@ -41,7 +41,7 @@
  * @param mixed[] $data	<p>An array containing the path to be added and settings to controll access to it.</p>
  *			<p>[path=>string, allow_sizes=>array|string, deny_sizes=>array|string, require_auth=>bool]</p>
  * 
- * @return bool		<p>Returns `true` on success. Triggers a warning and returns false on failure.
+ * @return bool		<p>Returns `true` on success. Triggers a warning and returns false if the data array is mal-formed.
  */
 function SWDF_add_img_path($data){
 	global $_SWDF;
@@ -90,30 +90,70 @@ function SWDF_add_img_path($data){
  * @param mixed[] $data	<p>An array containing the path to be added and settings to controll access to it.</p>
  *			<p>[path=>string, allow_sizes=>array|string, deny_sizes=>array|string, require_auth=>bool]</p>
  * 
- * @return bool		<p>Returns true on success. If session has not been initiated or is disabled, will return false.</p>
+ * @return bool		<p>Returns true on success. If session has not been initiated or is disabled, or if the $data array is malformed will return false.</p>
  */
 function SWDF_add_user_img_path($data){
 	//check if session has been initiated
 	if (session_status()===PHP_SESSION_ACTIVE && isset($_SESSION)){
-		//Normalize path to end with a /
-		$data['path'].="/";
-		$data['path']=str_replace(Array("\\","//"),"/",$data['path']);
 		
-		//Store the data in the sessions
-		$_SESSION['_SWDF']['images']['paths'][$data['path']]=$data;
-		
-		return true;
+		//Check integrety of data
+		if (isset($data) && is_array($data) && isset($data['path']) && $data['path']!==null){
+			
+			//Normalize path to end with a /
+			$data['path'].="/";
+			$data['path']=str_replace(Array("\\","//"),"/",$data['path']);
+
+			//Store the data in the session
+			$_SESSION['_SWDF']['images']['paths'][$data['path']]=$data;
+
+			return true;
+		}
 	}
 	return false;
 }
 
+/**
+ * Loads user-specific directory security settings related to image resizing.
+ * 
+ * When you have added user-specific security settings with SWDF_add_user_img_path()
+ * function, you need to call this function to load the settings before the
+ * SWDF_image_resizer_request() functions will take note of them. They are not 
+ * loaded by default as an added security measure.
+ * 
+ * @global array $_SWDF
+ * @return boolean	<p>Returns false if session hasn't been initiated or is disabled.</p>
+ *			<p>Returns true if all paths were added.</p>
+ *			<p> If one path fails to load, a warrning will be triggered and the 
+ *			function will return false (after attempting to load any remaining 
+ *			user paths).</p>
+ */
 function SWDF_load_user_img_paths(){
 	global $_SWDF;
-	if (isset($_SESSION['_SWDF']['images']['paths']) && is_array($_SESSION['_SWDF']['images']['paths'])){
-	foreach ($_SESSION['_SWDF']['images']['paths'] as $path){
-		SWDF_add_img_path($path);
+	//check if session has been initiated
+	if (session_status()===PHP_SESSION_ACTIVE && isset($_SESSION)){
+		
+		//Check $_SWDF has been loaded
+		if (!isset($_SWDF)){
+			$_SWDF=array();
+		}
+		
+		//Even if no paths were defined, return true
+		$return=true;
+		
+		//Check some paths are defined
+		if (isset($_SESSION['_SWDF']['images']['paths']) && is_array($_SESSION['_SWDF']['images']['paths'])){
+			foreach ($_SESSION['_SWDF']['images']['paths'] as $path){
+				//If one of the paths fails, return false
+				if (!SWDF_add_img_path($path)){
+					$return=false;
+				}
+			}
+		}
+		
+		return $return;
 	}
-}
+	
+	return false;
 }
 
 
