@@ -1,24 +1,33 @@
 <?php
 
-/*
- *	SWDF_image_resizer - v0.0.4
+/**
+ * SWDF Image Resier
  * 
- *	Copyright 2013 James Swift - See LICENSE for details
+ * This script allows you to automate the resizing of images on your website. 
  * 
- *	This script allows you to simply and securly automate the resizing of images
- *	on your website. It uses the GD2 PHP library. 
+ * The SWDF_image_resizer uses the GD2 PHP library, and wraps it up in a simple
+ * little class. It also contains a system for managing all images on a website, 
+ * both securing them and resizing/watermarking them as needed.
  * 
- * 	For examples usages, see examples.txt
+ * For a quick start, see examples.txt.
  * 
- *	You are free to use this code in any way you wish, but please give credit if
- *	you can by linking to the github page for this project:
+ * You are free to use this code in any way you wish. If you'd like to give
+ * credit, please link to the github page for this project:
  * 
- *	https://github.com/swiftoid/SWDF_image_resizer
+ * https://github.com/swiftoid/SWDF_image_resizer
  * 
+ * @author James Swift <me@james-swift.com>
+ * @version v0.0.4
+ * @package SWDF_image_resizer
+ * @copyright Copyright 2013 James Swift (Simplified BSD License)
  */
 
+
+
+
+
 /**
- * Add security data to control access to specified path.
+ * Control access to specified path, with the specified settings.
  * 
  * The function takes a single config/data array which can have any of the follwing elements:
  * 
