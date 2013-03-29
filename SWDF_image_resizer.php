@@ -98,7 +98,7 @@ function SWDF_add_img_path($data){
  */
 function SWDF_add_user_img_path($data){
 	//check if session has been initiated
-	if (session_active()===PHP_SESSION_ACTIVE && isset($_SESSION)){
+	if (session_active() && isset($_SESSION)){
 		
 		//Check integrety of data
 		if (isset($data) && is_array($data) && isset($data['path']) && $data['path']!==null){
@@ -134,7 +134,7 @@ function SWDF_add_user_img_path($data){
 function SWDF_load_user_img_paths(){
 	global $_SWDF;
 	//check if session has been initiated
-	if (session_active()===PHP_SESSION_ACTIVE && isset($_SESSION)){
+	if (session_active() && isset($_SESSION)){
 		
 		//Check $_SWDF has been loaded
 		if (!isset($_SWDF)){
