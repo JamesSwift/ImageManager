@@ -161,7 +161,7 @@ function SWDF_load_user_img_paths(){
 }
 
 /**
- * Finds which security settings apply to a particular image.
+ * Finds which security settings apply to a particular image and returns them.
  * 
  * The function starts at the deepest level of your image's path, then progressivley works it way up a directory at a time, testing each level until it finds a matching path from the ones you predefined earlier.
  * 
@@ -214,7 +214,7 @@ function SWDF_get_img_path_info($image){
 }
 
 /**
- * Process a path's settings and produce a list of sizes that are definitely allowed (and that really exist).
+ * Process a path's settings and produce an array of sizes that are definitely allowed (and that really exist).
  * 
  * Please ensure you have specified your paths and sizes first, otherwise the function will return false. Allowed sizes are added first, then any sizes defined in "deny_sizes" are then removed from the list.
  * 
@@ -275,43 +275,88 @@ function SWDF_get_allowed_sizes($path){
 
 }
 
-
-function SWDF_validate_resize_request($image,$size="",$authorized=false){
+/**
+ * Check the user is allowed to resize the specified image to the size they requested.
+ * 
+ * Note: This function doesn't by default take note of paths stored by SWDF_add_user_img_path(). 
+ * You must explicitly call SWDF_load_user_img_paths() before calling this function if you want
+ * them to be taken into account when granting a request.
+ * 
+ * @param  string	   $image	Required. The path, relative to $_SWDF['paths']['root'], to the image you wish to resize.
+ * 
+ * @param  string|null	   $size	Optional. The id of the size you wish to resize the image to. If not specified, 
+ *					$_SWDF['settings']['images']['default_size'] will be used (if configured).
+ * 
+ * @param  bool		   $authorized	Optional. If the path the image falls under has it's "require_auth" property set to true, 
+ *					the resize request will fail unless you set this argument to true. It's primarily intended 
+ *					as a saftey-net for building your own security system on top of the SWDF_image_resizer.
+ * 
+ * @return boolean|mixed[]		<p>If the request is allowed, an array containing the details of the requested size will be returned.</p>
+ *					<p>If request is not authorized or you have failed to define any sizes or paths, will return false</p>
+ */
+function SWDF_validate_resize_request($image,$size=null,$authorized=false){
 	global $_SWDF;
 
-	if ($size==""){
-		$size=$_SWDF['settings']['images']['default_size'];
+	//Check needed resources are available
+	if (!(	isset($_SWDF) &&
+		isset($_SWDF['paths']['root']) &&
+		isset($_SWDF['settings']['images']) &&
+		isset($_SWDF['settings']['images']['sizes']) &&
+		isset($_SWDF['settings']['images']['paths']) &&
+		isset($image) &&
+		is_string($image)
+	)) return false;
+	
+	//Load default size if none specified
+	if (isset($size) && !is_string($size)){
+		if (isset($_SWDF['settings']['images']['default_size'])){
+			$size=$_SWDF['settings']['images']['default_size'];
+		} else {
+			//If default size wasn't specified, bail out
+			return false;
+		}
 	}
 
+	//Normalize the $image request, and prevent back-references
 	$image=str_replace(Array("\\","//"),"/",$image);
 	$image=str_replace(Array("../","./"),"",$image);
 
 	//First, check file exists before other checks.
 	if (is_file($_SWDF['paths']['root'].$image)){
+		
 		//Get security settings for the path the image is in
 		$path=SWDF_get_img_path_info($image);
+		
 		//Check path is allowed
-		if ($path!=false){
+		if ($path!==false){
+			
 			//Find the allowed sizes for the path the image is in
 			$sizes=SWDF_get_allowed_sizes($path['path']);
+			
 			//Check whether requested size is allowed
 			if (is_array($sizes)){
+				
 				if (in_array($size,$sizes)===true && is_array($_SWDF['settings']['images']['sizes'][$size])){
-					//Check we are authorized to render
+					
+					//Size is allowed, just one final thing. Check we are authorized to render
+					
+					//Authorization required
 					if (isset($path['require_auth']) && $path['require_auth']===true){
 						if ($authorized===true){
-					return $_SWDF['settings']['images']['sizes'][$size];
-				}
+							return $_SWDF['settings']['images']['sizes'][$size];
+						}
+						
+					//No authorization required, just return the size to be rendered
 					} else {
 						return $_SWDF['settings']['images']['sizes'][$size];
+					}
+				}
 			}
 		}
-			}
-		}
-		return false;
-	} else {
-		return false;
 	}
+	
+	//Something went wrong
+	return false;
 }
 
 function SWDF_clean_image_cache($delete_fname=null, $force=false){
