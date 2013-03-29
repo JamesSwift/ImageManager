@@ -213,47 +213,71 @@ function SWDF_get_img_path_info($image){
 	return false;
 }
 
-function SWDF_get_allowed_sizes($path_id){
+/**
+ * Process a path's settings and produce a list of sizes that are definitely allowed (and that really exist).
+ * 
+ * Please ensure you have specified your paths and sizes first, otherwise the function will return false. Allowed sizes are added first, then any sizes defined in "deny_sizes" are then removed from the list.
+ * 
+ * @param string $path The path you want to check.
+ * @return boolean|array Returns an array of size ids on success. If the path cannot be found or no global sizes are specified, will return false.
+ */
+function SWDF_get_allowed_sizes($path){
 	global $_SWDF;
 
-	//Check image settings are loaded
-	if ($_SWDF['settings']['images']['settings_loaded']!==true){
-		require($_SWDF['paths']['root']."settings/images.php");
-	}
-
-	$path=$_SWDF['settings']['images']['paths'][$path_id];
-	if (is_array($path)){
-		$allowed_sizes=Array();
-		//Populate with all allowed sizes
-		if ($path['allow_sizes']==="all" || $path['allow_sizes']==NULL){
-			foreach($_SWDF['settings']['images']['sizes'] as $id=>$size){
+	//Check needed resources are available
+	if (!(	isset($path) && 
+		$path !== null &&
+		isset($_SWDF) &&
+		isset($_SWDF['settings']['images']['paths']) &&
+		isset($_SWDF['settings']['images']['paths'][$path]) &&
+		is_array($_SWDF['settings']['images']['paths'][$path]) &&
+		isset($_SWDF['settings']['images']['sizes']) &&
+		is_array($_SWDF['settings']['images']['sizes'])
+	)) return false;
+	
+	//Create shortcut to path settings
+	$path=$_SWDF['settings']['images']['paths'][$path];
+	
+	$allowed_sizes=Array();
+	
+	//If "allow_sizes" was left blank or set to all, populate the array with all available sizes
+	if ($path['allow_sizes']==="all" || $path['allow_sizes']===NULL){
+		foreach($_SWDF['settings']['images']['sizes'] as $id=>$size){
+			$allowed_sizes[$id]=$id;
+		}
+		
+	//If "allow_sizes" was an array instead, populate the array with those sizes
+	} else if ($path['allow_sizes']!=NULL && is_array($path['allow_sizes'])){
+		foreach($path['allow_sizes'] as $id){
+			//Check each size actually exists first
+			if (isset($_SWDF['settings']['images']['sizes'][$id])){
 				$allowed_sizes[$id]=$id;
 			}
-		} else if ($path['allow_sizes']!=NULL && is_array($path['allow_sizes'])){
-			$allowed_sizes=$path['allow_sizes'];
 		}
-		//Now remove any denied sizes
-		if (isset($path['deny_sizes']) && $path['deny_sizes']==="all"){
-			$allowed_sizes=Array();
-		} else if (isset($path['deny_sizes']) && is_array($path['deny_sizes'])){
-			foreach ($path['deny_sizes'] as $id ){
+	}
+	
+	//Now remove any sizes explicitly denied
+	if (isset($path['deny_sizes']) && $path['deny_sizes']==="all"){
+		//All sizes are denied, set the array to blank
+		$allowed_sizes=Array();
+		
+	//Just some sizes are denied
+	} else if (isset($path['deny_sizes']) && is_array($path['deny_sizes'])){
+		foreach ($path['deny_sizes'] as $id){
+			if (isset($_SWDF['settings']['images']['sizes'][$id]) && isset($allowed_sizes[$id])){
 				unset($allowed_sizes[$id]);
 			}
 		}
-		return $allowed_sizes;
-	} else {
-		return false;
 	}
+	
+	//Return the array of allowed sizes
+	return $allowed_sizes;
 
 }
 
+
 function SWDF_validate_resize_request($image,$size="",$authorized=false){
 	global $_SWDF;
-
-	//Check image settings are loaded
-	if ($_SWDF['settings']['images']['settings_loaded']!==true){
-		require($_SWDF['paths']['root']."settings/images.php");
-	}		
 
 	if ($size==""){
 		$size=$_SWDF['settings']['images']['default_size'];
@@ -292,11 +316,6 @@ function SWDF_validate_resize_request($image,$size="",$authorized=false){
 
 function SWDF_clean_image_cache($delete_fname=null, $force=false){
 	global $_SWDF;
-
-	//Check image settings are loaded
-	if ($_SWDF['settings']['images']['settings_loaded']!==true){
-		return false;
-	}
 
 	//Check caching is enabled (and configured)
 	if ($force===true || ( isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && isset($_SWDF['settings']['images']['cache_expiry']) && $_SWDF['settings']['images']['cache_expiry']!=null) ){
