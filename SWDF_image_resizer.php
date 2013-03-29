@@ -18,7 +18,7 @@
  * keep the message below intact:
  * 
  * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
- * https://github.com/james-swift/SWDF_image_resizer
+ * https://github.com/James-Swift/SWDF_image_resizer
  * 
  * @author James Swift <me@james-swift.com>
  * @version v0.1.3
