@@ -1,4 +1,4 @@
-Swift Web Development Framework - Image Resizer v0.1.0
+Swift Web Development Framework - Image Resizer v0.1.1
 ==================
 
 
