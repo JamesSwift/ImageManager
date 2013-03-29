@@ -11,15 +11,19 @@
  * 
  * For a quick start, see examples.txt.
  * 
- * You are free to use this code in any way you wish. If you'd like to give
- * credit, please link to the github page for this project:
+ * You are free to use, share and alter/remix this code, provided you distribute 
+ * it under the same or a similar license as this work. Please clearly mark any
+ * modifications you make (if extensive, a summary at the begining of the file
+ * is sufficient). If you redistribute, please include a copy of the LICENSE, 
+ * keep the message below intact:
  * 
- * https://github.com/swiftoid/SWDF_image_resizer
+ * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
+ * https://github.com/james-swift/SWDF_image_resizer
  * 
  * @author James Swift <me@james-swift.com>
  * @version v0.0.4
  * @package SWDF_image_resizer
- * @copyright Copyright 2013 James Swift (Simplified BSD License)
+ * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
 
