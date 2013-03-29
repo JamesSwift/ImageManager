@@ -160,46 +160,56 @@ function SWDF_load_user_img_paths(){
 	return false;
 }
 
-
+/**
+ * Finds which security settings apply to a particular image.
+ * 
+ * The function starts at the deepest level of your image's path, then progressivley works it way up a directory at a time, testing each level until it finds a matching path from the ones you predefined earlier.
+ * 
+ * @param string $image	The image (including relative path from to $_SWDF['paths']['root']) to find infomartion about. 
+ * 
+ * @return bool|mixed[]	If the image exists and matches a predefined path, the settings for that path will be returned. Otherwise, returns false.
+ */
 function SWDF_get_img_path_info($image){
 	global $_SWDF;
 
-	//Check image settings are loaded
-	if ($_SWDF['settings']['images']['settings_loaded']!==true){
-		require($_SWDF['paths']['root']."settings/images.php");
-	}
-
-	//First, check image exists
-	if (is_file($_SWDF['paths']['root'].$image)){
-		//Get folder
-		$image_path=str_replace(Array("\\","//"),"/",dirname($image)."/");
-
-
-		//Find closest matching path
+	//First, check all needed data exists, and that image exists
+	if (
+		isset($_SWDF) && 
+		isset($_SWDF['paths']['root']) && 
+		isset($image) && $image!=null && 
+		isset($_SWDF['settings']['images']['paths']) &&
+		is_file($_SWDF['paths']['root'].$image)
+	){
+		
+		//Remove the image from the path, and normalize the path
+		$image_path=str_replace(Array("\\","//"),"/",dirname($image));
 		$image_path_parts=explode("/",$image_path);
+		
+		//Find closest matching predefined path
 		if (is_array($image_path_parts)){
+			
 			foreach ($image_path_parts as $part){
+				
 				if (sizeof($image_path_parts)>0){
-					$new_image_path=implode("/",$image_path_parts)."/";
-					if (isset($_SWDF['settings']['images']['paths'][$new_image_path]) && is_array($_SWDF['settings']['images']['paths'][$new_image_path])){
-						$image_path_data=$_SWDF['settings']['images']['paths'][$new_image_path];
-						break;
-					} else {
-						array_pop($image_path_parts);
-					}
-				} else {
-					return false;
+					
+					//Combine $image_path_parts into a new path
+					$new_path_level=implode("/",$image_path_parts)."/";
+
+					//Check if this new path is explicetly defined
+					if (isset($_SWDF['settings']['images']['paths'][$new_path_level]) && is_array($_SWDF['settings']['images']['paths'][$new_path_level])){
+						
+						//A match was found, return the data for that path
+						return $_SWDF['settings']['images']['paths'][$new_path_level];
+						
+					//If no match found, move up one level and try again
+					} else array_pop($image_path_parts);
 				}
 			}
-
-			//return data
-			if (isset($image_path_data)){
-				return $image_path_data;
-			}
-
 		}
 
 	}
+	
+	//Something went wrong
 	return false;
 }
 
