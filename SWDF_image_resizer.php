@@ -359,7 +359,7 @@ function SWDF_validate_resize_request($image,$size=null,$authorized=false){
 	return false;
 }
 
-function SWDF_image_resizer_request($size,$img,$authorized=false){
+function SWDF_image_resizer_request($img,$size=null,$authorized=false){
 	global $_SWDF;
 	$return = array();
 
