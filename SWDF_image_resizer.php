@@ -21,7 +21,7 @@
  * https://github.com/James-Swift/SWDF_image_resizer
  * 
  * @author James Swift <me@james-swift.com>
- * @version v0.1.3
+ * @version v0.2.0
  * @package SWDF_image_resizer
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
@@ -160,133 +160,316 @@ function SWDF_load_user_img_paths(){
 	return false;
 }
 
-
+/**
+ * Finds which security settings apply to a particular image and returns them.
+ * 
+ * The function starts at the deepest level of your image's path, then progressivley works it way up a directory at a time, testing each level until it finds a matching path from the ones you predefined earlier.
+ * 
+ * @param string $image	The image (including relative path from to $_SWDF['paths']['root']) to find infomartion about. 
+ * 
+ * @return bool|mixed[]	If the image exists and matches a predefined path, the settings for that path will be returned. Otherwise, returns false.
+ */
 function SWDF_get_img_path_info($image){
 	global $_SWDF;
 
-	//Check image settings are loaded
-	if ($_SWDF['settings']['images']['settings_loaded']!==true){
-		require($_SWDF['paths']['root']."settings/images.php");
-	}
-
-	//First, check image exists
-	if (is_file($_SWDF['paths']['root'].$image)){
-		//Get folder
-		$image_path=str_replace(Array("\\","//"),"/",dirname($image)."/");
-
-
-		//Find closest matching path
+	//First, check all needed data exists, and that image exists
+	if (
+		isset($_SWDF) && 
+		isset($_SWDF['paths']['root']) && 
+		isset($image) && $image!=null && 
+		isset($_SWDF['settings']['images']['paths']) &&
+		is_file($_SWDF['paths']['root'].$image)
+	){
+		
+		//Remove the image from the path, and normalize the path
+		$image_path=str_replace(Array("\\","//"),"/",dirname($image));
 		$image_path_parts=explode("/",$image_path);
+		
+		//Find closest matching predefined path
 		if (is_array($image_path_parts)){
+			
 			foreach ($image_path_parts as $part){
+				
 				if (sizeof($image_path_parts)>0){
-					$new_image_path=implode("/",$image_path_parts)."/";
-					if (isset($_SWDF['settings']['images']['paths'][$new_image_path]) && is_array($_SWDF['settings']['images']['paths'][$new_image_path])){
-						$image_path_data=$_SWDF['settings']['images']['paths'][$new_image_path];
-						break;
-					} else {
-						array_pop($image_path_parts);
-					}
-				} else {
-					return false;
+					
+					//Combine $image_path_parts into a new path
+					$new_path_level=implode("/",$image_path_parts)."/";
+
+					//Check if this new path is explicetly defined
+					if (isset($_SWDF['settings']['images']['paths'][$new_path_level]) && is_array($_SWDF['settings']['images']['paths'][$new_path_level])){
+						
+						//A match was found, return the data for that path
+						return $_SWDF['settings']['images']['paths'][$new_path_level];
+						
+					//If no match found, move up one level and try again
+					} else array_pop($image_path_parts);
 				}
 			}
-
-			//return data
-			if (isset($image_path_data)){
-				return $image_path_data;
-			}
-
 		}
 
 	}
+	
+	//Something went wrong
 	return false;
 }
 
-function SWDF_get_allowed_sizes($path_id){
+/**
+ * Process a path's settings and produce an array of sizes that are definitely allowed (and that really exist).
+ * 
+ * Please ensure you have specified your paths and sizes first, otherwise the function will return false. Allowed sizes are added first, then any sizes defined in "deny_sizes" are then removed from the list.
+ * 
+ * @param string $path The path you want to check.
+ * @return boolean|array Returns an array of size ids on success. If the path cannot be found or no global sizes are specified, will return false.
+ */
+function SWDF_get_allowed_sizes($path){
 	global $_SWDF;
 
-	//Check image settings are loaded
-	if ($_SWDF['settings']['images']['settings_loaded']!==true){
-		require($_SWDF['paths']['root']."settings/images.php");
-	}
-
-	$path=$_SWDF['settings']['images']['paths'][$path_id];
-	if (is_array($path)){
-		$allowed_sizes=Array();
-		//Populate with all allowed sizes
-		if ($path['allow_sizes']==="all" || $path['allow_sizes']==NULL){
-			foreach($_SWDF['settings']['images']['sizes'] as $id=>$size){
+	//Check needed resources are available
+	if (!(	isset($path) && 
+		$path !== null &&
+		isset($_SWDF) &&
+		isset($_SWDF['settings']['images']['paths']) &&
+		isset($_SWDF['settings']['images']['paths'][$path]) &&
+		is_array($_SWDF['settings']['images']['paths'][$path]) &&
+		isset($_SWDF['settings']['images']['sizes']) &&
+		is_array($_SWDF['settings']['images']['sizes'])
+	)) return false;
+	
+	//Create shortcut to path settings
+	$path=$_SWDF['settings']['images']['paths'][$path];
+	
+	$allowed_sizes=Array();
+	
+	//If "allow_sizes" was left blank or set to all, populate the array with all available sizes
+	if ($path['allow_sizes']==="all" || $path['allow_sizes']===NULL){
+		foreach($_SWDF['settings']['images']['sizes'] as $id=>$size){
+			$allowed_sizes[$id]=$id;
+		}
+		
+	//If "allow_sizes" was an array instead, populate the array with those sizes
+	} else if ($path['allow_sizes']!=NULL && is_array($path['allow_sizes'])){
+		foreach($path['allow_sizes'] as $id){
+			//Check each size actually exists first
+			if (isset($_SWDF['settings']['images']['sizes'][$id])){
 				$allowed_sizes[$id]=$id;
 			}
-		} else if ($path['allow_sizes']!=NULL && is_array($path['allow_sizes'])){
-			$allowed_sizes=$path['allow_sizes'];
 		}
-		//Now remove any denied sizes
-		if (isset($path['deny_sizes']) && $path['deny_sizes']==="all"){
-			$allowed_sizes=Array();
-		} else if (isset($path['deny_sizes']) && is_array($path['deny_sizes'])){
-			foreach ($path['deny_sizes'] as $id ){
+	}
+	
+	//Now remove any sizes explicitly denied
+	if (isset($path['deny_sizes']) && $path['deny_sizes']==="all"){
+		//All sizes are denied, set the array to blank
+		$allowed_sizes=Array();
+		
+	//Just some sizes are denied
+	} else if (isset($path['deny_sizes']) && is_array($path['deny_sizes'])){
+		foreach ($path['deny_sizes'] as $id){
+			if (isset($_SWDF['settings']['images']['sizes'][$id]) && isset($allowed_sizes[$id])){
 				unset($allowed_sizes[$id]);
 			}
 		}
-		return $allowed_sizes;
-	} else {
-		return false;
 	}
+	
+	//Return the array of allowed sizes
+	return $allowed_sizes;
 
 }
 
-function SWDF_validate_resize_request($image,$size="",$authorized=false){
+/**
+ * Check the user is allowed to resize the specified image to the size they requested.
+ * 
+ * Note: This function doesn't by default take note of paths stored by SWDF_add_user_img_path(). 
+ * You must explicitly call SWDF_load_user_img_paths() before calling this function if you want
+ * them to be taken into account when granting a request.
+ * 
+ * @param  string	   $image	Required. The path, relative to $_SWDF['paths']['root'], to the image you wish to resize.
+ * 
+ * @param  string|null	   $size	Optional. The id of the size you wish to resize the image to. If not specified, 
+ *					$_SWDF['settings']['images']['default_size'] will be used (if configured).
+ * 
+ * @param  bool		   $authorized	Optional. If the path the image falls under has it's "require_auth" property set to true, 
+ *					the resize request will fail unless you set this argument to true. It's primarily intended 
+ *					as a saftey-net for building your own security system on top of the SWDF_image_resizer.
+ * 
+ * @return boolean|mixed[]		<p>If the request is allowed, an array containing the details of the requested size will be returned.</p>
+ *					<p>If request is not authorized or you have failed to define any sizes or paths, will return false</p>
+ */
+function SWDF_validate_resize_request($image,$size=null,$authorized=false){
 	global $_SWDF;
 
-	//Check image settings are loaded
-	if ($_SWDF['settings']['images']['settings_loaded']!==true){
-		require($_SWDF['paths']['root']."settings/images.php");
-	}		
-
-	if ($size==""){
-		$size=$_SWDF['settings']['images']['default_size'];
+	//Check needed resources are available
+	if (!(	isset($_SWDF) &&
+		isset($_SWDF['paths']['root']) &&
+		isset($_SWDF['settings']['images']) &&
+		isset($_SWDF['settings']['images']['sizes']) &&
+		isset($_SWDF['settings']['images']['paths']) &&
+		isset($image) &&
+		is_string($image)
+	)) return false;
+	
+	//Load default size if none specified
+	if (isset($size) && !is_string($size)){
+		if (isset($_SWDF['settings']['images']['default_size'])){
+			$size=$_SWDF['settings']['images']['default_size'];
+		} else {
+			//If default size wasn't specified, bail out
+			return false;
+		}
 	}
 
+	//Normalize the $image request, and prevent back-references
 	$image=str_replace(Array("\\","//"),"/",$image);
 	$image=str_replace(Array("../","./"),"",$image);
 
 	//First, check file exists before other checks.
 	if (is_file($_SWDF['paths']['root'].$image)){
+		
 		//Get security settings for the path the image is in
 		$path=SWDF_get_img_path_info($image);
+		
 		//Check path is allowed
-		if ($path!=false){
+		if ($path!==false){
+			
 			//Find the allowed sizes for the path the image is in
 			$sizes=SWDF_get_allowed_sizes($path['path']);
+			
 			//Check whether requested size is allowed
 			if (is_array($sizes)){
+				
 				if (in_array($size,$sizes)===true && is_array($_SWDF['settings']['images']['sizes'][$size])){
-					//Check we are authorized to render
+					
+					//Size is allowed, just one final thing. Check we are authorized to render
+					
+					//Authorization required
 					if (isset($path['require_auth']) && $path['require_auth']===true){
 						if ($authorized===true){
-					return $_SWDF['settings']['images']['sizes'][$size];
-				}
+							return $_SWDF['settings']['images']['sizes'][$size];
+						}
+						
+					//No authorization required, just return the size to be rendered
 					} else {
 						return $_SWDF['settings']['images']['sizes'][$size];
+					}
+				}
 			}
 		}
-			}
-		}
-		return false;
-	} else {
-		return false;
 	}
+	
+	//Something went wrong
+	return false;
+}
+
+function SWDF_image_resizer_request($img,$size=null,$authorized=false){
+	global $_SWDF;
+	$return = array();
+
+	//Get details of requested size
+	$size=SWDF_validate_resize_request($img,$size,$authorized);
+
+	//Check whether to proceed with resize request
+	if ($size!=false && is_array($size)){
+
+		//Get absolute path to image
+		$img_path=$_SWDF['paths']['root'].$img;
+		$img_path=str_replace(Array("\\","//"),"/",$img_path);
+		$img_path=str_replace(Array("../","./"),"",$img_path);
+		$orig_img_path=$img_path;
+
+		//Create cache filename
+		$cache_file="";
+		if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
+					$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.$size['id'])."].cache";
+			//check if it exists
+			//print gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';exit;
+			if (is_file($cache_file) && filemtime($cache_file)>filemtime($orig_img_path) && filemtime($cache_file)>time()-$_SWDF['settings']['images']['cache_expiry']){
+				//Change method to "original" so it will just be passed straight through
+				$size=Array(
+					"method"=>"original"
+				);
+				//Change img_path to cache file path
+				$img_path=$cache_file;
+			} else if (is_file($cache_file)) {
+				//Delete the old cache file in case it's contents are out-of-date
+				unlink($cache_file);
+			}
+		}	
+
+		//get properties of actual image
+		$properties=getimagesize($img_path);
+
+		//Determine resizing method
+		if (isset($size['method']) && $size['method']==="original" && (!isset($size['output']) || $size['output']==null)){
+			//Check file is an image
+			if ($properties!=false){
+				//just pass image through script
+				$return['status']=200;
+				$return['headers'][]="Content-type: {$properties['mime']}";
+				$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
+				$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
+				$return['data']=file_get_contents($img_path);
+			} else {
+				//Invalid image
+				$return['status']=404;
+			}
+
+		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true) {
+
+			//Load resizer class
+			$resizer=new SWDF_image_resizer();
+
+			//Set JPEG quality
+			$resizer->quality=$_SWDF['settings']['images']['default_jpeg_quality'];
+			if (isset($size['quality']) && $size['quality']!=null){
+				$resizer->quality=$size['quality'];
+			}
+
+			//load source
+			$resizer->load_image($img_path);
+
+			//resize image
+			$resizer->resize($size['method'],@$size['width'],@$size['height'],@$size['scale']);
+
+			//add watermark
+			if (isset($size['watermark']) && is_array($size['watermark'])){
+				if ($size['watermark']['opacity']==""){
+					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
+				}
+				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],$size['watermark']['opacity'],$size['watermark']['scale'],$size['watermark']['repeat'],50,50);
+			}
+
+			//Render resized image
+			$output = $resizer->output_image(@$size['output']);
+
+			//Save image to cache
+			if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
+					file_put_contents($cache_file,$output);
+			}
+
+			//Request that the browser cache this page
+			$properties=getimagesize($img_path);
+			$return['status']=200;
+			$return['headers'][]="Content-type: {$properties['mime']}";
+			$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
+			$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
+
+			//Return the image
+			$return['data']=$output;
+
+			//Clean the cache directory
+			SWDF_clean_image_cache();
+		} else {
+			die("Invalid method specified for this size.");
+		}
+	} else {
+		//Not allowed to resize this image/image not found
+		$return['status']=404;
+	}
+
+	return $return;
 }
 
 function SWDF_clean_image_cache($delete_fname=null, $force=false){
 	global $_SWDF;
-
-	//Check image settings are loaded
-	if ($_SWDF['settings']['images']['settings_loaded']!==true){
-		return false;
-	}
 
 	//Check caching is enabled (and configured)
 	if ($force===true || ( isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && isset($_SWDF['settings']['images']['cache_expiry']) && $_SWDF['settings']['images']['cache_expiry']!=null) ){
@@ -316,6 +499,11 @@ function SWDF_clean_image_cache($delete_fname=null, $force=false){
 	//Hmm, something went wrong
 	return false;
 }
+
+
+
+#############################################################################################################
+
 
 
 class SWDF_image_resizer {
@@ -579,114 +767,6 @@ class SWDF_image_resizer {
 	}
 }
 
-function SWDF_image_resizer_request($size,$img,$authorized=false){
-	global $_SWDF;
-	$return = array();
-
-	//Get details of requested size
-	$size=SWDF_validate_resize_request($img,$size,$authorized);
-
-	//Check whether to proceed with resize request
-	if ($size!=false && is_array($size)){
-
-		//Get absolute path to image
-		$img_path=$_SWDF['paths']['root'].$img;
-		$img_path=str_replace(Array("\\","//"),"/",$img_path);
-		$img_path=str_replace(Array("../","./"),"",$img_path);
-		$orig_img_path=$img_path;
-
-		//Create cache filename
-		$cache_file="";
-		if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
-					$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.$size['id'])."].cache";
-			//check if it exists
-			//print gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';exit;
-			if (is_file($cache_file) && filemtime($cache_file)>filemtime($orig_img_path) && filemtime($cache_file)>time()-$_SWDF['settings']['images']['cache_expiry']){
-				//Change method to "original" so it will just be passed straight through
-				$size=Array(
-					"method"=>"original"
-				);
-				//Change img_path to cache file path
-				$img_path=$cache_file;
-			} else if (is_file($cache_file)) {
-				//Delete the old cache file in case it's contents are out-of-date
-				unlink($cache_file);
-			}
-		}	
-
-		//get properties of actual image
-		$properties=getimagesize($img_path);
-
-		//Determine resizing method
-		if (isset($size['method']) && $size['method']==="original" && (!isset($size['output']) || $size['output']==null)){
-			//Check file is an image
-			if ($properties!=false){
-				//just pass image through script
-				$return['status']=200;
-				$return['headers'][]="Content-type: {$properties['mime']}";
-				$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
-				$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
-				$return['data']=file_get_contents($img_path);
-			} else {
-				//Invalid image
-				$return['status']=404;
-			}
-
-		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true) {
-
-			//Load resizer class
-			$resizer=new SWDF_image_resizer();
-
-			//Set JPEG quality
-			$resizer->quality=$_SWDF['settings']['images']['default_jpeg_quality'];
-			if (isset($size['quality']) && $size['quality']!=null){
-				$resizer->quality=$size['quality'];
-			}
-
-			//load source
-			$resizer->load_image($img_path);
-
-			//resize image
-			$resizer->resize($size['method'],@$size['width'],@$size['height'],@$size['scale']);
-
-			//add watermark
-			if (isset($size['watermark']) && is_array($size['watermark'])){
-				if ($size['watermark']['opacity']==""){
-					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
-				}
-				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],$size['watermark']['opacity'],$size['watermark']['scale'],$size['watermark']['repeat'],50,50);
-			}
-
-			//Render resized image
-			$output = $resizer->output_image(@$size['output']);
-
-			//Save image to cache
-			if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
-					file_put_contents($cache_file,$output);
-			}
-
-			//Request that the browser cache this page
-			$properties=getimagesize($img_path);
-			$return['status']=200;
-			$return['headers'][]="Content-type: {$properties['mime']}";
-			$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
-			$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
-
-			//Return the image
-			$return['data']=$output;
-
-			//Clean the cache directory
-			SWDF_clean_image_cache();
-		} else {
-			die("Invalid method specified for this size.");
-		}
-	} else {
-		//Not allowed to resize this image/image not found
-		$return['status']=404;
-	}
-
-	return $return;
-}
 
 //Make backwards compatible with earlier version of PHP
 //This isn't a perfect test for whether a session is active or not, but 
