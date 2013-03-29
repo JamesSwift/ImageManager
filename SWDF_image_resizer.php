@@ -359,6 +359,115 @@ function SWDF_validate_resize_request($image,$size=null,$authorized=false){
 	return false;
 }
 
+function SWDF_image_resizer_request($size,$img,$authorized=false){
+	global $_SWDF;
+	$return = array();
+
+	//Get details of requested size
+	$size=SWDF_validate_resize_request($img,$size,$authorized);
+
+	//Check whether to proceed with resize request
+	if ($size!=false && is_array($size)){
+
+		//Get absolute path to image
+		$img_path=$_SWDF['paths']['root'].$img;
+		$img_path=str_replace(Array("\\","//"),"/",$img_path);
+		$img_path=str_replace(Array("../","./"),"",$img_path);
+		$orig_img_path=$img_path;
+
+		//Create cache filename
+		$cache_file="";
+		if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
+					$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.$size['id'])."].cache";
+			//check if it exists
+			//print gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';exit;
+			if (is_file($cache_file) && filemtime($cache_file)>filemtime($orig_img_path) && filemtime($cache_file)>time()-$_SWDF['settings']['images']['cache_expiry']){
+				//Change method to "original" so it will just be passed straight through
+				$size=Array(
+					"method"=>"original"
+				);
+				//Change img_path to cache file path
+				$img_path=$cache_file;
+			} else if (is_file($cache_file)) {
+				//Delete the old cache file in case it's contents are out-of-date
+				unlink($cache_file);
+			}
+		}	
+
+		//get properties of actual image
+		$properties=getimagesize($img_path);
+
+		//Determine resizing method
+		if (isset($size['method']) && $size['method']==="original" && (!isset($size['output']) || $size['output']==null)){
+			//Check file is an image
+			if ($properties!=false){
+				//just pass image through script
+				$return['status']=200;
+				$return['headers'][]="Content-type: {$properties['mime']}";
+				$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
+				$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
+				$return['data']=file_get_contents($img_path);
+			} else {
+				//Invalid image
+				$return['status']=404;
+			}
+
+		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true) {
+
+			//Load resizer class
+			$resizer=new SWDF_image_resizer();
+
+			//Set JPEG quality
+			$resizer->quality=$_SWDF['settings']['images']['default_jpeg_quality'];
+			if (isset($size['quality']) && $size['quality']!=null){
+				$resizer->quality=$size['quality'];
+			}
+
+			//load source
+			$resizer->load_image($img_path);
+
+			//resize image
+			$resizer->resize($size['method'],@$size['width'],@$size['height'],@$size['scale']);
+
+			//add watermark
+			if (isset($size['watermark']) && is_array($size['watermark'])){
+				if ($size['watermark']['opacity']==""){
+					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
+				}
+				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],$size['watermark']['opacity'],$size['watermark']['scale'],$size['watermark']['repeat'],50,50);
+			}
+
+			//Render resized image
+			$output = $resizer->output_image(@$size['output']);
+
+			//Save image to cache
+			if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
+					file_put_contents($cache_file,$output);
+			}
+
+			//Request that the browser cache this page
+			$properties=getimagesize($img_path);
+			$return['status']=200;
+			$return['headers'][]="Content-type: {$properties['mime']}";
+			$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
+			$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
+
+			//Return the image
+			$return['data']=$output;
+
+			//Clean the cache directory
+			SWDF_clean_image_cache();
+		} else {
+			die("Invalid method specified for this size.");
+		}
+	} else {
+		//Not allowed to resize this image/image not found
+		$return['status']=404;
+	}
+
+	return $return;
+}
+
 function SWDF_clean_image_cache($delete_fname=null, $force=false){
 	global $_SWDF;
 
@@ -390,6 +499,11 @@ function SWDF_clean_image_cache($delete_fname=null, $force=false){
 	//Hmm, something went wrong
 	return false;
 }
+
+
+
+#############################################################################################################
+
 
 
 class SWDF_image_resizer {
@@ -653,114 +767,6 @@ class SWDF_image_resizer {
 	}
 }
 
-function SWDF_image_resizer_request($size,$img,$authorized=false){
-	global $_SWDF;
-	$return = array();
-
-	//Get details of requested size
-	$size=SWDF_validate_resize_request($img,$size,$authorized);
-
-	//Check whether to proceed with resize request
-	if ($size!=false && is_array($size)){
-
-		//Get absolute path to image
-		$img_path=$_SWDF['paths']['root'].$img;
-		$img_path=str_replace(Array("\\","//"),"/",$img_path);
-		$img_path=str_replace(Array("../","./"),"",$img_path);
-		$orig_img_path=$img_path;
-
-		//Create cache filename
-		$cache_file="";
-		if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
-					$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.$size['id'])."].cache";
-			//check if it exists
-			//print gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';exit;
-			if (is_file($cache_file) && filemtime($cache_file)>filemtime($orig_img_path) && filemtime($cache_file)>time()-$_SWDF['settings']['images']['cache_expiry']){
-				//Change method to "original" so it will just be passed straight through
-				$size=Array(
-					"method"=>"original"
-				);
-				//Change img_path to cache file path
-				$img_path=$cache_file;
-			} else if (is_file($cache_file)) {
-				//Delete the old cache file in case it's contents are out-of-date
-				unlink($cache_file);
-			}
-		}	
-
-		//get properties of actual image
-		$properties=getimagesize($img_path);
-
-		//Determine resizing method
-		if (isset($size['method']) && $size['method']==="original" && (!isset($size['output']) || $size['output']==null)){
-			//Check file is an image
-			if ($properties!=false){
-				//just pass image through script
-				$return['status']=200;
-				$return['headers'][]="Content-type: {$properties['mime']}";
-				$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
-				$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
-				$return['data']=file_get_contents($img_path);
-			} else {
-				//Invalid image
-				$return['status']=404;
-			}
-
-		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true) {
-
-			//Load resizer class
-			$resizer=new SWDF_image_resizer();
-
-			//Set JPEG quality
-			$resizer->quality=$_SWDF['settings']['images']['default_jpeg_quality'];
-			if (isset($size['quality']) && $size['quality']!=null){
-				$resizer->quality=$size['quality'];
-			}
-
-			//load source
-			$resizer->load_image($img_path);
-
-			//resize image
-			$resizer->resize($size['method'],@$size['width'],@$size['height'],@$size['scale']);
-
-			//add watermark
-			if (isset($size['watermark']) && is_array($size['watermark'])){
-				if ($size['watermark']['opacity']==""){
-					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
-				}
-				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],$size['watermark']['opacity'],$size['watermark']['scale'],$size['watermark']['repeat'],50,50);
-			}
-
-			//Render resized image
-			$output = $resizer->output_image(@$size['output']);
-
-			//Save image to cache
-			if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
-					file_put_contents($cache_file,$output);
-			}
-
-			//Request that the browser cache this page
-			$properties=getimagesize($img_path);
-			$return['status']=200;
-			$return['headers'][]="Content-type: {$properties['mime']}";
-			$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
-			$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
-
-			//Return the image
-			$return['data']=$output;
-
-			//Clean the cache directory
-			SWDF_clean_image_cache();
-		} else {
-			die("Invalid method specified for this size.");
-		}
-	} else {
-		//Not allowed to resize this image/image not found
-		$return['status']=404;
-	}
-
-	return $return;
-}
 
 //Make backwards compatible with earlier version of PHP
 //This isn't a perfect test for whether a session is active or not, but 
