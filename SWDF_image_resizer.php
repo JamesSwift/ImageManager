@@ -360,11 +360,25 @@ function SWDF_validate_resize_request($image,$size=null,$authorized=false){
 }
 
 /**
+ * Resize an image according to the settings you earlier specified
  * 
- * @param type $img
- * @param type $requested_size
- * @param type $authorized
- * @return boolean|int
+ * You must specify your settings in the $_SWDF variable as per the documentation before calling this function. It will then check your user's request to see if the file they have requested can be displayed to them at the size they requested. If so, it will resize it and return the raw image data for your to display.
+ * 
+ * @param string $img The path (relative to $_SWDF['paths']['root']) of the image to be resized.
+ * @param string $requested_size The id of a size specified in $_SWDF['settings']['images']['sizes'] that the user whiches to resize the image to.
+ * @param bool $authorized Whether this request has been authorized. Normally you can ignor this variable, it's only needed if you have added your own security layer ontop of the SWDF_image_resizer tool.
+ * 
+ * @return bool|mixed[] <p>If required dependancies could not be loaded (E.G. $_SWDF), the function will return false.</p><br/>
+ *			<p>If the request cannot be processed because, for example, the file cannot be found or access is denied, the function will return an array similar to this:<br/>
+ *			array("status"=>"404","data"=>"File not found");</p><br/>
+ *			<p>If the request was successful, the function will return an array similar to this:<br/>
+ *			array(<br/>
+ *				"status"=>"200",<br/>
+ *				"headers"=>array("Last-Modified"=>"Wed, 27 Mar 2013 00:47:53 GMT", "Content-Type"=>"image/jpeg"),<br/>
+ *				"cache_location"=>"/tmp/1.jpg[aabbccddeeff].cache",<br/>
+ *				"data"=>RAW_IMAGE_DATA<br/>
+ *			);<br/>
+ *			You can choose to use the data in the header section to render the image directly to the user, or ignore it do something different with the returned image data.</p>
  */
 function SWDF_image_resizer_request($img, $requested_size=null, $authorized=false){
 	global $_SWDF;
@@ -495,9 +509,12 @@ function SWDF_image_resizer_request($img, $requested_size=null, $authorized=fals
 			$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
 			
 			//Expiry
-			if (isset($_SWDF['settings']['images']['cache_expiry']){
+			if (isset($_SWDF['settings']['images']['cache_expiry'])){
 				$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
 			}
+			
+			//Tell the user where the cached version lives
+			$return['cahce_location']=$cache_file;
 
 			//Return the image
 			$return['data']=$output;
@@ -511,6 +528,7 @@ function SWDF_image_resizer_request($img, $requested_size=null, $authorized=fals
 	//If we ended up here, either the file is not found/access denied, or the resizing method doesn't exist
 	} else {
 		$return['status']=404;
+		$return['data']="File not found";
 	}
 
 	//Return the data
