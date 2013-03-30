@@ -535,14 +535,33 @@ function SWDF_image_resizer_request($img, $requested_size=null, $authorized=fals
 	return $return;
 }
 
+/**
+ * Clean the resized images cache
+ * 
+ * If you are trying to delete all the cached versions of a particular image, you can specify it in the first argument and it will delete any cache file starting with that name.
+ * By default, this function will only opperate if caching is enabled, but you can force it to operate by setting the second argument to true.
+ * 
+ * @param string|null $delete_fname Optional. The name (NOT PATH) of an image (E.G. "hello.jpg"). Any time a cache file starting with that name is encountered it will be deleted, regardless of if it has expired or not.
+ * @param bool $force Optional. Force cleaning fo the image cache, even when caching has been disabled. (You must have specified $_SWDF['paths']['images_cache'] and $_SWDF['settings']['images']['cache_expiry'] for this to work)
+ * @return bool 
+ */
 function SWDF_clean_image_cache($delete_fname=null, $force=false){
 	global $_SWDF;
 
+	//Has a file called $delete_fname been deleted in this sweep?
+	$deleted=false;
+		
 	//Check caching is enabled (and configured)
-	if ($force===true || ( isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && isset($_SWDF['settings']['images']['cache_expiry']) && $_SWDF['settings']['images']['cache_expiry']!=null) ){
+	if ( isset($_SWDF) && ($force===true || ( 
+	      isset($_SWDF['settings']['images']['cache_resized']) && 
+	      $_SWDF['settings']['images']['cache_resized']===true && 
+	      isset($_SWDF['settings']['images']['cache_expiry']) && 
+	      $_SWDF['settings']['images']['cache_expiry']!=null
+	    ) )
+	){
 
 		//Check cache directory exists
-		if (isset($_SWDF['paths']['images_cache']) && $_SWDF['paths']['images_cache']!==null && is_dir($_SWDF['paths']['images_cache']) ) {
+		if (isset($_SWDF['paths']['images_cache']) && $_SWDF['paths']['images_cache']!==null && is_dir($_SWDF['paths']['images_cache']) && isset($_SWDF['settings']['images']['cache_expiry']) && ctype_digit($_SWDF['settings']['images']['cache_expiry'])) {
 
 			//Create list of files in cache directory
 			$dir=scandir($_SWDF['paths']['images_cache']);
@@ -554,10 +573,24 @@ function SWDF_clean_image_cache($delete_fname=null, $force=false){
 					$fname=substr($file, 0, strpos($file, "["));
 
 					//Determine whether to delete or not
-					if (is_file($_SWDF['paths']['images_cache'].$file) && (filemtime($_SWDF['paths']['images_cache'].$file)<time()-$_SWDF['settings']['images']['cache_expiry'] || $fname===$delete_fname) && substr($file,-5,5)=="cache"){
+					if (is_file($_SWDF['paths']['images_cache'].$file) && 
+					    substr($file,-5,5)=="cache" &&
+					    (
+					     filemtime($_SWDF['paths']['images_cache'].$file)<time()-$_SWDF['settings']['images']['cache_expiry'] || 
+					     $fname===$delete_fname
+					    )
+					){
 						unlink($_SWDF['paths']['images_cache'].$file);
+						if ($fname===$delete_fname) $deleted=true;
 					}
 				}
+				
+				//If the user was specifically trying to delete one file, return true or false
+				if ($delete_fname!==null){
+					return $deleted;
+				}
+				
+				//Else, the scan was successful. return true
 				return true;
 			}
 		}
