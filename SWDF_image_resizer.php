@@ -21,7 +21,7 @@
  * https://github.com/James-Swift/SWDF_image_resizer
  * 
  * @author James Swift <me@james-swift.com>
- * @version v0.2.0
+ * @version v0.2.1
  * @package SWDF_image_resizer
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
