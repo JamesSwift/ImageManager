@@ -21,7 +21,7 @@
  * https://github.com/James-Swift/SWDF_image_resizer
  * 
  * @author James Swift <me@james-swift.com>
- * @version v0.2.0
+ * @version v0.2.1
  * @package SWDF_image_resizer
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
@@ -359,48 +359,94 @@ function SWDF_validate_resize_request($image,$size=null,$authorized=false){
 	return false;
 }
 
-function SWDF_image_resizer_request($img,$size=null,$authorized=false){
+/**
+ * Resize an image according to the settings you earlier specified
+ * 
+ * You must specify your settings in the $_SWDF variable as per the documentation before calling this function. It will then check your user's request to see if the file they have requested can be displayed to them at the size they requested. If so, it will resize it and return the raw image data for your to display.
+ * 
+ * @param string $img The path (relative to $_SWDF['paths']['root']) of the image to be resized.
+ * @param string $requested_size The id of a size specified in $_SWDF['settings']['images']['sizes'] that the user whiches to resize the image to.
+ * @param bool $authorized Whether this request has been authorized. Normally you can ignor this variable, it's only needed if you have added your own security layer ontop of the SWDF_image_resizer tool.
+ * 
+ * @return bool|mixed[] <p>If required dependancies could not be loaded (E.G. $_SWDF), the function will return false.</p><br/>
+ *			<p>If the request cannot be processed because, for example, the file cannot be found or access is denied, the function will return an array similar to this:<br/>
+ *			array("status"=>"404","data"=>"File not found");</p><br/>
+ *			<p>If the request was successful, the function will return an array similar to this:<br/>
+ *			array(<br/>
+ *				"status"=>"200",<br/>
+ *				"headers"=>array("Last-Modified"=>"Wed, 27 Mar 2013 00:47:53 GMT", "Content-Type"=>"image/jpeg"),<br/>
+ *				"cache_location"=>"/tmp/1.jpg[aabbccddeeff].cache",<br/>
+ *				"data"=>RAW_IMAGE_DATA<br/>
+ *			);<br/>
+ *			You can choose to use the data in the header section to render the image directly to the user, or ignore it do something different with the returned image data.</p>
+ */
+function SWDF_image_resizer_request($img, $requested_size=null, $authorized=false){
 	global $_SWDF;
+	
+	//Check all dependancies are loaded
+	if (!(
+		isset($_SWDF) &&
+		isset($_SWDF['paths']['root']) &&
+		isset($_SWDF['settings']['images']) &&
+		isset($_SWDF['settings']['images']['sizes']) &&
+		isset($_SWDF['settings']['images']['paths'])
+	)) return false;
+	
+	//This function returns an array. Initiate it.
 	$return = array();
 
 	//Get details of requested size
-	$size=SWDF_validate_resize_request($img,$size,$authorized);
+	$size=SWDF_validate_resize_request($img,$requested_size,$authorized);
 
 	//Check whether to proceed with resize request
-	if ($size!=false && is_array($size)){
+	if ($size!==false && is_array($size)){
 
 		//Get absolute path to image
 		$img_path=$_SWDF['paths']['root'].$img;
+		
+		//Normalize path
 		$img_path=str_replace(Array("\\","//"),"/",$img_path);
+		
+		//Prevent direcotry traversal
 		$img_path=str_replace(Array("../","./"),"",$img_path);
+		
+		//Note for later use
 		$orig_img_path=$img_path;
 
-		//Create cache filename
-		$cache_file="";
-		if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
-					$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.$size['id'])."].cache";
-			//check if it exists
-			//print gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';exit;
-			if (is_file($cache_file) && filemtime($cache_file)>filemtime($orig_img_path) && filemtime($cache_file)>time()-$_SWDF['settings']['images']['cache_expiry']){
-				//Change method to "original" so it will just be passed straight through
-				$size=Array(
-					"method"=>"original"
-				);
-				//Change img_path to cache file path
+		//Work out where the cached image will be/is stored
+		$cache_file=null;
+		
+		//Is caching enabled? (both globally and for this size)
+		if ( isset($_SWDF['settings']['images']['cache_resized']) && 
+		     isset($_SWDF['paths']['images_cache']) &&
+		     $_SWDF['settings']['images']['cache_resized']===true && 
+		     @$size['disable_caching']!==true
+		){
+			//Create path to cached file
+			$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.implode("".$size))."].cache";
+			
+			//Check if a cached version exists (and it hasn't expired)
+			if ( is_file($cache_file) && 
+			     filemtime($cache_file)>filemtime($orig_img_path) && 
+			     filemtime($cache_file)>time()-$_SWDF['settings']['images']['cache_expiry']
+			){
+				//It's valid, so let's forget about resizing and point straight to the cached version
 				$img_path=$cache_file;
+				$size=Array("method"=>"original");
+
+			//If the cache file exists, but is now out of date, remove it to keep the cache clean
 			} else if (is_file($cache_file)) {
-				//Delete the old cache file in case it's contents are out-of-date
 				unlink($cache_file);
 			}
 		}	
 
-		//get properties of actual image
+		//Get properties of image to be resized
 		$properties=getimagesize($img_path);
 
-		//Determine resizing method
-		if (isset($size['method']) && $size['method']==="original" && (!isset($size['output']) || $size['output']==null)){
+		//If method=original just pass the data straight through
+		if (isset($size['method']) && $size['method']==="original" && is_file($img_path)){
 			//Check file is an image
-			if ($properties!=false){
+			if ($properties!==false){
 				//just pass image through script
 				$return['status']=200;
 				$return['headers'][]="Content-type: {$properties['mime']}";
@@ -412,7 +458,8 @@ function SWDF_image_resizer_request($img,$size=null,$authorized=false){
 				$return['status']=404;
 			}
 
-		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true) {
+		//If method is any other kind, make a SWDF_image_resizer() request
+		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true && is_file($img_path)) {
 
 			//Load resizer class
 			$resizer=new SWDF_image_resizer();
@@ -430,52 +477,91 @@ function SWDF_image_resizer_request($img,$size=null,$authorized=false){
 			$resizer->resize($size['method'],@$size['width'],@$size['height'],@$size['scale']);
 
 			//add watermark
-			if (isset($size['watermark']) && is_array($size['watermark'])){
-				if ($size['watermark']['opacity']==""){
+			if (isset($size['watermark']) && is_array($size['watermark']) && isset($size['watermark']['path']) && is_file($size['watermark']['path']) ){
+				if (isset($size['watermark']['opacity']) && ctype_digit(isset($size['watermark']['opacity']))){
 					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
 				}
-				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],$size['watermark']['opacity'],$size['watermark']['scale'],$size['watermark']['repeat'],50,50);
+				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],@$size['watermark']['opacity'],@$size['watermark']['scale'],@$size['watermark']['repeat'],50,50);
 			}
 
 			//Render resized image
 			$output = $resizer->output_image(@$size['output']);
 
 			//Save image to cache
-			if (isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && @$size['disable_caching']!==true){
-					file_put_contents($cache_file,$output);
+			if ($cache_file!==null && is_string($cache_file)){
+				file_put_contents($cache_file,$output);
 			}
 
-			//Request that the browser cache this page
+			//Find data about original file
 			$properties=getimagesize($img_path);
+			
+			//Build return headers
 			$return['status']=200;
-			$return['headers'][]="Content-type: {$properties['mime']}";
+			
+			//Find mime-type
+			if (isset($size['output']) && $size['output']!==null){
+				$return['headers'][]="Content-type: {$size['output']}";
+			} else if ($properties!==false){
+				$return['headers'][]="Content-type: {$properties['mime']}";
+			}
+			
+			//Last-modified
 			$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
-			$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
+			
+			//Expiry
+			if (isset($_SWDF['settings']['images']['cache_expiry'])){
+				$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
+			}
+			
+			//Tell the user where the cached version lives
+			$return['cahce_location']=$cache_file;
 
 			//Return the image
 			$return['data']=$output;
 
-			//Clean the cache directory
-			SWDF_clean_image_cache();
+			//Clean the cache directory every now and then
+			if (rand(0,1)===1) SWDF_clean_image_cache();
 		} else {
 			die("Invalid method specified for this size.");
 		}
+		
+	//If we ended up here, either the file is not found/access denied, or the resizing method doesn't exist
 	} else {
-		//Not allowed to resize this image/image not found
 		$return['status']=404;
+		$return['data']="File not found";
 	}
 
+	//Return the data
 	return $return;
 }
 
+/**
+ * Clean the resized images cache
+ * 
+ * If you are trying to delete all the cached versions of a particular image, you can specify it in the first argument and it will delete any cache file starting with that name.
+ * By default, this function will only opperate if caching is enabled, but you can force it to operate by setting the second argument to true.
+ * 
+ * @param string|null $delete_fname Optional. The name (NOT PATH) of an image (E.G. "hello.jpg"). Any time a cache file starting with that name is encountered it will be deleted, regardless of if it has expired or not.
+ * @param bool $force Optional. Force cleaning fo the image cache, even when caching has been disabled. (You must have specified $_SWDF['paths']['images_cache'] and $_SWDF['settings']['images']['cache_expiry'] for this to work)
+ * @return bool 
+ */
 function SWDF_clean_image_cache($delete_fname=null, $force=false){
 	global $_SWDF;
 
+	//Has a file called $delete_fname been deleted in this sweep?
+	$deleted=false;
+		
 	//Check caching is enabled (and configured)
-	if ($force===true || ( isset($_SWDF['settings']['images']['cache_resized']) && $_SWDF['settings']['images']['cache_resized']===true && isset($_SWDF['settings']['images']['cache_expiry']) && $_SWDF['settings']['images']['cache_expiry']!=null) ){
+	if ( isset($_SWDF) && ($force===true || ( 
+	      isset($_SWDF['settings']['images']['cache_resized']) && 
+	      $_SWDF['settings']['images']['cache_resized']===true && 
+	      isset($_SWDF['settings']['images']['cache_expiry']) && 
+	      $_SWDF['settings']['images']['cache_expiry']!=null
+	    ) )
+	){
 
 		//Check cache directory exists
-		if (isset($_SWDF['paths']['images_cache']) && $_SWDF['paths']['images_cache']!==null && is_dir($_SWDF['paths']['images_cache']) ) {
+		if (isset($_SWDF['paths']['images_cache']) && $_SWDF['paths']['images_cache']!==null && is_dir($_SWDF['paths']['images_cache']) && isset($_SWDF['settings']['images']['cache_expiry']) && ctype_digit($_SWDF['settings']['images']['cache_expiry'])) {
 
 			//Create list of files in cache directory
 			$dir=scandir($_SWDF['paths']['images_cache']);
@@ -487,10 +573,24 @@ function SWDF_clean_image_cache($delete_fname=null, $force=false){
 					$fname=substr($file, 0, strpos($file, "["));
 
 					//Determine whether to delete or not
-					if (is_file($_SWDF['paths']['images_cache'].$file) && (filemtime($_SWDF['paths']['images_cache'].$file)<time()-$_SWDF['settings']['images']['cache_expiry'] || $fname===$delete_fname) && substr($file,-5,5)=="cache"){
+					if (is_file($_SWDF['paths']['images_cache'].$file) && 
+					    substr($file,-5,5)=="cache" &&
+					    (
+					     filemtime($_SWDF['paths']['images_cache'].$file)<time()-$_SWDF['settings']['images']['cache_expiry'] || 
+					     $fname===$delete_fname
+					    )
+					){
 						unlink($_SWDF['paths']['images_cache'].$file);
+						if ($fname===$delete_fname) $deleted=true;
 					}
 				}
+				
+				//If the user was specifically trying to delete one file, return true or false
+				if ($delete_fname!==null){
+					return $deleted;
+				}
+				
+				//Else, the scan was successful. return true
 				return true;
 			}
 		}
