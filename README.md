@@ -1,14 +1,6 @@
 Swift Web Development Framework - Image Resizer v0.2.0
 ==================
 
-PLEASE NOTE: The order of the arguments of `SWDF_image_resizer_request()` recently changed to:
-
-`SWDF_image_resizer_request($img, $size=null, $authorized=false)`
-
-Please make a note of this before upgrading to > v0.2.0.
-
-
-
 A PHP class and set of functions to make automatically re-sizing images on your web site simple and secure.
 
 This project's code has basically just been copied and pasted from the main [SWDF](https://github.com/James-Swift/SWDF) repo. Updates are coming slowly, focusing on improving the code (particularly rationalising the return values of the functions) and adding Documentation (phpDoc) to the code. Although the code is still being neatened up, it's ready to use.
