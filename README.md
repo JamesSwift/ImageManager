@@ -1,4 +1,4 @@
-Swift Web Development Framework - Image Resizer v0.2.1
+Swift Web Development Framework - Image Resizer v0.2.2
 ==================
 
 A PHP class and set of functions to make automatically re-sizing images on your web site simple and secure.
