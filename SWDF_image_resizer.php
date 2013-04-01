@@ -1,5 +1,4 @@
 <?php
-
 /**
  * SWDF Image Resier
  * 
@@ -26,7 +25,7 @@
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
-
+namespace SWDF;
 
 
 
@@ -38,7 +37,7 @@
  * "path"		string		The path (relative to $_SWDF['paths']['root']) to the directory to be secured.<br/>
  * "allow_sizes"	array|string	Sizes to allow. All other sizes will be blocked unless otherwise specified. To allow all sizes, set to string "all". Default is "all".<br/>
  * "deny_sizes"		array|string	Sizes to deny. All other sizes will be allowed unless otherwise specified. To block all sizes, set to string "all". By default, none are blocked.<br/>
- * "require_auth"	bool		When true, SWDF_image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.<br/>
+ * "require_auth"	bool		When true, image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.<br/>
  * 
  * @example "example_config.php" See example usage.
  * 
@@ -47,7 +46,7 @@
  * 
  * @return bool		<p>Returns `true` on success. Triggers a warning and returns false if the data array is mal-formed.
  */
-function SWDF_add_img_path($data){
+function add_img_path($data){
 	global $_SWDF;
 	
 	//Check integrety of data
@@ -73,14 +72,14 @@ function SWDF_add_img_path($data){
 /**
  * Persistantly control access to specified path, with the specified settings.
  * 
- * This function is like SWDF_add_img_path, but instead of loading the data you 
+ * This function is like add_img_path, but instead of loading the data you 
  * send into the $_SWDF settings variable, the data will be stored in the 
  * $_SESSION['_SWDF'] settings variable. This allows directory settings specific 
  * to a user's session to be persistantly stored between requests.
  * 
  * PLEASE NOTE: For security, settings in this vairable aren't automatically 
- * loaded when using any of the SWDF_* functions. You must explicitly call 
- * SWDF_load_user_img_paths() before using the functions, otherwise the user 
+ * loaded when using any of the * functions. You must explicitly call 
+ * load_user_img_paths() before using the functions, otherwise the user 
  * paths you have defined will be ignored.
  * 
  * The function takes a single config/data array which can have any of the follwing elements:
@@ -88,7 +87,7 @@ function SWDF_add_img_path($data){
  * "path"		string		The path (relative to $_SWDF['paths']['root']) to the directory to be secured.<br/>s
  * "allow_sizes"	array|string	Sizes to allow. All other sizes will be blocked unless otherwise specified. To allow all sizes, set to string "all". Default is "all".<br/>
  * "deny_sizes"		array|string	Sizes to deny. All other sizes will be allowed unless otherwise specified. To block all sizes, set to string "all". By default, none are blocked.<br/>
- * "require_auth"	bool		When true, SWDF_image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.<br/>
+ * "require_auth"	bool		When true, image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.<br/>
  * 
  * 
  * @param mixed[] $data	<p>An array containing the path to be added and settings to controll access to it.</p>
@@ -96,7 +95,7 @@ function SWDF_add_img_path($data){
  * 
  * @return bool		<p>Returns true on success. If session has not been initiated or is disabled, or if the $data array is malformed will return false.</p>
  */
-function SWDF_add_user_img_path($data){
+function add_user_img_path($data){
 	//check if session has been initiated
 	if (session_active() && isset($_SESSION)){
 		
@@ -119,9 +118,9 @@ function SWDF_add_user_img_path($data){
 /**
  * Loads user-specific directory security settings related to image resizing.
  * 
- * When you have added user-specific security settings with SWDF_add_user_img_path()
+ * When you have added user-specific security settings with add_user_img_path()
  * function, you need to call this function to load the settings before the
- * SWDF_image_resizer_request() functions will take note of them. They are not 
+ * image_resizer_request() functions will take note of them. They are not 
  * loaded by default as an added security measure.
  * 
  * @global array $_SWDF
@@ -131,7 +130,7 @@ function SWDF_add_user_img_path($data){
  *			function will return false (after attempting to load any remaining 
  *			user paths).</p>
  */
-function SWDF_load_user_img_paths(){
+function load_user_img_paths(){
 	global $_SWDF;
 	//check if session has been initiated
 	if (session_active() && isset($_SESSION)){
@@ -148,7 +147,7 @@ function SWDF_load_user_img_paths(){
 		if (isset($_SESSION['_SWDF']['images']['paths']) && is_array($_SESSION['_SWDF']['images']['paths'])){
 			foreach ($_SESSION['_SWDF']['images']['paths'] as $path){
 				//If one of the paths fails, return false
-				if (!SWDF_add_img_path($path)){
+				if (!add_img_path($path)){
 					$return=false;
 				}
 			}
@@ -169,7 +168,7 @@ function SWDF_load_user_img_paths(){
  * 
  * @return bool|mixed[]	If the image exists and matches a predefined path, the settings for that path will be returned. Otherwise, returns false.
  */
-function SWDF_get_img_path_info($image){
+function get_img_path_info($image){
 	global $_SWDF;
 
 	//First, check all needed data exists, and that image exists
@@ -221,7 +220,7 @@ function SWDF_get_img_path_info($image){
  * @param string $path The path you want to check.
  * @return boolean|array Returns an array of size ids on success. If the path cannot be found or no global sizes are specified, will return false.
  */
-function SWDF_get_allowed_sizes($path){
+function get_allowed_sizes($path){
 	global $_SWDF;
 
 	//Check needed resources are available
@@ -278,8 +277,8 @@ function SWDF_get_allowed_sizes($path){
 /**
  * Check the user is allowed to resize the specified image to the size they requested.
  * 
- * Note: This function doesn't by default take note of paths stored by SWDF_add_user_img_path(). 
- * You must explicitly call SWDF_load_user_img_paths() before calling this function if you want
+ * Note: This function doesn't by default take note of paths stored by add_user_img_path(). 
+ * You must explicitly call load_user_img_paths() before calling this function if you want
  * them to be taken into account when granting a request.
  * 
  * @param  string	   $image	Required. The path, relative to $_SWDF['paths']['root'], to the image you wish to resize.
@@ -294,7 +293,7 @@ function SWDF_get_allowed_sizes($path){
  * @return boolean|mixed[]		<p>If the request is allowed, an array containing the details of the requested size will be returned.</p>
  *					<p>If request is not authorized or you have failed to define any sizes or paths, will return false</p>
  */
-function SWDF_validate_resize_request($image,$size=null,$authorized=false){
+function validate_resize_request($image,$size=null,$authorized=false){
 	global $_SWDF;
 
 	//Check needed resources are available
@@ -325,13 +324,13 @@ function SWDF_validate_resize_request($image,$size=null,$authorized=false){
 	if (is_file($_SWDF['paths']['root'].$image)){
 		
 		//Get security settings for the path the image is in
-		$path=SWDF_get_img_path_info($image);
+		$path=get_img_path_info($image);
 		
 		//Check path is allowed
 		if ($path!==false){
 			
 			//Find the allowed sizes for the path the image is in
-			$sizes=SWDF_get_allowed_sizes($path['path']);
+			$sizes=get_allowed_sizes($path['path']);
 			
 			//Check whether requested size is allowed
 			if (is_array($sizes)){
@@ -380,7 +379,7 @@ function SWDF_validate_resize_request($image,$size=null,$authorized=false){
  *			);<br/>
  *			You can choose to use the data in the header section to render the image directly to the user, or ignore it do something different with the returned image data.</p>
  */
-function SWDF_image_resizer_request($img, $requested_size=null, $authorized=false){
+function image_resizer_request($img, $requested_size=null, $authorized=false){
 	global $_SWDF;
 	
 	//Check all dependancies are loaded
@@ -396,7 +395,7 @@ function SWDF_image_resizer_request($img, $requested_size=null, $authorized=fals
 	$return = array();
 
 	//Get details of requested size
-	$size=SWDF_validate_resize_request($img,$requested_size,$authorized);
+	$size=validate_resize_request($img,$requested_size,$authorized);
 
 	//Check whether to proceed with resize request
 	if ($size!==false && is_array($size)){
@@ -520,7 +519,7 @@ function SWDF_image_resizer_request($img, $requested_size=null, $authorized=fals
 			$return['data']=$output;
 
 			//Clean the cache directory every now and then
-			if (rand(0,1)===1) SWDF_clean_image_cache();
+			if (rand(0,1)===1) clean_image_cache();
 		} else {
 			die("Invalid method specified for this size.");
 		}
@@ -545,7 +544,7 @@ function SWDF_image_resizer_request($img, $requested_size=null, $authorized=fals
  * @param bool $force Optional. Force cleaning fo the image cache, even when caching has been disabled. (You must have specified $_SWDF['paths']['images_cache'] and $_SWDF['settings']['images']['cache_expiry'] for this to work)
  * @return bool 
  */
-function SWDF_clean_image_cache($delete_fname=null, $force=false){
+function clean_image_cache($delete_fname=null, $force=false){
 	global $_SWDF;
 
 	//Has a file called $delete_fname been deleted in this sweep?

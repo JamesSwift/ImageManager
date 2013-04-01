@@ -21,7 +21,7 @@ require("SWDF_image_resizer.php");
 require("example_config.php");
 
 //Make resize request
-$result=SWDF_image_resizer_request($img,$size,false);
+$result=\SWDF\image_resizer_request($img,$size,false);
 
 //Handle returned data, mapping headers etc. and output image
 if (isset($result['status'])){
