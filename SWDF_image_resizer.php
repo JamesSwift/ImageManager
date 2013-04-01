@@ -864,19 +864,24 @@ class imageResizer {
 
 
 class secureImageResizer {
-	private $_config	 = array();
-	private $_paths		 = array();
-	private $_sizes		 = array();
+	private $_config = array();
+	private $_paths	 = array();
+	private $_sizes	 = array();
 	
-	//Allow passing config straight through constructor
 	public function __construct($config=null){
-		
+		//Allow passing config straight through constructor
 		if ($config!==null ){
 			$this->loadConfig($config);
 		}
 	}
 	
 	public function loadConfig($config){
+		
+		//Update Default settings
+		$default_config = array(
+			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
+			"defaultJpegQuality"=>90
+		);
 		
 		//If they called this function with no config, just return false
 		if ($config===null) return false;
@@ -898,17 +903,11 @@ class secureImageResizer {
 			
 		}
 		
-		//Update Default settings
-		$default_config = array(
-			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
-			"defaultJpegQuality"=>90
-		);
-		
 		//Check we're dealing with a valid config file
 		if (isset($config)===true && is_array($config)===true){
 			
 			//Combine default settings with user-specified settings;
-			$config+=$config;
+			$config+=$default_config;
 			
 			//Loop through config and set it up
 			
