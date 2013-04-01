@@ -33,24 +33,27 @@ $img  = @$_GET['img'];	//Path (relative to "base" defined below) to image to be 
  * Or a combination of the three. If you use $resizer->loadConfig(), it will 
  * clear all previous settings (includeing paths and sizes) and re-initialize
  * with the new settings. Using $resizer->set() overwrites only the value it
- * replaces.
+ * replaces. NOTE: While the other two methods can create sizes and paths, 
+ * the set() method can only alter settings. See: addPath() and addSize()
+ * 
+ * We normally recommend storing your config in a seperate file as best
+ * practice, but for simplicity it has been incorporated below:
  */
 $resizer=new \SWDF\secureImageResizer();
 
 /**
- * Second, define the base (and other settings.)
+ * Second, define the base and other settings.
  * 
- * The "base" setting must be set before doing anything else (otherwise you'll
- * throw an exception). It is the absolute filesytem path to the logical root
+  * The "base" setting is the absolute filesytem path to the logical root or
  * "base" of the folders where you keep your images. Usually, this is your
- * web-root (i.e. htdocs or public_html) as all images are usually stored
- * somewhere in there. However, it doesn't have to be in a publicly-accessible
- * directory. It could be for example a home directory. As long as php has 
- * write access to it, and that's where you store your images, it doesn't 
+ * web-root (i.e. /var/www or /home/user/public_html) as all images are usually
+ * stored somewhere in there. However, it doesn't have to be in a publicly 
+ * accessible directory. It could be, for example, a home directory. As long as php
+ * has write access to it, and that's where you store your images, it doesn't 
  * matter.
  * 
- * There are other optional settings you can define here as well. Examples are
- * included. See the documentation for full specification.
+ * There are other settings you can define here as well. Examples are included.
+ * See the documentation for full specification.
  */
 $resizer->set("base", dirname(__FILE__) );
 
@@ -58,7 +61,7 @@ $resizer->set("base", dirname(__FILE__) );
  * source file is modified, the cached file is automatically refreshed. */
 $resizer->set("enableCaching", true );
 
-/** How long to keep a cached file before deleting. */
+/** How long to keep a cached file before deleting. Set to zero for infinity*/
 $resizer->set("cacheTime", 60*60*24 );
 
 /** Default jpeg quality. Can be overwriteen on a size-by-size basis. */
@@ -134,7 +137,8 @@ $resizer->addPath(array(
  * the actual resizing.
  */
 
-$new_image = $resizer->resize($img, $size);
+try {
+	$new_image = $resizer->resize($img, $size);
 
 /**
  * Lastly, check it went ok, then output it.
@@ -144,9 +148,9 @@ $new_image = $resizer->resize($img, $size);
  * Check the documentation for more ideas.
  */
 
-if ($new_image!==false){
 	$new_image->outputHttp();
-} else {
-	print "Sorry. Your request could not be processed.";
+} catch (Exception $e){
+	print "Sorry, your request couldn't be processed";
+	print $e->getMessage();
 }
 ?>

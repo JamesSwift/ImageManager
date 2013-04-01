@@ -868,23 +868,88 @@ class SWDF_image_resizer {
 
 
 class secureImageResizer {
-	private $_config = array();
-	private $_paths = array();
-	private $_sizes = array();
+	private $_config	 = array();
+	private $_paths		 = array();
+	private $_sizes		 = array();
 	
 	//Allow passing config straight through constructor
 	public function __construct($config=null){
-		//Load Default settings
-		$config=array(
-			"cachePath"=>sys_get_temp_dir()."/SWDF/imageCache"
-		);
 		
-		if ($config!==null && is_array($config)===true){
+		if ($config!==null ){
 			$this->loadConfig($config);
 		}
 	}
 	
-	public function loadConfig(array $config){}
+	public function loadConfig($config){
+		
+		//If they called this function with no config, just return false
+		if ($config===null) return false;
+				
+		//Check if we should load a JSON file
+		if (is_string($config)){
+			//Does the file exist?
+			if (is_file($config)){
+				//Atempt to decode it
+				$config = json_decode(file_get_contents($config),true);
+				
+				//Did it work?
+				if ($config===null){
+					throw new \Exception("Unable to decode JSON config file, or file empty.", 3);
+				}
+			} else {
+				throw new \Exception("Specified config file location doesn't exist, or isn't accessible", 2);
+			}
+			
+		}
+		
+		//Update Default settings
+		$default_config = array(
+			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
+			"defaultJpegQuality"=>90
+		);
+		
+		//Check we're dealing with a valid config file
+		if (isset($config)===true && is_array($config)===true){
+			
+			//Combine default settings with user-specified settings;
+			$config=$default_config+$config;
+			
+			//Loop through config and set it up
+			
+			//Set sizes
+			if (isset($config['sizes'])===true && is_array($config['sizes'])){
+				foreach ($config['sizes'] as $size){
+					try {
+						$this->addSize($size);
+					} catch (\Exception $e) { throw $e; }
+				}
+			}
+			
+			//Set paths
+			if (isset($config['paths'])===true && is_array($config['paths'])){
+				foreach ($config['paths'] as $path){
+					try {
+						$this->addPath($path);
+					} catch (\Exception $e) { throw $e; }
+				}
+			}
+			
+			//Set the rest
+			foreach ($config as $name=>$setting){
+				if (in_array(gettype($setting), array("string","boolean","integer","double","null"))===true ){
+					try {
+						$this->set($name,$setting);
+					} catch (\Exception $e) { throw $e; }
+				} else {
+					throw new \Exception("Unable to load setting '".$name."'. Bad variable type.", 4);
+				}
+			}
+			
+			return true;
+		} else {
+			throw new \Exception("Unable to load configuration.", 1);
+		}
+	}
 	
 	public function getConfig(){}
 	
@@ -895,40 +960,73 @@ class secureImageResizer {
 		//Perform sanitization/standardization
 		
 		//Base path
-		if ($setting==="base" && is_string($value)===true && $value!==""){
+		if ($setting==="base"){
+			//Check type
+			if (is_string($value)!==true || $value==="")
+				throw new \Exception("Cannot set '".$setting."'. Must be non-null string.");
+			
+			//Use correct slash and add trailing slash
 			$value=str_replace(Array('\\',"\\","//"),"/",$value."/");
-			if (is_dir($value)===false) return false;
+			
+			//Check directory exists
+			if (is_dir($value)===false)	
+				throw new \Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.");
+			
 			
 			
 		//Cache Path
-		} else if ($setting==="cachePath" && is_string($value)===true && $value!==""){
+		} else if ($setting==="cachePath"){
+			//Check type
+			if (is_string($value)!==true || $value==="")
+				throw new \Exception("Cannot set '".$setting."'. Must be non-null string.");
+			
+			//Use correct slash and add trailing slash
 			$value=str_replace(Array('\\',"\\","//"),"/",$value."/");
-			if (is_dir($value)===false) {
-				if (!mkdir($value) && is_dir($value)===true) return false;
-			}
 			
-		} else if ($setting===""){
+			//Check directory exists (and create it if it doesn't)
+			if (is_dir($value)===false)
+				if (!mkdir($value, 0777, true) || is_dir($value)===false) 
+					throw new \Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.");
 			
-		} else if ($setting===""){
+				
+		//Enable Caching
+		} else if ($setting==="enableCaching"){
+			//Check type
+			if (is_bool($value)===false)
+				throw new \Exception("Cannot set '".$setting."'. Must be of type boolean. Type give is ".gettype($value));
 			
-		} else if ($setting===""){
 			
-		} else if ($setting===""){
+		//Cache Time - maximum age of cache files
+		} else if ($setting==="cacheTime"){
+			$value=(int)$value;
+			
+			
+		//defaultJpegQuality
+		} else if ($setting==="defaultJpegQuality"){
+			$value=(int)$value;
+			if ($value<0 || $value>100)
+				throw new \Exception("Cannot set '".$setting."'. Must be between 0 and 100");
+		
+		//Default watermark opacity
+		} else if ($setting==="defaultWatermarkOpacity"){
+			$value=(int)$value;
+			if ($value<0 || $value>100)
+				throw new \Exception("Cannot set '".$setting."'. Must be between 0 and 100");
 			
 		} else if ($setting===""){
 			
 		} else {
-			return false;
+			throw new \Exception("Cannot set '".$setting."'. Specified setting doesn't exist.");
 		}
 		
-		//It worked
+		//Store the setting
 		$config[$setting]=$value;
 		return true;
 		
 	}
 	
 	public function get($setting){
-		if (isset($setting) && is_string($setting) && isset($this->_config[$setting])){
+		if (isset($setting) && isset($this->_config[$setting])){
 			return $this->_config[$setting];
 		}
 		return false;
