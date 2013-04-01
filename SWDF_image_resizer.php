@@ -867,17 +867,72 @@ class SWDF_image_resizer {
 }
 
 
-class secure_image_resizer {
-	private $_config;
+class secureImageResizer {
+	private $_config = array();
+	private $_paths = array();
+	private $_sizes = array();
 	
 	//Allow passing config straight through constructor
 	public function __construct($config=null){
+		//Load Default settings
+		$config=array(
+			"cachePath"=>sys_get_temp_dir()."/SWDF/imageCache"
+		);
+		
 		if ($config!==null && is_array($config)===true){
-			$this->load_config($config);
+			$this->loadConfig($config);
 		}
 	}
 	
 	public function loadConfig(array $config){}
+	
+	public function getConfig(){}
+	
+	public function saveConfig($file){}
+	
+	public function set($setting, $value){
+		
+		//Perform sanitization/standardization
+		
+		//Base path
+		if ($setting==="base" && is_string($value)===true && $value!==""){
+			$value=str_replace(Array('\\',"\\","//"),"/",$value."/");
+			if (is_dir($value)===false) return false;
+			
+			
+		//Cache Path
+		} else if ($setting==="cachePath" && is_string($value)===true && $value!==""){
+			$value=str_replace(Array('\\',"\\","//"),"/",$value."/");
+			if (is_dir($value)===false) {
+				if (!mkdir($value) && is_dir($value)===true) return false;
+			}
+			
+		} else if ($setting===""){
+			
+		} else if ($setting===""){
+			
+		} else if ($setting===""){
+			
+		} else if ($setting===""){
+			
+		} else if ($setting===""){
+			
+		} else {
+			return false;
+		}
+		
+		//It worked
+		$config[$setting]=$value;
+		return true;
+		
+	}
+	
+	public function get($setting){
+		if (isset($setting) && is_string($setting) && isset($this->_config[$setting])){
+			return $this->_config[$setting];
+		}
+		return false;
+	}
 	
 	public function addPath(array $path){}
 	
@@ -897,10 +952,16 @@ class secure_image_resizer {
 	
 	
 	
-	public function resize($img, $size){}
+	public function resize($img, $size){ 
+		return new resizedImage(); 
+	}
 	
 }
 
+class resizedImage {
+	public function outputHttp() {}
+	public function save() {}
+}
 
 //Make backwards compatible with earlier version of PHP
 //This isn't a perfect test for whether a session is active or not, but 
