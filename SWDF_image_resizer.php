@@ -867,6 +867,41 @@ class SWDF_image_resizer {
 }
 
 
+class secure_image_resizer {
+	private $_config;
+	
+	//Allow passing config straight through constructor
+	public function __construct($config=null){
+		if ($config!==null && is_array($config)===true){
+			$this->load_config($config);
+		}
+	}
+	
+	public function loadConfig(array $config);
+	
+	public function addPath(array $path);
+	
+	public function getPath($path);
+	
+	public function removePath($path);
+	
+	public function getPaths();
+	
+	public function addSize(array $size);
+	
+	public function getSize($size);
+	
+	public function removeSize($size);
+	
+	public function getSizes();
+	
+	
+	
+	public function resize($img, $size);
+	
+}
+
+
 //Make backwards compatible with earlier version of PHP
 //This isn't a perfect test for whether a session is active or not, but 
 if (!function_exists('session_status')){
