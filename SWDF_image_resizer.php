@@ -958,7 +958,18 @@ class secureImageResizer {
 		return $config;
 	}
 	
-	public function saveConfig($file){}
+	public function saveConfig($file, $overwrite=false){
+		
+		if ($overwrite===false && is_file($file)) 
+			throw new \Exception("Unable to save settings. File '".$file."' already exists, and method is in non-overwrite mode.", 5);
+		
+		if (file_put_contents($file, json_encode($this->getConfig()) )!==false ){
+			return true;
+		} else {
+			throw new \Exception("An unknown error occured and the settings could not be saved to file: ".$file, 6);
+		}
+		
+	}
 	
 	public function set($setting, $value){
 		
