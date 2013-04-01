@@ -912,7 +912,7 @@ class secureImageResizer {
 		if (isset($config)===true && is_array($config)===true){
 			
 			//Combine default settings with user-specified settings;
-			$config=$default_config+$config;
+			$config+=$config;
 			
 			//Loop through config and set it up
 			
@@ -951,7 +951,12 @@ class secureImageResizer {
 		}
 	}
 	
-	public function getConfig(){}
+	public function getConfig(){
+		$config=$this->_config;
+		$config['paths']=$this->_paths;
+		$config['sizes']=$this->_sizes;
+		return $config;
+	}
 	
 	public function saveConfig($file){}
 	
@@ -1020,7 +1025,7 @@ class secureImageResizer {
 		}
 		
 		//Store the setting
-		$config[$setting]=$value;
+		$this->_config[$setting]=$value;
 		return true;
 		
 	}
