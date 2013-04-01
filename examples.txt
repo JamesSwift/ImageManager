@@ -56,7 +56,7 @@ watermark to some images, add an overlay etc. just by changing one setting in th
 config file, instead of finding your source files then manually adjusting them all 
 and re-uploading everything.
 
-Hopefully, this has given you an idea of how the SWDF_image_resizer_request() 
+Hopefully, this has given you an idea of how the SWDF\image_resizer_request() 
 function can be used.
 
 ####################################################################################
