@@ -877,27 +877,27 @@ class secure_image_resizer {
 		}
 	}
 	
-	public function loadConfig(array $config);
+	public function loadConfig(array $config){}
 	
-	public function addPath(array $path);
+	public function addPath(array $path){}
 	
-	public function getPath($path);
+	public function getPath($path){}
 	
-	public function removePath($path);
+	public function removePath($path){}
 	
-	public function getPaths();
+	public function getPaths(){}
 	
-	public function addSize(array $size);
+	public function addSize(array $size){}
 	
-	public function getSize($size);
+	public function getSize($size){}
 	
-	public function removeSize($size);
+	public function removeSize($size){}
 	
-	public function getSizes();
+	public function getSizes(){}
 	
 	
 	
-	public function resize($img, $size);
+	public function resize($img, $size){}
 	
 }
 
