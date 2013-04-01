@@ -461,7 +461,7 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true && is_file($img_path)) {
 
 			//Load resizer class
-			$resizer=new SWDF_image_resizer();
+			$resizer=new imageResizer();
 
 			//Set JPEG quality
 			$resizer->quality=$_SWDF['settings']['images']['default_jpeg_quality'];
@@ -605,7 +605,7 @@ function clean_image_cache($delete_fname=null, $force=false){
 
 
 
-class SWDF_image_resizer {
+class imageResizer {
 
 	private $source;
 	private $stream;
@@ -617,10 +617,6 @@ class SWDF_image_resizer {
 	public $compatible_mime_types=Array("image/jpeg","image/jp2","image/png","image/gif");
 	public $quality;
 
-
-	public function __construct(){
-
-	}
 
 	public function imagecopymerge_alpha($dst_im, $src_im, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h, $pct){ 
 	   // creating a cut resource 
@@ -1045,7 +1041,7 @@ class secureImageResizer {
 		if (isset($setting) && isset($this->_config[$setting])){
 			return $this->_config[$setting];
 		}
-		return false;
+		return null;
 	}
 	
 	public function addPath(array $path){}
