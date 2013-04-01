@@ -49,12 +49,12 @@
 ////////////////////////////////////////////////////////////////
 //Image Directories Options
 	
-	SWDF_add_img_path(Array(
+	\SWDF\add_img_path(Array(
 		"path"=>"images/",
 		"allow_sizes"=>"all"
 	));
 	
-	SWDF_add_img_path(Array(
+	\SWDF\add_img_path(Array(
 		"path"=>"images/restricted/",
 		"deny_sizes"=>Array("0","2")
 	));

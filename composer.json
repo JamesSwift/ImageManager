@@ -4,7 +4,7 @@
 	"description": "A PHP class and set of functions to make automatically re-sizing images for your website simple and secure.",
 	"keywords": ["image", "images", "resize", "resizing", "resizer", "SWDF", "James", "Swift", "GD", "GD2", "manipulation", "watermark", "water-mark", "water", "mark"],
 	"homepage": "https://github.com/James-Swift/SWDF_image_resizer",
-	"license": "CC-BY-SA3.0",
+	"license": "CC-BY-SA-3.0",
 	"authors": [
 		{
 			"name": "James Swift",
