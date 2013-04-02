@@ -1071,6 +1071,10 @@ class secureImageResizer {
 		}
 	}
 	
+	public function getPaths(){
+		return $this->_paths;
+	}
+	
 	public function isPath($path){
 		if (isset($this->_paths[$path])) return true;
 		return false;
@@ -1085,34 +1089,38 @@ class secureImageResizer {
 		}
 	}
 	
-	public function getPaths(){}
+	
+	
 	
 	public function addSize(array $size){}
 	
 	public function getSize($size){
-		if (isset($this->_paths[$size])){
-			return $this->_paths[$size];
+		if (isset($this->_sizes[$size])){
+			return $this->_sizes[$size];
 		} else {
 			throw new \Exception("Cannot locate size '".$size."'");
 		}
 	}
 	
+	public function getSizes(){
+		return $this->_sizes;
+	}
+	
 	public function isSize($size){
-		if (isset($this->_paths[$size])) return true;
+		if (isset($this->_sizes[$size])) return true;
 		return false;
 	}
 	
 	public function removeSize($size){
-		if (isset($this->_paths[$size])){
-			unset($this->_paths[$size]);
+		if (isset($this->_sizes[$size])){
+			unset($this->_sizes[$size]);
 			return true;
 		} else {
 			throw new \Exception("Cannot locate size '".$size."'");
 		}
 	}
 	
-	public function getSizes(){}
-	
+
 	
 	
 	public function resize($img, $size){ 
