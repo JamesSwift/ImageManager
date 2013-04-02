@@ -1076,7 +1076,14 @@ class secureImageResizer {
 		return false;
 	}
 	
-	public function removePath($path){}
+	public function removePath($path){
+		if (isset($this->_paths[$path])){
+			unset($this->_paths[$path]);
+			return true;
+		} else {
+			throw new \Exception("Cannot locate path '".$path."'");
+		}
+	}
 	
 	public function getPaths(){}
 	
