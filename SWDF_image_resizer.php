@@ -1059,9 +1059,22 @@ class secureImageResizer {
 		return $this->_allowedOutputFormats;
 	}
 	
-	public function addPath(array $path){}
+	public function addPath(array $path){
+		
+	}
 	
-	public function getPath($path){}
+	public function getPath($path){
+		if (isset($this->_paths[$path])){
+			return $this->_paths[$path];
+		} else {
+			throw new \Exception("Cannot locate path '".$path."'");
+		}
+	}
+	
+	public function isPath($path){
+		if (isset($this->_paths[$path])) return true;
+		return false;
+	}
 	
 	public function removePath($path){}
 	
