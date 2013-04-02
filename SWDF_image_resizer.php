@@ -1082,7 +1082,18 @@ class secureImageResizer {
 	
 	public function addSize(array $size){}
 	
-	public function getSize($size){}
+	public function getSize($size){
+		if (isset($this->_paths[$size])){
+			return $this->_paths[$size];
+		} else {
+			throw new \Exception("Cannot locate size '".$size."'");
+		}
+	}
+	
+	public function isSize($size){
+		if (isset($this->_paths[$size])) return true;
+		return false;
+	}
 	
 	public function removeSize($size){}
 	
