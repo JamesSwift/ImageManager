@@ -864,11 +864,19 @@ class imageResizer {
 
 
 class secureImageResizer {
-	private $_config = array();
-	private $_paths	 = array();
-	private $_sizes	 = array();
+	private $_config	 = array();
+	private $_paths		 = array();
+	private $_sizes		 = array();
+	private $_defaultConfig  = array();
+	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
 	
 	public function __construct($config=null){
+		//Update Default settings
+		$this->_defaultConfig = array(
+			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
+			"defaultJpegQuality"=>90
+		);
+		
 		//Allow passing config straight through constructor
 		if ($config!==null ){
 			$this->loadConfig($config);
@@ -876,12 +884,6 @@ class secureImageResizer {
 	}
 	
 	public function loadConfig($config){
-		
-		//Update Default settings
-		$default_config = array(
-			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
-			"defaultJpegQuality"=>90
-		);
 		
 		//If they called this function with no config, just return false
 		if ($config===null) return false;
@@ -907,9 +909,20 @@ class secureImageResizer {
 		if (isset($config)===true && is_array($config)===true){
 			
 			//Combine default settings with user-specified settings;
-			$config+=$default_config;
+			$config+=$this->_defaultConfig;
 			
 			//Loop through config and set it up
+			
+			//Set the settings
+			foreach ($config as $name=>$setting){
+				if (in_array(gettype($setting), array("array","string","boolean","integer","double","null"))===true ){
+					try {
+						$this->set($name,$setting);
+					} catch (\Exception $e) { throw $e; }
+				} else {
+					throw new \Exception("Unable to load setting '".$name."'. Bad variable type.", 4);
+				}
+			}
 			
 			//Set sizes
 			if (isset($config['sizes'])===true && is_array($config['sizes'])){
@@ -926,17 +939,6 @@ class secureImageResizer {
 					try {
 						$this->addPath($path);
 					} catch (\Exception $e) { throw $e; }
-				}
-			}
-			
-			//Set the rest
-			foreach ($config as $name=>$setting){
-				if (in_array(gettype($setting), array("string","boolean","integer","double","null"))===true ){
-					try {
-						$this->set($name,$setting);
-					} catch (\Exception $e) { throw $e; }
-				} else {
-					throw new \Exception("Unable to load setting '".$name."'. Bad variable type.", 4);
 				}
 			}
 			
@@ -1012,7 +1014,7 @@ class secureImageResizer {
 			$value=(int)$value;
 			
 			
-		//defaultJpegQuality
+		//Default JPEG quality
 		} else if ($setting==="defaultJpegQuality"){
 			$value=(int)$value;
 			if ($value<0 || $value>100)
@@ -1023,14 +1025,24 @@ class secureImageResizer {
 			$value=(int)$value;
 			if ($value<0 || $value>100)
 				throw new \Exception("Cannot set '".$setting."'. Must be between 0 and 100");
+		
+		//Default output format
+		} else if ($setting==="defaultOutputFormat"){
+			//Check type
+			if (gettype($value)!=="string")
+				throw new Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting])."'";
 			
-		} else if ($setting===""){
+			//Check value
+			if (in_array($value,$this->getAllowedOutputFormats())===false)
+				throw new Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()));
 			
+		
+		//Catch unknown settings
 		} else {
 			throw new \Exception("Cannot set '".$setting."'. Specified setting doesn't exist.");
 		}
 		
-		//Store the setting
+		//Store the verfied setting
 		$this->_config[$setting]=$value;
 		return true;
 		
@@ -1041,6 +1053,10 @@ class secureImageResizer {
 			return $this->_config[$setting];
 		}
 		return null;
+	}
+	
+	public function getAllowedOutputFormats(){
+		return $this->_allowedOutputFormats;
 	}
 	
 	public function addPath(array $path){}

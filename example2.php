@@ -64,6 +64,11 @@ $resizer->set("enableCaching", true );
 /** How long to keep a cached file before deleting. Set to zero for infinity*/
 $resizer->set("cacheTime", 60*60*24 );
 
+/** You can define a default output image format for files. This can be overridden
+ *  on a size by size basis, and/or by specifing the third argument to the resize()
+ *  method. It defaults to "image/jpeg". */
+$resizer->set("defaultOutputFormat", "image/jpeg");
+
 /** Default jpeg quality. Can be overwriteen on a size-by-size basis. */
 $resizer->set("defaultJpegQuality", 90 );
 
@@ -104,7 +109,8 @@ $resizer->addSize(array(
 	"method"=>"fill",
 	"width"=>200,
 	"height"=>300,
-	"quality"=>90
+	"quality"=>90,
+	"defaultOutputFormat"=>"image/pmng"
 ));
 
 
@@ -135,10 +141,14 @@ $resizer->addPath(array(
  * This checks that the requested file and size exists, that the file's
  * location allows it to be resized to the requested size etc., then does
  * the actual resizing.
+ * 
+ * You pass in the relative location of the image to be resized and the 
+ * requested size. Optionally, you can also pass an output format. This 
+ * over-rides any defaults previously defined.
  */
 
 try {
-	$new_image = $resizer->resize($img, $size);
+	$new_image = $resizer->resize($img, $size, "images/jpeg");
 
 /**
  * Lastly, check it went ok, then output it.
@@ -150,7 +160,7 @@ try {
 
 	$new_image->outputHttp();
 } catch (Exception $e){
-	print "Sorry, your request couldn't be processed";
+	print "Sorry, your request couldn't be processed:\n";
 	print $e->getMessage();
 }
 ?>
