@@ -1102,7 +1102,14 @@ class secureImageResizer {
 		return false;
 	}
 	
-	public function removeSize($size){}
+	public function removeSize($size){
+		if (isset($this->_paths[$size])){
+			unset($this->_paths[$size]);
+			return true;
+		} else {
+			throw new \Exception("Cannot locate size '".$size."'");
+		}
+	}
 	
 	public function getSizes(){}
 	
