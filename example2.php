@@ -115,7 +115,7 @@ $resizer->addSize(array(
 
 
 /**
- * Foruth. Define some paths.
+ * Fourth. Define some paths.
  * 
  * The image resizer by default doesn't allow you to resize any images. You 
  * must tell it what folders it is allowed to operate in, and (optionally)
