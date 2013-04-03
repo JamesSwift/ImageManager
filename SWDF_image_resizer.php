@@ -908,6 +908,11 @@ class secureImageResizer {
 		//Check we're dealing with a valid config file
 		if (isset($config)===true && is_array($config)===true){
 			
+			//Remove the old configuration
+			$this->_config=array();
+			$this->_paths=array();
+			$this->_sizes=array();
+			
 			//Combine default settings with user-specified settings;
 			$config+=$this->_defaultConfig;
 			
@@ -915,12 +920,15 @@ class secureImageResizer {
 			
 			//Set the settings
 			foreach ($config as $name=>$setting){
-				if (in_array(gettype($setting), array("array","string","boolean","integer","double","null"))===true ){
-					try {
-						$this->set($name,$setting);
-					} catch (\Exception $e) { throw $e; }
-				} else {
-					throw new \Exception("Unable to load setting '".$name."'. Bad variable type.", 4);
+				//Filter out the paths and sizes
+				if ($name!=="paths" && $name!=="sizes"){
+					if (in_array(gettype($setting), array("array","string","boolean","integer","double","null"))===true){
+						try {
+							$this->set($name,$setting);
+						} catch (\Exception $e) { throw $e; }
+					} else {
+						throw new \Exception("Unable to load setting '".$name."'. Bad variable type.", 4);
+					}
 				}
 			}
 			
@@ -936,7 +944,8 @@ class secureImageResizer {
 			//Set paths
 			if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0){
 				try {
-					$this->addPaths($config['paths']);
+					//Call $this->addPath with all paths as arguments
+					call_user_func_array(array($this, "addPath"), $config['paths']);
 				} catch (\Exception $e) { throw $e; }
 			}
 			
@@ -1061,7 +1070,15 @@ class secureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public function addPaths(array $paths, $allowOverwrite=false){
+	public function addPath($dummy, $allowOverwrite=false){
+		
+		//Get list of arguments
+		$paths = func_get_args();
+		
+		//Check for last variable being $allowOverwrite
+		if (is_array($paths) && sizeof($paths>1) && is_bool(end($paths))){
+			$allowOverwrite=array_pop($paths);
+		}
 		
 		//Check we're dealing with an array
 		if (isset($paths) && is_array($paths) && sizeof($paths)>0){
@@ -1114,14 +1131,7 @@ class secureImageResizer {
 			}
 			return true;
 		}
-		throw new Exception("Cannot add path(s). You must pass a non-empty array to this method.");
-	}
-	
-	public function addPath(array $path, $allowOverwrite=false){
-		//Wrap path in an array and send it to addPaths
-		try {
-			return $this->addPaths(array($path), $allowOverwrite);
-		} catch (\Exception $e){ throw $e; }
+		throw new \Exception("Cannot add path(s). You must pass a non-empty array to this method.");
 	}
 	
 	public function getPath($path){
