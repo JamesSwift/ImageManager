@@ -1194,7 +1194,11 @@ class secureImageResizer {
 				if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||
 					isset($size['method'])===false	|| $size['method']==="" || !is_string($size['method'])
 				){
-					throw new \Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");
+					if (isset($size['id'])){
+						throw new \Exception("Cannot add size '".(string)$size['id']."'. The passed array must contain non-empty 'id' and 'method' elements.");
+					} else {
+						throw new \Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");						
+					}
 				}
 				
 				//TODO: more checks
