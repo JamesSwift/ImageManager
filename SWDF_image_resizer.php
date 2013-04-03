@@ -1070,12 +1070,13 @@ class secureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public function addPath($dummy, $allowOverwrite=false){
+	public function addPath(array $path /*, $path, $path, $path ... */){
 		
 		//Get list of arguments
 		$paths = func_get_args();
 		
 		//Check for last variable being $allowOverwrite
+		$allowOverwrite=false;
 		if (is_array($paths) && sizeof($paths>1) && is_bool(end($paths))){
 			$allowOverwrite=array_pop($paths);
 		}
@@ -1093,7 +1094,7 @@ class secureImageResizer {
 					throw new \Exception("Cannot add path. Paths must be non-empty arrays");
 
 				//Check required elements are there
-				if (isset($path['path'])===false || $path['path']==="")
+				if (isset($path['path'])===false || $path['path']==="" || !is_string($path['path']) )
 					throw new \Exception("Cannot add path. The passed array must contain a non-empty 'path' element.");
 
 				//Sanitize path
@@ -1131,7 +1132,7 @@ class secureImageResizer {
 			}
 			return true;
 		}
-		throw new \Exception("Cannot add path(s). You must pass a non-empty array to this method.");
+		throw new \Exception("Cannot add path(s). You must pass one or more non-empty array to this method.");
 	}
 	
 	public function getPath($path){
@@ -1163,7 +1164,46 @@ class secureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		
-	public function addSize(array $size){}
+	public function addSize(array $size /*, $size, $size, $size ... */){
+		//Get list of arguments
+		$sizes = func_get_args();
+		
+		//Check for last variable being $allowOverwrite
+		$allowOverwrite=false;
+		if (is_array($sizes) && sizeof($sizes>1) && is_bool(end($sizes))){
+			$allowOverwrite=array_pop($sizes);
+		}
+		
+		//Check we're dealing with an array
+		if (isset($sizes) && is_array($sizes) && sizeof($sizes)>0){
+			//loop through sizes and add them
+			foreach($sizes as $size){
+				
+				//Create array to hold sanitized data
+				$_new=array();
+
+				//Check type
+				if (!is_array($size) || sizeof($size)===0)
+					throw new \Exception("Cannot add size. Paths must be non-empty arrays");
+
+				//Check required elements are there
+				if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||
+					isset($size['method'])===false	|| $size['method']==="" || !is_string($size['method'])
+				){
+					throw new \Exception("Cannot add size. The passed array must contain a non-empty 'size' element.");
+				}
+				
+				//TODO: more checks
+				$_new['id']=$size['id'];
+				
+				//Discard any other elements and store the new path
+				$this->_sizes[$_new['id']]=$_new;
+				
+			}
+			return true;
+		}
+		throw new \Exception("Cannot add size(s). You must pass one or more a non-empty arrays to this method.");
+	}
 	
 	public function getSize($size){
 		if (isset($this->_sizes[$size])){
