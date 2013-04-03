@@ -1118,8 +1118,10 @@ class secureImageResizer {
 	}
 	
 	public function addPath(array $path, $allowOverwrite=false){
-		//Wrap it in an array and send it to addPaths
-		$this->addPaths(array($path), $allowOverwrite);
+		//Wrap path in an array and send it to addPaths
+		try {
+			return $this->addPaths(array($path), $allowOverwrite);
+		} catch (\Exception $e){ throw $e; }
 	}
 	
 	public function getPath($path){
