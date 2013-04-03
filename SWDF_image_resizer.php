@@ -956,9 +956,13 @@ class secureImageResizer {
 	}
 	
 	public function getConfig(){
+		//Load basic config
 		$config=$this->_config;
-		$config['paths']=$this->_paths;
-		$config['sizes']=$this->_sizes;
+		
+		//Load paths and sizes (Remove IDs)
+		$config['paths']= array_values($this->_paths);
+		$config['sizes']= array_values($this->_sizes);
+		
 		return $config;
 	}
 	
@@ -1173,7 +1177,7 @@ class secureImageResizer {
 		if (is_array($sizes) && sizeof($sizes>1) && is_bool(end($sizes))){
 			$allowOverwrite=array_pop($sizes);
 		}
-		
+
 		//Check we're dealing with an array
 		if (isset($sizes) && is_array($sizes) && sizeof($sizes)>0){
 			//loop through sizes and add them
@@ -1190,11 +1194,12 @@ class secureImageResizer {
 				if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||
 					isset($size['method'])===false	|| $size['method']==="" || !is_string($size['method'])
 				){
-					throw new \Exception("Cannot add size. The passed array must contain a non-empty 'size' element.");
+					throw new \Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");
 				}
 				
 				//TODO: more checks
 				$_new['id']=$size['id'];
+				$_new['method']=$size['method'];
 				
 				//Discard any other elements and store the new path
 				$this->_sizes[$_new['id']]=$_new;

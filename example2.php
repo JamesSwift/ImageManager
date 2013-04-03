@@ -85,11 +85,17 @@ try {
 	 * suffice it to say that you must explicitly define all sizes your website
 	 * can produce here, you limit when they can be used later. Give them an ID
 	 * to easily reuse them later. A few examples are included:
+	 * 
+	 * You can add these sizes by calling $resizer->addSize() over and over, or
+	 * alternatively you can add them all in one call (uses less resources).
 	 */
+	
+	//Size by size method:
 	$resizer->addSize(array(
 		"id"=>"original",
 		"method"=>"original"
 	));
+	
 	$resizer->addSize(array(
 		"id"=>"product_image",
 		"method"=>"fit",
@@ -102,19 +108,23 @@ try {
 			"repeat"=>true
 		)
 	));
-	$resizer->addSize(array(
-		"id"=>"2x",
-		"method"=>"scale",
-		"scale"=>2
-	));
-	$resizer->addSize(array(
-		"id"=>"200x300",
-		"method"=>"fill",
-		"width"=>200,
-		"height"=>300,
-		"quality"=>90,
-		"defaultOutputFormat"=>"image/pmng"
-	));
+	
+	//Multiple sizes in one call method:
+	$resizer->addSize(
+		array(
+			"id"=>"2x",
+			"method"=>"scale",
+			"scale"=>2
+		),
+		array(
+			"id"=>"200x300",
+			"method"=>"fill",
+			"width"=>200,
+			"height"=>300,
+			"quality"=>90,
+			"defaultOutputFormat"=>"image/png"
+		)
+	);
 
 
 	/**
@@ -125,7 +135,7 @@ try {
 	 * what sizes can be used in which folders (all sizes are allowed by default).
 	 * 
 	 * You can add these paths by calling $resizer->addPath() over and over, or
-	 * alternatively you can add them all in one go (which uses less resources)
+	 * alternatively you can add them all in one call (which uses less resources)
 	 * like so:
 	 */
 	$resizer->addPath(
