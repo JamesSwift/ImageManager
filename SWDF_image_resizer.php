@@ -1158,11 +1158,11 @@ class secureImageResizer {
 	}
 	
 	public function getPath($path){
-		if (isset($this->_paths[$path])){
-			return $this->_paths[$path];
-		} else {
+		//Check path exists
+		if (!isset($this->_paths[(string)$path]))
 			throw new \Exception("Cannot locate path '".$path."'");
-		}
+		
+		return $this->_paths[$path];
 	}
 	
 	public function getPaths(){
