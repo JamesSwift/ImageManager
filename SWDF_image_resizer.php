@@ -883,6 +883,33 @@ class secureImageResizer {
 		}
 	}
 	
+	public function sanitizeFilePath($path, $removeLeading=false){
+
+		//Check we're dealing with a path
+		if (!isset($path) || !is_string($path) || $path==="")
+			throw new \Exception("Cannot sanitize file-path. It must be a non-empty string.");
+		
+		//Add trailing slash
+		$path=$path."/";
+		
+		//Turn all slashes round the same way
+		$path=str_replace(Array("\\","/",'\\',"//"),"/",$path);
+		
+		//Remove redundant references to ./
+		$path=str_replace("/./","",$path);
+
+		//Check path for directory traversing
+		if (strpos("/".$path, "/../")!==false)
+			throw new \Exception("Cannot sanitize file path: '".$path['path']."'. It appears to contain an attempt at directory traversal which may be a security breach.");
+
+		//Remove leading slash
+		if ($removeLeading===true && substr($path,0,1)==="/")
+			$path=substr($path,1);
+		
+		return $path;
+	
+	}
+	
 	public function loadConfig($config){
 		
 		//If they called this function with no config, just return false
