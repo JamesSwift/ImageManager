@@ -1141,19 +1141,15 @@ class secureImageResizer {
 			if ($this->isPath($_new['path']) && $allowOverwrite!==true)
 				throw new \Exception("Cannot add path '".$path['path']."'. It already exists.");
 
-			//If allowSizes defined, remove any keys, convert to string, and add it
-			if (isset($path['allowSizes']) && is_array($path['allowSizes'])){
-				foreach($path['allowSizes'] as $size){
+			//If allowSizes defined, remove any keys, convert to strings, and add it
+			if (isset($path['allowSizes']) && is_array($path['allowSizes']))
+				foreach($path['allowSizes'] as $size)
 					$_new['allowSizes'][]=(string)$size;
-				}
-			}
 
 			//If denySizes defined, remove any keys, convert to string, and add it
-			if (isset($path['denySizes']) && is_array($path['denySizes'])){
-				foreach($path['denySizes'] as $size){
+			if (isset($path['denySizes']) && is_array($path['denySizes']))
+				foreach($path['denySizes'] as $size)
 					$_new['denySizes'][]=(string)$size;
-				}
-			}
 
 			//Discard any other elements and store the new path
 			$this->_paths[$_new['path']]=$_new;
