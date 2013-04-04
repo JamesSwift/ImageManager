@@ -1081,62 +1081,64 @@ class secureImageResizer {
 		
 		//Check for last variable being $allowOverwrite
 		$allowOverwrite=false;
-		if (is_array($paths) && sizeof($paths>1) && is_bool(end($paths))){
+		if (is_array($paths) && sizeof($paths>1) && is_bool(end($paths)) )
 			$allowOverwrite=array_pop($paths);
-		}
 		
-		//Check we're dealing with an array
-		if (isset($paths) && is_array($paths) && sizeof($paths)>0){
-			//loop through paths and add them
-			foreach($paths as $path){
-				
-				//Create array to hold sanitized data
-				$_new=array();
+		//Check we're dealing with an non-empty array
+		if (!isset($paths) || !is_array($paths) || sizeof($paths)<1)
+			throw new \Exception("Cannot add path(s). You must pass one or more non-empty array to this method.");
+		
+		//loop through paths and add them
+		foreach($paths as $path){
 
-				//Check type
-				if (!is_array($path) || sizeof($path)===0)
-					throw new \Exception("Cannot add path. Paths must be non-empty arrays");
+			//Create blank array to hold sanitized data
+			$_new=array(
+				"allowSizes"=>array(),
+				"denySizes"=>array()
+			);
 
-				//Check required elements are there
-				if (isset($path['path'])===false || $path['path']==="" || !is_string($path['path']) )
-					throw new \Exception("Cannot add path. The passed array must contain a non-empty 'path' element.");
+			//Check type
+			if (!is_array($path) || sizeof($path)===0)
+				throw new \Exception("Cannot add path. Paths must be non-empty arrays");
 
-				//Sanitize path
-				$_new['path']="/".$path['path']."/";				 //Add leading and trailing slash
-				$_new['path']=str_replace(Array("\\","//"),"/",$_new['path']); //Make all slashes go one way
-				$_new['path']=str_replace("/./","",$_new['path']);		 //Remove bad references to same directory
+			//Check required elements are there
+			if (isset($path['path'])===false || !is_string($path['path'] || $path['path']==="") )
+				throw new \Exception("Cannot add path. The passed array must contain a non-empty 'path' element.");
 
-				//Check path for directory traversing
-				if (strpos($_new['path'], "/../")!==false)
-					throw new \Exception("Cannot add path '".$path['path']."'. It appears to contain an attempt at directory traversal which may be a security breach.");
+			//Sanitize path
+			$_new['path']="/".$path['path']."/";				//Add leading and trailing slash
+			$_new['path']=str_replace(Array("\\","//"),"/",$_new['path']);  //Make all slashes go one way
+			$_new['path']=str_replace("/./","",$_new['path']);		//Remove bad references to same directory
 
-				//Remove leading slash
-				$_new['path']=substr($_new['path'],1);
+			//Check path for directory traversing
+			if (strpos($_new['path'], "/../")!==false)
+				throw new \Exception("Cannot add path '".$path['path']."'. It appears to contain an attempt at directory traversal which may be a security breach.");
 
-				//Check path doesn't already exist
-				if ($this->isPath($_new['path']) && $allowOverwrite!==true)
-					throw new \Exception("Cannot add path '".$path['path']."'. It already exists.");
+			//Remove leading slash
+			$_new['path']=substr($_new['path'],1);
 
-				//If allowSizes defined, remove any keys, convert to string, and add it
-				if (isset($path['allowSizes']) && is_array($path['allowSizes'])){
-					foreach($path['allowSizes'] as $size){
-						$_new['allowSizes'][]=(string)$size;
-					}
+			//Check path doesn't already exist
+			if ($this->isPath($_new['path']) && $allowOverwrite!==true)
+				throw new \Exception("Cannot add path '".$path['path']."'. It already exists.");
+
+			//If allowSizes defined, remove any keys, convert to string, and add it
+			if (isset($path['allowSizes']) && is_array($path['allowSizes'])){
+				foreach($path['allowSizes'] as $size){
+					$_new['allowSizes'][]=(string)$size;
 				}
-
-				//If denySizes defined, remove any keys, convert to string, and add it
-				if (isset($path['denySizes']) && is_array($path['denySizes'])){
-					foreach($path['denySizes'] as $size){
-						$_new['denySizes'][]=(string)$size;
-					}
-				}
-
-				//Discard any other elements and store the new path
-				$this->_paths[$_new['path']]=$_new;
 			}
-			return true;
+
+			//If denySizes defined, remove any keys, convert to string, and add it
+			if (isset($path['denySizes']) && is_array($path['denySizes'])){
+				foreach($path['denySizes'] as $size){
+					$_new['denySizes'][]=(string)$size;
+				}
+			}
+
+			//Discard any other elements and store the new path
+			$this->_paths[$_new['path']]=$_new;
 		}
-		throw new \Exception("Cannot add path(s). You must pass one or more non-empty array to this method.");
+		return true;
 	}
 	
 	public function getPath($path){
