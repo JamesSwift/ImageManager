@@ -1113,7 +1113,7 @@ class secureImageResizer {
 		
 		//Check we're dealing with an non-empty array
 		if (!isset($paths) || !is_array($paths) || sizeof($paths)<1)
-			throw new \Exception("Cannot add path(s). You must pass one or more non-empty array to this method.");
+			throw new \Exception("Cannot add path(s). You must pass one or more non-empty arrays as arguments to this method.");
 		
 		//loop through paths and add them
 		foreach($paths as $path){
@@ -1159,10 +1159,10 @@ class secureImageResizer {
 	
 	public function getPath($path){
 		//Check path exists
-		if (!isset($this->_paths[(string)$path]))
-			throw new \Exception("Cannot locate path '".$path."'");
-		
-		return $this->_paths[$path];
+		if (isset($this->_paths[(string)$path])){
+			return $this->_paths[$path];
+		}
+		return false;
 	}
 	
 	public function getPaths(){
@@ -1178,9 +1178,8 @@ class secureImageResizer {
 		if (isset($this->_paths[$path])){
 			unset($this->_paths[$path]);
 			return true;
-		} else {
-			throw new \Exception("Cannot locate path '".$path."'");
-		}
+		} 
+		return false;
 	}
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1235,9 +1234,8 @@ class secureImageResizer {
 	public function getSize($size){
 		if (isset($this->_sizes[$size])){
 			return $this->_sizes[$size];
-		} else {
-			throw new \Exception("Cannot locate size '".$size."'");
 		}
+		return false;
 	}
 	
 	public function getSizes(){
@@ -1253,9 +1251,8 @@ class secureImageResizer {
 		if (isset($this->_sizes[$size])){
 			unset($this->_sizes[$size]);
 			return true;
-		} else {
-			throw new \Exception("Cannot locate size '".$size."'");
 		}
+		return false;
 	}
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
