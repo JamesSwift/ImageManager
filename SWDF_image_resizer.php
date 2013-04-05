@@ -864,22 +864,18 @@ class imageResizer {
 
 
 class secureImageResizer {
-	const   VERSION		 = "v0.3.0";
-	private $_config	 = array();
-	private $_paths		 = array();
-	private $_sizes		 = array();
-	private $_defaultConfig  = array();
+	const   VERSION = "v0.3.0";
+	private $_config;
+	private $_paths;
+	private $_sizes;
 	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
 		
 	public function __construct($config=null){
-		//Update Default settings
-		$this->_defaultConfig = array(
-			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
-			"defaultJpegQuality"=>90
-		);
-		
+		//Load default config
+		$this->loadDefaultConfig();
+			
 		//Allow passing config straight through constructor
-		if ($config!==null ){
+		if ($config!==null){
 			$this->loadConfig($config);
 		}
 	}
@@ -911,60 +907,79 @@ class secureImageResizer {
 	
 	}
 	
+	private function loadConfigFromFile($file){
+		
+		//Does the file exist?
+		if (!is_file($file))
+			return false;
+
+		//Atempt to decode it
+		$config = json_decode(file_get_contents($file),true);
+		
+		//Return false on failure
+		return ($config === null) ? false : $config;
+	}
+	
+	public function loadDefaultConfig(){
+		$this->_config=array(
+			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
+			"defaultJpegQuality"=>90
+		);
+		$this->_paths=array();
+		$this->_sizes=array(); 	
+	}
+	
+	private function loadSignedConfig($config){
+		
+		//Check we're dealing with a signed config
+		if (!isset($config['signedHash']))
+			return false;
+
+		//Recheck hash to see if it is valid
+		if ($this->signConfig($config)!==$config['signedHash'])
+			return false;
+
+		//Load the signed (previously checked) paths and sizes
+		$this->_sizes=$config['sizes'];
+		$this->_paths=$config['paths'];
+
+		//Unset value we don't want in our $this->_config array;
+		unset($config['paths'],$config['sizes'],$config['signedHash']);
+		
+		//Load the signed config settings
+		$this->_config=$config;
+
+		return true;
+		
+	}
+	
 	public function loadConfig($loadFrom, $clearOld=true, $saveChanges=false){
 		
 		//If they called this function with no config, just return false
 		if ($loadFrom===null) return false;
 				
-		//Check if we should load a JSON file
-		if (is_string($loadFrom)){
-			//Does the file exist?
-			if (!is_file($loadFrom))
-				return false;
+		//If we have been passed an array, load that
+		if (is_array($loadFrom)) {
+			$config=$loadFrom;
 			
-			//Atempt to decode it
-			$config = json_decode(file_get_contents($loadFrom),true);
-
-			//Did it work?
-			if ($config===null)
+		//If not, try to load from JSON file
+		} else if (is_string($loadFrom)) {
+			$config=$this->loadConfigFromFile($loadFrom);
+			if (is_string($loadFrom) && $config===false)
 				return false;
 		}
 		
-		//Check we're dealing with a valid config setup
-		if (isset($loadFrom) && is_array($loadFrom)){
-			$config=$loadFrom;
-		} else {
+		//Were we able to load $config from somewhere?
+		if (!isset($config)) 
 			return false;
-		}
-	
-			
-		//Remove the old configuration if requested
-		if ($clearOld===true){
-			$this->_config=array();
-			$this->_paths=array();
-			$this->_sizes=array();
-		}
-
-		//Hash this config been signed previously?
-		if (isset($config['signedHash'])){
-
-			//Recheck hash to see if it is valid (if not, carry on and recheck it)
-			if ($this->signConfig($config)===$config['signedHash']){
-				
-				//Just load the signed (previously checked) data and return true
-				$this->_sizes=$config['sizes'];
-				$this->_paths=$config['paths'];
-
-				//Unset value we don't want in our $_config array;
-				unset($config['paths'],$config['sizes'],$config['signedHash']);
-				$this->_config=$config;
-
-				return true;
-			}
-		}
-
-		//Combine default settings with user-specified settings;
-		$config+=$this->_defaultConfig;
+		
+		//Remove the previous configuration if requested
+		if ($clearOld===true) 
+			$this->loadDefaultConfig();
+		
+		//Has this config been signed previously? (if so load it without error checking to save CPU cycles)
+		if (isset($config['signedHash']) && $this->loadSignedConfig($config) )
+			return true;
 
 		//Loop through config and set it up
 
