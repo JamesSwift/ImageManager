@@ -983,25 +983,32 @@ class secureImageResizer {
 
 		//Process configuration
 		try {
+			$newConfig=array();
 			
 			//Set the settings
 			foreach ($config as $name=>$setting){
 				//Filter out the paths and sizes
 				if ($name!=="paths" && $name!=="sizes")
-					$this->set($name,$setting);
+					$newConfig[$name] = $this->set($name,$setting);
 			}
 
 			//Call $this->addSize with all sizes as arguments
 			if (isset($config['sizes'])===true && is_array($config['sizes']))
-				call_user_func_array(array($this, "addSize"), $config['sizes']);
+				$newConfig['sizes']=call_user_func_array(array($this, "addSize"), $config['sizes']);
 
 			//Call $this->addPath with all paths as arguments
 			if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0)
-				call_user_func_array(array($this, "addPath"), $config['paths']);
+				$newConfig['paths']=call_user_func_array(array($this, "addPath"), $config['paths']);
 			
 			//Check if we should save changes back to the file
-			if ($saveChanges===true && is_string($loadFrom))
-				$this->saveConfig($originalPath, true);
+			if ($saveChanges===true && is_string($loadFrom)){
+				
+				//Sign this new config
+				$newConfig['signedHash'] = $this->signConfig($newConfig);
+				
+				//write it back to disk
+				file_put_contents($loadFrom, json_encode($newConfig));
+			}
 
 			return true;
 			
@@ -1016,8 +1023,8 @@ class secureImageResizer {
 		$config=$this->_config;
 		
 		//Load paths and sizes (Remove IDs)
-		$config['paths']= array_values($this->_paths);
-		$config['sizes']= array_values($this->_sizes);
+		$config['paths']=$this->_paths;
+		$config['sizes']=$this->_sizes;
 		
 		return $config;
 	}
@@ -1151,7 +1158,8 @@ class secureImageResizer {
 		
 		//Store the verfied setting
 		$this->_config[$setting]=$value;
-		return true;
+		
+		return $value;
 		
 	}
 	
@@ -1184,14 +1192,11 @@ class secureImageResizer {
 		if (!isset($paths) || !is_array($paths) || sizeof($paths)<1)
 			throw new \Exception("Cannot add path(s). You must pass one or more non-empty arrays as arguments to this method.");
 		
+		//Create blank array to hold sanitized data
+		$newPaths=array();
+		
 		//loop through paths and add them
 		foreach($paths as $path){
-
-			//Create blank array to hold sanitized data
-			$_new=array(
-				"allowSizes"=>array(),
-				"denySizes"=>array()
-			);
 
 			//Check type
 			if (!is_array($path) || sizeof($path)===0)
@@ -1202,28 +1207,36 @@ class secureImageResizer {
 				throw new \Exception("Cannot add path. The passed array must contain a non-empty 'path' element.");
 
 			//Sanitize path
-			try { 
-				$_new['path']=$this->sanitizeFilePath($path['path'],true);
+			try { $newPath=$this->sanitizeFilePath($path['path'],true);
 			} catch (\Exception $e){ throw $e; }
 
 			//Check path doesn't already exist
-			if ($this->isPath($_new['path']) && $allowOverwrite!==true)
-				throw new \Exception("Cannot add path '".$path['path']."'. It already exists.");
+			if ($this->isPath($newPath) && $allowOverwrite!==true)
+				throw new \Exception("Cannot add path '".$newPath."'. It already exists.");
+			
+			//Add basic data
+			$newPaths[$newPath]=array(
+				"path"=>$newPath,
+				"allowSizes"=>array(),
+				"denySizes"=>array()
+			);
 
 			//If allowSizes defined, remove any keys, convert to strings, and add it
 			if (isset($path['allowSizes']) && is_array($path['allowSizes']))
 				foreach($path['allowSizes'] as $size)
-					$_new['allowSizes'][]=(string)$size;
+					$newPaths[$newPath]['allowSizes'][]=(string)$size;
 
 			//If denySizes defined, remove any keys, convert to string, and add it
 			if (isset($path['denySizes']) && is_array($path['denySizes']))
 				foreach($path['denySizes'] as $size)
-					$_new['denySizes'][]=(string)$size;
+					$newPaths[$newPath]['denySizes'][]=(string)$size;
 
 			//Discard any other elements and store the new path
-			$this->_paths[$_new['path']]=$_new;
+			$this->_paths[$newPath]=$newPaths[$newPath];
 		}
-		return true;
+		
+		//Returned the sanitized data
+		return $newPaths;
 	}
 	
 	public function getPath($path){
@@ -1265,39 +1278,43 @@ class secureImageResizer {
 		}
 
 		//Check we're dealing with an array
-		if (isset($sizes) && is_array($sizes) && sizeof($sizes)>0){
-			//loop through sizes and add them
-			foreach($sizes as $size){
-				
-				//Create array to hold sanitized data
-				$_new=array();
+		if (!isset($sizes) || !is_array($sizes) || sizeof($sizes)<1)
+			throw new \Exception("Cannot add size(s). You must pass one or more non-empty arrays to this method.");
 
-				//Check type
-				if (!is_array($size) || sizeof($size)===0)
-					throw new \Exception("Cannot add size. Paths must be non-empty arrays");
+		//Create array to hold sanitized data
+		$newSizes=array();
+		
+		//loop through sizes and add them
+		foreach($sizes as $size){
 
-				//Check required elements are there
-				if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||
-					isset($size['method'])===false	|| $size['method']==="" || !is_string($size['method'])
-				){
-					if (isset($size['id'])){
-						throw new \Exception("Cannot add size '".(string)$size['id']."'. The passed array must contain non-empty 'id' and 'method' elements.");
-					} else {
-						throw new \Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");						
-					}
+			//Check type
+			if (!is_array($size) || sizeof($size)===0)
+				throw new \Exception("Cannot add size. Paths must be non-empty arrays");
+
+			//Check required elements are there
+			if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||
+				isset($size['method'])===false	|| $size['method']==="" || !is_string($size['method'])
+			){
+				if (isset($size['id'])){
+					throw new \Exception("Cannot add size '".(string)$size['id']."'. The passed array must contain non-empty 'id' and 'method' elements.");
+				} else {
+					throw new \Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");						
 				}
-				
-				//TODO: more checks
-				$_new['id']=$size['id'];
-				$_new['method']=$size['method'];
-				
-				//Discard any other elements and store the new path
-				$this->_sizes[$_new['id']]=$_new;
-				
 			}
-			return true;
+
+			//TODO: more checks
+			$newSizes[$size['id']]=array(
+				"id"=>$size['id'],
+				"method"=>$size['method']
+			);
+
+			//Discard any other elements and store the new path
+			$this->_sizes[$newSizes[$size['id']]['id']]=$newSizes[$size['id']];
+
 		}
-		throw new \Exception("Cannot add size(s). You must pass one or more a non-empty arrays to this method.");
+		
+		return $newSizes;
+		
 	}
 	
 	public function getSize($size){
