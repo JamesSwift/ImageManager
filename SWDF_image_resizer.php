@@ -864,12 +864,14 @@ class imageResizer {
 
 
 class secureImageResizer {
+	const   VERSION		 = "v0.3.0";
 	private $_config	 = array();
 	private $_paths		 = array();
 	private $_sizes		 = array();
+	private $_configHashes	 = array();
 	private $_defaultConfig  = array();
 	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
-	
+		
 	public function __construct($config=null){
 		//Update Default settings
 		$this->_defaultConfig = array(
@@ -910,7 +912,7 @@ class secureImageResizer {
 	
 	}
 	
-	public function loadConfig($config){
+	public function loadConfig($config, $clearOld=true){
 		
 		//If they called this function with no config, just return false
 		if ($config===null) return false;
@@ -918,68 +920,91 @@ class secureImageResizer {
 		//Check if we should load a JSON file
 		if (is_string($config)){
 			//Does the file exist?
-			if (is_file($config)){
-				//Atempt to decode it
-				$config = json_decode(file_get_contents($config),true);
-				
-				//Did it work?
-				if ($config===null){
-					throw new \Exception("Unable to decode JSON config file, or file empty.", 3);
-				}
-			} else {
-				throw new \Exception("Specified config file location doesn't exist, or isn't accessible", 2);
-			}
+			if (!is_file($config))
+				return false;
 			
+			//Store the original location
+			$originalPath=$config;
+						
+			//Atempt to decode it
+			$config = json_decode(file_get_contents($config),true);
+
+			//Did it work?
+			if ($config===null)
+				return false;
 		}
 		
-		//Check we're dealing with a valid config file
-		if (isset($config)===true && is_array($config)===true){
+		//Check we're dealing with a valid config setup
+		if (!isset($config) || !is_array($config))
+			return false;
 			
-			//Remove the old configuration
+		//Remove the old configuration if requested
+		if ($clearOld===true){
 			$this->_config=array();
 			$this->_paths=array();
 			$this->_sizes=array();
-			
-			//Combine default settings with user-specified settings;
-			$config+=$this->_defaultConfig;
-			
-			//Loop through config and set it up
-			
-			//Set the settings
-			foreach ($config as $name=>$setting){
-				//Filter out the paths and sizes
-				if ($name!=="paths" && $name!=="sizes"){
-					if (in_array(gettype($setting), array("array","string","boolean","integer","double","null"))===true){
-						try {
-							$this->set($name,$setting);
-						} catch (\Exception $e) { throw $e; }
-					} else {
-						throw new \Exception("Unable to load setting '".$name."'. Bad variable type.", 4);
-					}
-				}
+			$this->_configHashes=array();
+		}
+
+		//Hash this config been signed previously?
+		if (isset($config['signedHash'])){
+
+			//Recheck hash to see if it is valid (if not, carry on and recheck it)
+			if ($this->signConfig($config)===$config['signedHash']){
+
+				//Keep a note of the original hash
+				$this->_configHashes[$originalPath]=$config['signedHash'];
+
+				//Just load the signed (previously checked) data and return true
+				$this->_sizes=$config['sizes'];
+				$this->_paths=$config['paths'];
+
+				//Unset value we don't want in our $_config array;
+				unset($config['paths'],$config['sizes'],$config['signedHash']);
+				$this->_config=$config;
+
+				return true;
 			}
-			
-			//Set sizes
-			if (isset($config['sizes'])===true && is_array($config['sizes'])){
-				foreach ($config['sizes'] as $size){
+		}
+
+		//Combine default settings with user-specified settings;
+		$config+=$this->_defaultConfig;
+
+		//Loop through config and set it up
+
+		//Set the settings
+		foreach ($config as $name=>$setting){
+			//Filter out the paths and sizes
+			if ($name!=="paths" && $name!=="sizes"){
+				if (in_array(gettype($setting), array("array","string","boolean","integer","double","null"))===true){
 					try {
-						$this->addSize($size);
+						$this->set($name,$setting);
 					} catch (\Exception $e) { throw $e; }
+				} else {
+					throw new \Exception("Unable to load setting '".$name."'. Bad variable type.", 4);
 				}
 			}
-			
-			//Set paths
-			if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0){
+		}
+
+		//Set sizes
+		if (isset($config['sizes'])===true && is_array($config['sizes'])){
+			foreach ($config['sizes'] as $size){
 				try {
-					//Call $this->addPath with all paths as arguments
-					call_user_func_array(array($this, "addPath"), $config['paths']);
+					$this->addSize($size);
 				} catch (\Exception $e) { throw $e; }
 			}
-			
-			return true;
-		} else {
-			throw new \Exception("Unable to load configuration.", 1);
 		}
+
+		//Set paths
+		if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0){
+			try {
+				//Call $this->addPath with all paths as arguments
+				call_user_func_array(array($this, "addPath"), $config['paths']);
+			} catch (\Exception $e) { throw $e; }
+		}
+
+		//All went well
+		return true;
 	}
 	
 	public function getConfig(){
@@ -993,16 +1018,54 @@ class secureImageResizer {
 		return $config;
 	}
 	
-	public function saveConfig($file, $overwrite=false){
+	public function getSignedConfig(){
+		
+		//Get config to sign
+		$config = $this->getConfig();
+		
+		//Sign and return it
+		return $this->signConfig($config);
+	}
+	
+	protected function signConfig($config){
+		
+		//Check the config array actually exists
+		if (!(isset($config) && is_array($config)))
+			return false;
+		
+		//Remove any previous signature
+		unset($config['signedHash']);
+	
+		//Stringify it and hash it
+		$config['signedHash'] = 
+			hash("crc32",
+				var_export($config).
+				" <- Compatible config file for SWDF/secureImageResizer ".
+				self::VERSION.
+				" by James Swift"
+			);
+		
+		//Return it
+		return $config;
+	}
+	
+
+	public function saveConfig($file, $format="json", $overwrite=false, $varName="SWDF_secureImageResizer_config_array"){
 		
 		if ($overwrite===false && is_file($file)) 
 			throw new \Exception("Unable to save settings. File '".$file."' already exists, and method is in non-overwrite mode.", 5);
 		
-		if (file_put_contents($file, json_encode($this->getConfig()) )!==false ){
-			return true;
-		} else {
-			throw new \Exception("An unknown error occured and the settings could not be saved to file: ".$file, 6);
+		if ($format==="json"){
+			if (file_put_contents($file, json_encode($this->getSignedConfig()) )!==false )
+				return true;
+		
+		} else if ($format==="php"){
+			if (file_put_contents($file, "<"."?php \$".$varName." = ".var_export($this->getSignedConfig(), true)."; ?".">")!==false )
+				return true;
 		}
+		
+		throw new \Exception("An unknown error occured and the settings could not be saved to file: ".$file, 6);
+		
 		
 	}
 	
