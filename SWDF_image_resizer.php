@@ -868,7 +868,6 @@ class secureImageResizer {
 	private $_config	 = array();
 	private $_paths		 = array();
 	private $_sizes		 = array();
-	private $_configHashes	 = array();
 	private $_defaultConfig  = array();
 	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
 		
@@ -912,22 +911,19 @@ class secureImageResizer {
 	
 	}
 	
-	public function loadConfig($config, $clearOld=true, $saveChanges=false){
+	public function loadConfig($loadFrom, $clearOld=true, $saveChanges=false){
 		
 		//If they called this function with no config, just return false
-		if ($config===null) return false;
+		if ($loadFrom===null) return false;
 				
 		//Check if we should load a JSON file
-		if (is_string($config)){
+		if (is_string($loadFrom)){
 			//Does the file exist?
-			if (!is_file($config))
+			if (!is_file($loadFrom))
 				return false;
 			
-			//Store the original location
-			$originalPath=$config;
-						
 			//Atempt to decode it
-			$config = json_decode(file_get_contents($config),true);
+			$config = json_decode(file_get_contents($loadFrom),true);
 
 			//Did it work?
 			if ($config===null)
@@ -935,15 +931,18 @@ class secureImageResizer {
 		}
 		
 		//Check we're dealing with a valid config setup
-		if (!isset($config) || !is_array($config))
+		if (isset($loadFrom) && is_array($loadFrom)){
+			$config=$loadFrom;
+		} else {
 			return false;
+		}
+	
 			
 		//Remove the old configuration if requested
 		if ($clearOld===true){
 			$this->_config=array();
 			$this->_paths=array();
 			$this->_sizes=array();
-			$this->_configHashes=array();
 		}
 
 		//Hash this config been signed previously?
@@ -952,11 +951,6 @@ class secureImageResizer {
 			//Recheck hash to see if it is valid (if not, carry on and recheck it)
 			if ($this->signConfig($config)===$config['signedHash']){
 				
-				//Keep a note of the original hash
-				if (isset($originalPath))
-					$this->_configHashes[$originalPath]=$config['signedHash'];
-					
-
 				//Just load the signed (previously checked) data and return true
 				$this->_sizes=$config['sizes'];
 				$this->_paths=$config['paths'];
@@ -1006,9 +1000,8 @@ class secureImageResizer {
 		}
 		
 		//Check if we should save changes
-		if ($saveChanges===true && isset($originalPath)){
+		if ($saveChanges===true && is_string($loadFrom))
 			$this->saveConfig($originalPath, true);
-		}
 
 		//All went well
 		return true;
