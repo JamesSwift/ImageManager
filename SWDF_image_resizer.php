@@ -1022,7 +1022,7 @@ class secureImageResizer {
 		
 		//Get config to sign
 		$config = $this->getConfig();
-		
+
 		//Sign and return it
 		return $this->signConfig($config);
 	}
@@ -1039,7 +1039,7 @@ class secureImageResizer {
 		//Stringify it and hash it
 		$config['signedHash'] = 
 			hash("crc32",
-				var_export($config).
+				var_export($config, true).
 				" <- Compatible config file for SWDF/secureImageResizer ".
 				self::VERSION.
 				" by James Swift"
@@ -1050,7 +1050,7 @@ class secureImageResizer {
 	}
 	
 
-	public function saveConfig($file, $format="json", $overwrite=false, $varName="SWDF_secureImageResizer_config_array"){
+	public function saveConfig($file, $overwrite=false, $format="json", $varName="SWDF_secureImageResizer_config_array"){
 		
 		if ($overwrite===false && is_file($file)) 
 			throw new \Exception("Unable to save settings. File '".$file."' already exists, and method is in non-overwrite mode.", 5);
