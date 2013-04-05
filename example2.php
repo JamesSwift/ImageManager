@@ -6,8 +6,8 @@
  * This file creates a way to resize images by passing settings in a URL. 
  * Examples:
  * 
- * "example.php?size=thumbnail&img=images/product.jpg"
- * "example.php?size=watermarked_big3&img=images/photos/spain.png"
+ * "example2.php?size=thumbnail&img=images/product.jpg"
+ * "example2.php?size=watermarked_big3&img=images/photos/spain.png"
  * 
  * There is some brief explaination of what is going on, but for a proper
  * dicussion, see the documentation.
@@ -151,15 +151,6 @@ try {
 			"denySizes"=>array("original","2x")
 		)
 	);
-
-	/*
-	//Testing of loadConfig
-	$resizer->saveConfig("config.json", true);
-	sleep(1);
-	$resizer->loadConfig("config.json");
-	unlink("./config.json");
-	print "<pre>".print_r($resizer->getConfig(), true)."</pre>";
-	*/
 	
 	/**
 	 * Fith. Process the user's request.

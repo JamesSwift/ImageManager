@@ -912,7 +912,7 @@ class secureImageResizer {
 	
 	}
 	
-	public function loadConfig($config, $clearOld=true){
+	public function loadConfig($config, $clearOld=true, $saveChanges=false){
 		
 		//If they called this function with no config, just return false
 		if ($config===null) return false;
@@ -951,9 +951,11 @@ class secureImageResizer {
 
 			//Recheck hash to see if it is valid (if not, carry on and recheck it)
 			if ($this->signConfig($config)===$config['signedHash']){
-
+				
 				//Keep a note of the original hash
-				$this->_configHashes[$originalPath]=$config['signedHash'];
+				if (isset($originalPath))
+					$this->_configHashes[$originalPath]=$config['signedHash'];
+					
 
 				//Just load the signed (previously checked) data and return true
 				$this->_sizes=$config['sizes'];
@@ -1002,6 +1004,11 @@ class secureImageResizer {
 				call_user_func_array(array($this, "addPath"), $config['paths']);
 			} catch (\Exception $e) { throw $e; }
 		}
+		
+		//Check if we should save changes
+		if ($saveChanges===true && isset($originalPath)){
+			$this->saveConfig($originalPath, true);
+		}
 
 		//All went well
 		return true;
@@ -1023,8 +1030,11 @@ class secureImageResizer {
 		//Get config to sign
 		$config = $this->getConfig();
 
+		//Sign the config
+		$config['signedHash'] = $this->signConfig($config);
+		
 		//Sign and return it
-		return $this->signConfig($config);
+		return $config;
 	}
 	
 	protected function signConfig($config){
@@ -1037,16 +1047,12 @@ class secureImageResizer {
 		unset($config['signedHash']);
 	
 		//Stringify it and hash it
-		$config['signedHash'] = 
-			hash("crc32",
+		return	hash("crc32",
 				var_export($config, true).
 				" <- Compatible config file for SWDF/secureImageResizer ".
 				self::VERSION.
 				" by James Swift"
 			);
-		
-		//Return it
-		return $config;
 	}
 	
 
@@ -1060,7 +1066,7 @@ class secureImageResizer {
 				return true;
 		
 		} else if ($format==="php"){
-			if (file_put_contents($file, "<"."?php \$".$varName." = ".var_export($this->getSignedConfig(), true)."; ?".">")!==false )
+			if (file_put_contents($file, "<"."?php \$".$varName." =\n".var_export($this->getSignedConfig(), true).";\n?".">")!==false )
 				return true;
 		}
 		
@@ -1137,6 +1143,9 @@ class secureImageResizer {
 			if (in_array($value,$this->getAllowedOutputFormats())===false)
 				throw new \Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()));
 			
+		//Ignore signedHash
+		} else if ($setting=="signedHash"){
+			//Ignore me
 		
 		//Catch unknown settings
 		} else {
