@@ -973,53 +973,42 @@ class secureImageResizer {
 		if (!isset($config)) 
 			return false;
 		
-		//Remove the previous configuration if requested
+		//Reset the class if requested
 		if ($clearOld===true) 
 			$this->loadDefaultConfig();
 		
-		//Has this config been signed previously? (if so load it without error checking to save CPU cycles)
+		//Has this configuration been signed previously? (if so load it without error checking to save CPU cycles)
 		if (isset($config['signedHash']) && $this->loadSignedConfig($config) )
 			return true;
 
-		//Loop through config and set it up
-
-		//Set the settings
-		foreach ($config as $name=>$setting){
-			//Filter out the paths and sizes
-			if ($name!=="paths" && $name!=="sizes"){
-				if (in_array(gettype($setting), array("array","string","boolean","integer","double","null"))===true){
-					try {
-						$this->set($name,$setting);
-					} catch (\Exception $e) { throw $e; }
-				} else {
-					throw new \Exception("Unable to load setting '".$name."'. Bad variable type.", 4);
-				}
+		//Process configuration
+		try {
+			
+			//Set the settings
+			foreach ($config as $name=>$setting){
+				//Filter out the paths and sizes
+				if ($name!=="paths" && $name!=="sizes")
+					$this->set($name,$setting);
 			}
-		}
 
-		//Set sizes
-		if (isset($config['sizes'])===true && is_array($config['sizes'])){
-			foreach ($config['sizes'] as $size){
-				try {
-					$this->addSize($size);
-				} catch (\Exception $e) { throw $e; }
-			}
-		}
+			//Call $this->addSize with all sizes as arguments
+			if (isset($config['sizes'])===true && is_array($config['sizes']))
+				call_user_func_array(array($this, "addSize"), $config['sizes']);
 
-		//Set paths
-		if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0){
-			try {
-				//Call $this->addPath with all paths as arguments
+			//Call $this->addPath with all paths as arguments
+			if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0)
 				call_user_func_array(array($this, "addPath"), $config['paths']);
-			} catch (\Exception $e) { throw $e; }
-		}
-		
-		//Check if we should save changes
-		if ($saveChanges===true && is_string($loadFrom))
-			$this->saveConfig($originalPath, true);
+			
+			//Check if we should save changes back to the file
+			if ($saveChanges===true && is_string($loadFrom))
+				$this->saveConfig($originalPath, true);
 
-		//All went well
-		return true;
+			return true;
+			
+		} catch (\Exception $e) {
+			//These are configuration errors, so just rethrow them so the developer can deal with them
+			throw $e;
+		}
 	}
 	
 	public function getConfig(){
