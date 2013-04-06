@@ -1,57 +1,50 @@
 {
-	"base": "G:/Projects/Programming/SWDF/SWDF_image_resizer/",
-	"enableCaching": true,
-	"cacheTime": 2419200,
-	"defaultOutputFormat": "image/jpeg",
-	"defaultJpegQuality": 90,
-	"defaultWatermarkOpacity": 10,
-	"cachePath": "C:/Windows/TEMP/SWDF/imageCache/",
-	"sizes": {
-		"original": {
-			"id": "original",
-			"method": "original"
+	"base":"G:\/Projects\/Programming\/SWDF\/SWDF_image_resizer\/",
+	"enableCaching":true,
+	"cacheTime":2419200,
+	"defaultOutputFormat":"image\/jpeg",
+	"defaultJpegQuality":90,
+	"defaultWatermarkOpacity":10,
+	"cachePath":"C:\/Windows\/TEMP\/SWDF\/imageCache\/",
+	"signedHash":"341ca2bc",
+	"sizes":{
+		"original":{
+			"id":"original",
+			"method":"original"
 		},
-		"productImage": {
-			"id": "product_image",
-			"method": "fit",
-			"width": 400,
-			"height": 300,
-			"outputFormat": "image/gif"
+		"product_image":{
+			"id":"product_image",
+			"method":"fit",
+			"width":400,
+			"height":300,
+			"outputFormat":"image\/gif"
 		},
-		"2x": {
-			"id": "2x",
-			"method": "scale",
-			"scale": 2
+		"2x":{
+			"id":"2x",
+			"method":"scale",
+			"scale":2
 		},
-		"200x300": {
-			"id": "200x300",
-			"method": "fill",
-			"width": 200,
-			"height": 300
+		"200x300":{
+			"id":"200x300",
+			"method":"fill",
+			"width":200,
+			"height":300
 		}
 	},
-	"paths": {
-		"images\/": {
-			"path": "images\/",
-			"allowSizes": [
-			],
-			"denySizes": [
-			]
+	"paths":{
+		"images\/":{
+			"path":"images\/"
 		},
-		"images\/products\/": {
-			"path": "images\/products\/",
-			"allowSizes": [
+		"images\/products\/":{
+			"path":"images\/products\/",
+			"allowSizes":[
 				"product_image",
 				"200x300"
-			],
-			"denySizes": [
 			]
 		},
-		"images\/original_scans\/": {
-			"path": "images\/original_scans\/",
-			"allowSizes": [
-			],
-			"denySizes": [
+		"images\/original_scans\/":{
+			"path":"images\/original_scans\/",
+			"denySizes":[
 				"original",
 				"2x"
 			]

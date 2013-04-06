@@ -1018,7 +1018,7 @@ class secureImageResizer {
 				$newConfig['signedHash'] = $this->signConfig($newConfig);
 				
 				//write it back to disk
-				file_put_contents($loadFrom, json_encode($newConfig));
+				file_put_contents($loadFrom, json_indent(json_encode($newConfig)));
 			}
 
 			return true;
@@ -1077,7 +1077,7 @@ class secureImageResizer {
 			throw new \Exception("Unable to save settings. File '".$file."' already exists, and method is in non-overwrite mode.", 5);
 		
 		if ($format==="json"){
-			if (file_put_contents($file, json_encode($this->getSignedConfig()) )!==false )
+			if (file_put_contents($file, json_indent(json_encode($this->getSignedConfig())) )!==false )
 				return true;
 		
 		} else if ($format==="php"){
@@ -1232,8 +1232,6 @@ class secureImageResizer {
 			//Add basic data
 			$newPaths[$newPath]=array(
 				"path"=>$newPath,
-				"allowSizes"=>array(),
-				"denySizes"=>array()
 			);
 
 			//If allowSizes defined, remove any keys, convert to strings, and add it
@@ -1414,5 +1412,55 @@ if (!function_exists('session_status')){
     function session_active(){
         return (session_status() === 2);   
     }        
+}
+
+/**
+ * Indents a flat JSON string to make it more human-readable.
+ * 
+ * @author Dave Perrett
+ * @copyright Copyright Dave Perret 2008 - see http://www.daveperrett.com/articles/2008/03/11/format-json-with-php/
+ * @param string $json The original JSON string to process.
+ * @return string Indented version of the original JSON string.
+ */
+function json_indent($json, $indentStr = "\t", $newLine = "\n") {
+
+	$json = str_replace(array("\n", "\r"), "", $json);
+	$result = '';
+	$pos = 0;
+	$strLen = strlen($json);
+	$prevChar = '';
+	$outOfQuotes = true;
+
+	for ($i = 0; $i <= $strLen; $i++) {
+
+		$char = substr($json, $i, 1);
+
+		if ($char == '"' && $prevChar != '\\') {
+			$outOfQuotes = !$outOfQuotes;
+		} else if (($char == '}' || $char == ']') && $outOfQuotes) {
+			$result .= $newLine;
+			$pos--;
+			for ($j = 0; $j < $pos; $j++) {
+				$result .= $indentStr;
+			}
+		}
+
+		$result .= $char;
+
+		if (($char == ',' || $char == '{' || $char == '[') && $outOfQuotes) {
+			$result .= $newLine;
+			if ($char == '{' || $char == '[') {
+				$pos++;
+			}
+
+			for ($j = 0; $j < $pos; $j++) {
+				$result .= $indentStr;
+			}
+		}
+
+		$prevChar = $char;
+	}
+
+	return $result;
 }
 ?>

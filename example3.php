@@ -23,7 +23,7 @@ try {
 	$resizer=new \SWDF\secureImageResizer();
 	
 	//Load the configuration (and save any enhancments that can be made to the file, back to it (set argumnet 3 to true))
-	if ($resizer->loadConfig("example_config2.json", true, false)){
+	if ($resizer->loadConfig("example_config2.json", true, true)){
 	
 		try {
 			//Resize the requested image
