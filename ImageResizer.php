@@ -860,8 +860,28 @@ class SecureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public function resize($img, $size){ 
+	public function resize($img, $size=null){ 
+		$this->validateResizeRequest($img, $size);
+				
 		return new resizedImage(); 
+	}
+	
+	public function validateResizeRequest($img, $size=null){
+		//Check size, load default if not specified
+		
+		//Sanitize image path
+		
+		//Check image exists
+		
+		//Find which path rule applies
+		
+		//Check path allowed
+		
+		//Find allowed sizes
+		
+		//Check this size is allowed
+		
+		return true;
 	}
 	
 }
@@ -871,17 +891,13 @@ class resizedImage {
 	public function save() {}
 }
 
-//Make backwards compatible with earlier version of PHP
-//This isn't a perfect test for whether a session is active or not, but 
-if (!function_exists('session_status')){
-    function session_active(){
-        return defined('SID');   
-    }
-} else {
-    function session_active(){
-        return (session_status() === 2);   
-    }        
-}
+
+
+
+
+
+
+
 
 /**
  * Indents a flat JSON string to make it more human-readable.
