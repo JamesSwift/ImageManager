@@ -11,11 +11,12 @@
 			"id": "original",
 			"method": "original"
 		},
-		"product_image": {
+		"productImage": {
 			"id": "product_image",
 			"method": "fit",
 			"width": 400,
-			"height": 300
+			"height": 300,
+			"outputFormat": "image/gif"
 		},
 		"2x": {
 			"id": "2x",

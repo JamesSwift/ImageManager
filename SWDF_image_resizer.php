@@ -1315,39 +1315,50 @@ class secureImageResizer {
 				
 				throw new \Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");						
 			}
-
+			
+			//Create array to hold sanitized data
+			$newSize=&$newSizes[$size['id']];
+			
 			//Sanitize data
-			if (isset($size['method']))	$size['method']	= strtolower($size['method']);
-			if (isset($size['width']))	$size['width']	= (int)$size['width'];
-			if (isset($size['height'])) 	$size['height']	= (int)$size['height'];
-			if (isset($size['scale']))	$size['scale']	= (float)$size['scale'];
+								$newSize['id']			= $size['id'];
+								$newSize['method']		= strtolower($size['method']);
+			if (isset($size['width']))		$newSize['width']		= (int)$size['width'];
+			if (isset($size['height']))		$newSize['height']		= (int)$size['height'];
+			if (isset($size['scale']))		$newSize['scale']		= (float)$size['scale'];
+			if (isset($size['outputFormat']))	$newSize['outputFormat']	= strtolower($size['outputFormat']);
+			if (isset($size['jpegOutputQuality']))	$newSize['jpegOutputQuality']	= (int)$size['jpegOutputQuality'];
+			if (isset($size['disableCaching']))	$newSize['disableCaching']	= (bool)$size['disableCaching'];
 			
 			//Check id
 			if (preg_match("/[^0-9a-zA-Z_\-]/", $size['id'])!==0)
 				throw new \Exception("Cannot add size. '".$size['id']."'. The id element must contain only numbers, letters, underscores or dashes. ");	
 
 			//Check method exists
-			if (in_array($size['method'], $this->_allowedMethods)===false)
-				throw new \Exception("Cannot add size. '".$size['id']."'. It has an invalid method element. Valid methods are: ".implode(", ", $this->allowedMethods));	
+			if (in_array($newSize['method'], $this->_allowedMethods)===false)
+				throw new \Exception("Cannot add size. '".$newSize['id']."'. It has an invalid method element. Valid methods are: ".implode(", ", $this->allowedMethods));	
 			
 			//Checks for methods "fit", "fill", "stretch"
-			if ($size['method']==="fit" || $size['method']==="fill" || $size['method']==="stretch")
-				if (!isset($size['width']) || !isset($size['height']) )
-					throw new \Exception("Cannot add size. '".$size['id']."'. Width and Height must be defined for method '".$size['method']."'");	
+			if ($newSize['method']==="fit" || $newSize['method']==="fill" || $newSize['method']==="stretch")
+				if (!isset($newSize['width']) || !isset($newSize['height']) )
+					throw new \Exception("Cannot add size. '".$newSize['id']."'. Width and Height must be defined for method '".$newSize['method']."'");	
 			
 			//Checks for method "scale""
-			if ($size['method']==="scale")
-				if (!isset($size['scale']) || $size['scale']<=0 )
-					throw new \Exception("Cannot add size. '".$size['id']."'. Element 'scale' must be defined as a positive number when using method '".$size['method']."'");	
-						
-			//TODO: more checks
-			$newSizes[$size['id']]=array(
-				"id"=>$size['id'],
-				"method"=>$size['method']
-			);
+			if ($newSize['method']==="scale")
+				if (!isset($newSize['scale']) || $newSize['scale']<=0 )
+					throw new \Exception("Cannot add size. '".$newSize['id']."'. Element 'scale' must be defined as a positive number when using method '".$newSize['method']."'");	
+				
+			//Check output format
+			if (isset($newSize['outputFormat']) && in_array($newSize['outputFormat'], $this->_allowedOutputFormats)===false)
+				throw new \Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'outputFormat' must be one of: ".implode(", ",$this->_allowedOutputFormats).". Given output was: ".$newSize['outputFormat']);	
+
+			//Check quality
+			if (isset($newSize['jpegOutputQuality']) && ($newSize['jpegOutputQuality']<0 || $newSize['jpegOutputQuality']>100))
+				throw new \Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'jpegOutputQuality' must be between 0 and 100. Given was: ".$newSize['jpegOutputQuality']);	
+
+			//TODO: watermark checking
 
 			//Discard any other elements and store the new path
-			$this->_sizes[$newSizes[$size['id']]['id']]=$newSizes[$size['id']];
+			$this->_sizes[$newSize['id']]=$newSize;
 
 		}
 		
