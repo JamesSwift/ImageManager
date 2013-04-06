@@ -1,12 +1,12 @@
 {
-	"base":"G:\/Projects\/Programming\/SWDF\/SWDF_image_resizer\/",
+	"base":"G:/Projects/Programming/SWDF/SWDF_image_resizer/",
 	"enableCaching":true,
 	"cacheTime":2419200,
-	"defaultOutputFormat":"image\/jpeg",
+	"defaultOutputFormat":"image/jpeg",
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
-	"cachePath":"C:\/Windows\/TEMP\/SWDF\/imageCache\/",
-	"signedHash":"3e867077",
+	"cachePath":"C:/Windows/TEMP/SWDF/imageCache/",
+	"signedHash":"999d64fc",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -17,9 +17,10 @@
 			"method":"fit",
 			"width":400,
 			"height":300,
-			"outputFormat":"image\/gif",
+			"outputFormat":"image/gif",
 			"watermark":{
-				"path":"images\/watermark.png\/"
+				"path":"images/watermark.png",
+				"opacity":80
 			}
 		},
 		"2x":{
@@ -35,18 +36,18 @@
 		}
 	},
 	"paths":{
-		"images\/":{
-			"path":"images\/"
+		"images/":{
+			"path":"images/"
 		},
-		"images\/products\/":{
-			"path":"images\/products\/",
+		"images/products/":{
+			"path":"images/products/",
 			"allowSizes":[
 				"product_image",
 				"200x300"
 			]
 		},
-		"images\/original_scans\/":{
-			"path":"images\/original_scans\/",
+		"images/original_scans/":{
+			"path":"images/original_scans/",
 			"denySizes":[
 				"original",
 				"2x"

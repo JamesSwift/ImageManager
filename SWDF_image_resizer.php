@@ -1470,14 +1470,17 @@ if (!function_exists('session_status')){
 /**
  * Indents a flat JSON string to make it more human-readable.
  * 
+ * Slightly modified by James Swift 2013
+ * 
  * @author Dave Perrett
  * @copyright Copyright Dave Perret 2008 - see http://www.daveperrett.com/articles/2008/03/11/format-json-with-php/
  * @param string $json The original JSON string to process.
  * @return string Indented version of the original JSON string.
  */
-function json_indent($json, $indentStr = "\t", $newLine = "\n") {
+function json_indent($json, $indentStr = "\t", $newLine = "\n", $unescapeSlashes=true) {
 
 	$json = str_replace(array("\n", "\r"), "", $json);
+	if ($unescapeSlashes===true) $json = str_replace('\/', "/", $json);
 	$result = '';
 	$pos = 0;
 	$strLen = strlen($json);
