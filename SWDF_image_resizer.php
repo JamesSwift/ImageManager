@@ -967,23 +967,23 @@ class secureImageResizer {
 	
 	public function loadConfig($loadFrom, $clearOld=true, $saveChanges=false){
 		
-		//If they called this function with no config, just return false
-		if ($loadFrom===null) return false;
+		//If they called this function with no config, just return null
+		if ($loadFrom===null) return null;
 				
 		//If we have been passed an array, load that
 		if (is_array($loadFrom)) {
 			$config=$loadFrom;
 			
 		//If not, try to load from JSON file
-		} else if (is_string($loadFrom)) {
+		} else if (is_string($loadFrom) && is_file($loadFrom)) {
 			$config=$this->loadConfigFromFile($loadFrom);
-			if (is_string($loadFrom) && $config===false)
-				return false;
+			if ($config===false)
+				throw new \Exception("Unable to parse config file: ".$loadFrom);
 		}
 		
 		//Were we able to load $config from somewhere?
 		if (!isset($config)) 
-			return false;
+			throw new \Exception("Unable to load configuration. Please pass a config array or a valid absolute path to a JSON file.");
 		
 		//Reset the class if requested
 		if ($clearOld===true) 
@@ -991,7 +991,7 @@ class secureImageResizer {
 		
 		//Has this configuration been signed previously? (if so load it without error checking to save CPU cycles)
 		if (isset($config['signedHash']) && $this->loadSignedConfig($config) )
-			return true;
+			return $config;
 
 		//Process configuration
 		try {
@@ -1353,8 +1353,14 @@ class secureImageResizer {
 			if (isset($newSize['jpegOutputQuality']) && ($newSize['jpegOutputQuality']<0 || $newSize['jpegOutputQuality']>100))
 				throw new \Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'jpegOutputQuality' must be between 0 and 100. Given was: ".$newSize['jpegOutputQuality']);	
 
-			//TODO: watermark checking
-
+			//Check watermark
+			try {
+				$newWatermark=$this->_checkWatermark($size['watermark']);
+				$newSize['watermark']=$newWatermark;
+			} catch (\Exception $e){
+				throw new \Exception("Cannot add size. '".$newSize['id']."' ".$e->getMessage(), $e->getCode(), $e);
+			}
+			
 			//Discard any other elements and store the new path
 			$this->_sizes[$newSize['id']]=$newSize;
 
@@ -1364,6 +1370,11 @@ class secureImageResizer {
 		
 	}
 	
+	protected function _sanitizeWatermark($watermark){
+		
+	}
+
+
 	public function getSize($size){
 		if (isset($this->_sizes[$size])){
 			return $this->_sizes[$size];

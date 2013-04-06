@@ -18,29 +18,28 @@ require("SWDF_image_resizer.php");
 $size = @$_GET['size'];	//Requested output size
 $img  = @$_GET['img'];	//Path (relative to "base" defined in config) to image to be resized
 
+//Catch configuration errors
 try {
 	//Load the resizer
 	$resizer=new \SWDF\secureImageResizer();
 	
 	//Load the configuration (and save any enhancments that can be made to the file, back to it (set argumnet 3 to true))
-	if ($resizer->loadConfig("example_config2.json", true, true)){
+	$resizer->loadConfig("example_config2.json", true, true);
 	
-		try {
-			//Resize the requested image
-			$new_image = $resizer->resize($img, $size, "images/jpeg");
+	//Catch errors while resizing
+	try {
+		//Resize the requested image
+		$new_image = $resizer->resize($img, $size, "images/jpeg");
 
-			//Output the image to the user
-			$new_image->outputHttp();
-
-		//Catch errors while resizing
-		} catch (\Exception $e){
-
-			print "Sorry, your request couldn't be processed:\n";
-			print $e->getMessage();
-		}
-	} else {
-		print "Unable to load configuration file";
+		//Output the image to the user
+		$new_image->outputHttp();
+		
+	} catch (\Exception $e){
+		//TODO: setup error codes so can return correct http response
+		print "Sorry, your request couldn't be processed:\n";
+		print $e->getMessage();
 	}
+
 	
 //Catch configuration errors
 } catch (\Exception $e){
