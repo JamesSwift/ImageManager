@@ -599,5 +599,16 @@ function clean_image_cache($delete_fname=null, $force=false){
 	return false;
 }
 
+//Make backwards compatible with earlier version of PHP
+//This isn't a perfect test for whether a session is active or not, but 
+if (!function_exists('session_status')){
+    function session_active(){
+        return defined('SID');   
+    }
+} else {
+    function session_active(){
+        return (session_status() === 2);   
+    }        
+}
 
 ?>
