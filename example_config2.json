@@ -1,12 +1,11 @@
 {
-	"base":"G:/Projects/Programming/SWDF/SWDF_image_resizer/",
 	"enableCaching":true,
 	"cacheTime":2419200,
 	"defaultOutputFormat":"image/jpeg",
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"cachePath":"C:/Windows/TEMP/SWDF/imageCache/",
-	"signedHash":"5f1f55b8",
+	"signedHash":"dfc43ab6",
 	"sizes":{
 		"original":{
 			"id":"original",

@@ -12,7 +12,7 @@
  */
 
 //Load dependencies
-require("imageResizer.php");
+require_once("imageResizer.php");
 
 //Register GET variables
 $size = @$_GET['size'];	//Requested output size
@@ -23,8 +23,11 @@ try {
 	//Load the resizer
 	$resizer=new \swdf\SecureImageResizer();
 	
-	//Load the configuration (and save any enhancments that can be made to the file, back to it (set argumnet 3 to true))
-	$resizer->loadConfig("example_config2.json", true, true);
+	//Define the base path (all other paths are relative to this point)
+	$resizer->set("base", dirname(__FILE__) );
+	
+	//Load the configuration
+	$resizer->loadConfig("example_config2.json");
 	
 	//Catch errors while resizing
 	try {

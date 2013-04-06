@@ -963,7 +963,7 @@ class SecureImageResizer {
 		
 	}
 	
-	public function loadConfig($loadFrom, $clearOld=true, $saveChanges=false){
+	public function loadConfig($loadFrom, $clearOld=false, $saveChanges=true){
 		
 		//If they called this function with no config, just return null
 		if ($loadFrom===null) return null;
