@@ -6,8 +6,8 @@
  * This file creates a way to resize images by passing settings in a URL. 
  * Examples:
  * 
- * "example3.php?size=thumbnail&img=images/product.jpg"
- * "example3.php?size=watermarked_big3&img=images/photos/spain.png"
+ * "new_example.php?size=thumbnail&img=images/product.jpg"
+ * "new_example.php?size=watermarked_big3&img=images/photos/spain.png"
  * 
  */
 
@@ -27,7 +27,7 @@ try {
 	$resizer->set("base", dirname(__FILE__) );
 	
 	//Load the configuration
-	$resizer->loadConfig("example_config2.json");
+	$resizer->loadConfig("example_config.json");
 	
 	//Catch errors while resizing
 	try {
