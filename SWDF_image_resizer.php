@@ -1213,31 +1213,30 @@ class SecureImageResizer {
 			if (isset($path['path'])===false || !is_string($path['path']) || $path['path']==="" )
 				throw new Exception("Cannot add path. The passed array must contain a non-empty 'path' element.");
 
-			//Sanitize path
-			$newPath=$this->sanitizePath($path['path'],true);
+			//Create blank array for sanitized data
+			$newPath=&$newPaths[$path['path']];
 			
+			//Sanitize variables
+			$newPath['path']=$this->sanitizePath($path['path'],true);
+			if (isset($path['disableCaching']))
+				$newPath['disableCaching']=(bool)$path['disableCaching'];
 
 			//Check path doesn't already exist
-			if ($this->isPath($newPath) && $allowOverwrite!==true)
-				throw new Exception("Cannot add path '".$newPath."'. It already exists.");
+			if ($this->isPath($newPath['path']) && $allowOverwrite!==true)
+				throw new Exception("Cannot add path '".$newPath['path']."'. It already exists.");
 			
-			//Add basic data
-			$newPaths[$newPath]=array(
-				"path"=>$newPath,
-			);
-
 			//If allowSizes defined, remove any keys, convert to strings, and add it
 			if (isset($path['allowSizes']) && is_array($path['allowSizes']))
 				foreach($path['allowSizes'] as $size)
-					$newPaths[$newPath]['allowSizes'][]=(string)$size;
+					$newPath['allowSizes'][]=(string)$size;
 
 			//If denySizes defined, remove any keys, convert to string, and add it
 			if (isset($path['denySizes']) && is_array($path['denySizes']))
 				foreach($path['denySizes'] as $size)
-					$newPaths[$newPath]['denySizes'][]=(string)$size;
+					$newPath['denySizes'][]=(string)$size;
 
-			//Discard any other elements and store the new path
-			$this->_paths[$newPath]=$newPaths[$newPath];
+			//Store the new path
+			$this->_paths[$newPath['path']]=$newPath;
 		}
 		
 		//Returned the sanitized data
@@ -1352,7 +1351,8 @@ class SecureImageResizer {
 					$newSize['watermark']=$newWatermark;
 				}
 			} catch (Exception $e){
-				throw new Exception("Cannot add size. '".$newSize['id']."'. ".$e->getMessage(), $e->getCode(), $e);
+				//Tweak the message
+				throw new Exception("Cannot add size '".$newSize['id']."'. Misconfigured watermark array: \n".$e->getMessage(), $e->getCode(), $e);
 			}
 			
 			//Discard any other elements and store the new path

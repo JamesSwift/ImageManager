@@ -6,7 +6,7 @@
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"cachePath":"C:/Windows/TEMP/SWDF/imageCache/",
-	"signedHash":"8ca81ece",
+	"signedHash":"5f1f55b8",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -20,13 +20,15 @@
 			"outputFormat":"image/gif",
 			"watermark":{
 				"path":"images/watermark.png",
-				"opacity":80
+				"opacity":80,
+				"repeat":true
 			}
 		},
 		"2x":{
 			"id":"2x",
 			"method":"scale",
-			"scale":2
+			"scale":2,
+			"disableCaching":true
 		},
 		"200x300":{
 			"id":"200x300",
@@ -52,6 +54,10 @@
 				"original",
 				"2x"
 			]
+		},
+		"images/webcam/":{
+			"path":"images/webcam/",
+			"disableCaching":true
 		}
 	}
 }
