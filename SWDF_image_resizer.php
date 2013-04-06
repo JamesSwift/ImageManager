@@ -923,6 +923,10 @@ class secureImageResizer {
 	public function loadDefaultConfig(){
 		$this->_config=array(
 			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
+			"enableCaching"=>true,
+			"cacheTime"=>0,
+			"defaultWatermarkOpacity"=>50,
+			"defaultOutputFormat"=>"image/jpeg",
 			"defaultJpegQuality"=>90
 		);
 		$this->_paths=array();
@@ -987,7 +991,6 @@ class secureImageResizer {
 			
 			//Set the settings
 			foreach ($config as $name=>$setting){
-				//Filter out the paths and sizes
 				if ($name!=="paths" && $name!=="sizes")
 					$newConfig[$name] = $this->set($name,$setting);
 			}
@@ -1075,8 +1078,6 @@ class secureImageResizer {
 		}
 		
 		throw new \Exception("An unknown error occured and the settings could not be saved to file: ".$file, 6);
-		
-		
 	}
 	
 	public function set($setting, $value){
@@ -1146,9 +1147,15 @@ class secureImageResizer {
 			//Check value
 			if (in_array($value,$this->getAllowedOutputFormats())===false)
 				throw new \Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()));
+		
+		//Default output size
+		} else if ($settings==="defaultSize"){
+			//check type
+			if (gettype($value)!=="string")
+				throw new \Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting])."'";
 			
 		//Ignore signedHash
-		} else if ($setting=="signedHash"){
+		} else if ($setting==="signedHash"){
 			//Ignore me
 		
 		//Catch unknown settings
