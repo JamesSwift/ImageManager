@@ -18,17 +18,18 @@ require("SWDF_image_resizer.php");
 $size = @$_GET['size'];	//Requested output size
 $img  = @$_GET['img'];	//Path (relative to "base" defined in config) to image to be resized
 
-//Load resizer
 try {
 	//Load the resizer
 	$resizer=new \SWDF\secureImageResizer();
 	
-	//Load the configuration (and save any enhancments that can be made to the file, back to it)
+	//Load the configuration (and save any enhancments that can be made to the file, back to it (set argumnet 3 to true))
 	$resizer->loadConfig("example_config2.json", true, true);
 	
-	//Resize the requested image
 	try {
+		//Resize the requested image
 		$new_image = $resizer->resize($img, $size, "images/jpeg");
+		
+		//Output the image to the user
 		$new_image->outputHttp();
 	
 	//Catch errors while resizing
