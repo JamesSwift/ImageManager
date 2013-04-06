@@ -880,35 +880,30 @@ class SecureImageResizer {
 			
 		//Allow passing config straight through constructor
 		if ($config!==null){
-			//Rethrow any errors
-			try {
-				if ($this->loadConfig($config)===false){
-					throw new Exception("Unable to load passed config.");
-				}
-			} catch (Exception $e){
-				throw $e;
+			if ($this->loadConfig($config)===false){
+				throw new Exception("Unable to load passed config.");
 			}
 		}
 	}
 	
-	public function sanitizeFilePath($path, $removeLeading=false){
+	public function sanitizePath($path, $removeLeading=false, $addTrailing=true){
 
 		//Check we're dealing with a path
 		if (!isset($path) || !is_string($path) || $path==="")
 			throw new Exception("Cannot sanitize file-path. It must be a non-empty string.");
 		
 		//Add trailing slash
-		$path=$path."/";
+		if ($addTrailing===true) $path=$path."/";
 		
 		//Turn all slashes round the same way
 		$path=str_replace(Array("\\","/",'\\',"//"),"/",$path);
 		
 		//Remove redundant references to ./
-		$path=str_replace("/./","",$path);
+		$path=substr(str_replace("/./","/",$path."/"), 0, -1);
 
 		//Check path for directory traversing
-		if (strpos("/".$path, "/../")!==false)
-			throw new Exception("Cannot sanitize file path: '".$path['path']."'. It appears to contain an attempt at directory traversal which may be a security breach.");
+		if (strpos("/".$path."/", "/../")!==false)
+			throw new Exception("Cannot sanitize file path: '".$path."'. It appears to contain an attempt at directory traversal which may be a security breach.");
 
 		//Remove leading slash
 		if ($removeLeading===true && substr($path,0,1)==="/")
@@ -997,39 +992,33 @@ class SecureImageResizer {
 			return $config;
 
 		//Process configuration
-		try {
-			$newConfig=array();
-			
-			//Set the settings
-			foreach ($config as $name=>$setting){
-				if ($name!=="paths" && $name!=="sizes")
-					$newConfig[$name] = $this->set($name,$setting);
-			}
+		$newConfig=array();
 
-			//Call $this->addSize with all sizes as arguments
-			if (isset($config['sizes'])===true && is_array($config['sizes']))
-				$newConfig['sizes']=call_user_func_array(array($this, "addSize"), $config['sizes']);
-
-			//Call $this->addPath with all paths as arguments
-			if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0)
-				$newConfig['paths']=call_user_func_array(array($this, "addPath"), $config['paths']);
-			
-			//Check if we should save changes back to the file
-			if ($saveChanges===true && is_string($loadFrom)){
-				
-				//Sign this new config
-				$newConfig['signedHash'] = $this->_signConfig($newConfig);
-				
-				//write it back to disk
-				file_put_contents($loadFrom, json_indent(json_encode($newConfig)));
-			}
-
-			return $newConfig;
-			
-		} catch (Exception $e) {
-			//These are configuration errors, so just rethrow them so the developer can deal with them
-			throw $e;
+		//Set the settings
+		foreach ($config as $name=>$setting){
+			if ($name!=="paths" && $name!=="sizes")
+				$newConfig[$name] = $this->set($name,$setting);
 		}
+
+		//Call $this->addSize with all sizes as arguments
+		if (isset($config['sizes'])===true && is_array($config['sizes']))
+			$newConfig['sizes']=call_user_func_array(array($this, "addSize"), $config['sizes']);
+
+		//Call $this->addPath with all paths as arguments
+		if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0)
+			$newConfig['paths']=call_user_func_array(array($this, "addPath"), $config['paths']);
+
+		//Check if we should save changes back to the file
+		if ($saveChanges===true && is_string($loadFrom)){
+
+			//Sign this new config
+			$newConfig['signedHash'] = $this->_signConfig($newConfig);
+
+			//write it back to disk
+			file_put_contents($loadFrom, json_indent(json_encode($newConfig)));
+		}
+
+		return $newConfig;
 	}
 	
 	public function getConfig(){
@@ -1225,8 +1214,8 @@ class SecureImageResizer {
 				throw new Exception("Cannot add path. The passed array must contain a non-empty 'path' element.");
 
 			//Sanitize path
-			try { $newPath=$this->sanitizeFilePath($path['path'],true);
-			} catch (Exception $e){ throw $e; }
+			$newPath=$this->sanitizePath($path['path'],true);
+			
 
 			//Check path doesn't already exist
 			if ($this->isPath($newPath) && $allowOverwrite!==true)
@@ -1363,7 +1352,7 @@ class SecureImageResizer {
 					$newSize['watermark']=$newWatermark;
 				}
 			} catch (Exception $e){
-				throw new Exception("Cannot add size. '".$newSize['id']."' ".$e->getMessage(), $e->getCode(), $e);
+				throw new Exception("Cannot add size. '".$newSize['id']."'. ".$e->getMessage(), $e->getCode(), $e);
 			}
 			
 			//Discard any other elements and store the new path
@@ -1388,7 +1377,7 @@ class SecureImageResizer {
 			throw new Exception("No path specified for watermark image. Must be none empty string.");
 		
 		//Sanitize path
-		$newWatermark['path']=$this->sanitizeFilePath($watermark['path']);
+		$newWatermark['path']=$this->sanitizePath($watermark['path'], false, false);
 		
 		//Check it exists
 		if (!is_file($watermark['path']))
