@@ -614,7 +614,7 @@ class imageResizer {
 	private $height;
 	private $img=array();
 
-	public $compatible_mime_types=Array("image/jpeg","image/jp2","image/png","image/gif");
+	static $compatible_mime_types=Array("image/jpeg","image/jp2","image/png","image/gif");
 	public $quality;
 
 
@@ -869,6 +869,7 @@ class secureImageResizer {
 	private $_paths;
 	private $_sizes;
 	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
+	private $_allowedMethods = array("original","fit","fill","stretch","scale");
 		
 	public function __construct($config=null){
 		//Load default config
@@ -876,7 +877,14 @@ class secureImageResizer {
 			
 		//Allow passing config straight through constructor
 		if ($config!==null){
-			$this->loadConfig($config);
+			//Rethrow any errors
+			try {
+				if ($this->loadConfig($config)===false){
+					throw new \Exception("Unable to load passed config.");
+				}
+			} catch (\Exception $e){
+				throw $e;
+			}
 		}
 	}
 	
@@ -924,7 +932,7 @@ class secureImageResizer {
 		$this->_config=array(
 			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
 			"enableCaching"=>true,
-			"cacheTime"=>0,
+			"cacheTime"=>2419200, //28 days
 			"defaultWatermarkOpacity"=>50,
 			"defaultOutputFormat"=>"image/jpeg",
 			"defaultJpegQuality"=>90
@@ -1149,7 +1157,7 @@ class secureImageResizer {
 				throw new \Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()));
 		
 		//Default output size
-		} else if ($settings==="defaultSize"){
+		} else if ($setting==="defaultSize"){
 			//check type
 			if (gettype($value)!=="string")
 				throw new \Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting])."'";
@@ -1299,16 +1307,39 @@ class secureImageResizer {
 				throw new \Exception("Cannot add size. Paths must be non-empty arrays");
 
 			//Check required elements are there
-			if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||
+			if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||				
 				isset($size['method'])===false	|| $size['method']==="" || !is_string($size['method'])
 			){
-				if (isset($size['id'])){
+				if (isset($size['id']))
 					throw new \Exception("Cannot add size '".(string)$size['id']."'. The passed array must contain non-empty 'id' and 'method' elements.");
-				} else {
-					throw new \Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");						
-				}
+				
+				throw new \Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");						
 			}
 
+			//Sanitize data
+			if (isset($size['method']))	$size['method']	= strtolower($size['method']);
+			if (isset($size['width']))	$size['width']	= (int)$size['width'];
+			if (isset($size['height'])) 	$size['height']	= (int)$size['height'];
+			if (isset($size['scale']))	$size['scale']	= (float)$size['scale'];
+			
+			//Check id
+			if (preg_match("/[^0-9a-zA-Z_\-]/", $size['id'])!==0)
+				throw new \Exception("Cannot add size. '".$size['id']."'. The id element must contain only numbers, letters, underscores or dashes. ");	
+
+			//Check method exists
+			if (in_array($size['method'], $this->_allowedMethods)===false)
+				throw new \Exception("Cannot add size. '".$size['id']."'. It has an invalid method element. Valid methods are: ".implode(", ", $this->allowedMethods));	
+			
+			//Checks for methods "fit", "fill", "stretch"
+			if ($size['method']==="fit" || $size['method']==="fill" || $size['method']==="stretch")
+				if (!isset($size['width']) || !isset($size['height']) )
+					throw new \Exception("Cannot add size. '".$size['id']."'. Width and Height must be defined for method '".$size['method']."'");	
+			
+			//Checks for method "scale""
+			if ($size['method']==="scale")
+				if (!isset($size['scale']) || $size['scale']<=0 )
+					throw new \Exception("Cannot add size. '".$size['id']."'. Element 'scale' must be defined as a positive number when using method '".$size['method']."'");	
+						
 			//TODO: more checks
 			$newSizes[$size['id']]=array(
 				"id"=>$size['id'],
