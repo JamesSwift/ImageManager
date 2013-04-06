@@ -12,7 +12,7 @@
  */
 
 //Load dependencies
-require_once("imageResizer.php");
+require_once("ImageResizer.php");
 
 //Register GET variables
 $size = @$_GET['size'];	//Requested output size

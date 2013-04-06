@@ -17,11 +17,12 @@ $size=@$_GET['size'];
 $img=@$_GET['img'];
 
 //Load dependencies
-require("imageResizer.php");
-require("example_config.php");
+require_once("SWDF_image_resizer.php");
+require_once("ImageResizer.php");
+require_once("example_config.php");
 
 //Make resize request
-$result=\SWDF\image_resizer_request($img,$size,false);
+$result=\swdf\image_resizer_request($img,$size,false);
 
 //Handle returned data, mapping headers etc. and output image
 if (isset($result['status'])){
