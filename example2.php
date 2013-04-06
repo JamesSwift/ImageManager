@@ -15,7 +15,7 @@
  */
 
 //Load dependencies
-require("SWDF_image_resizer.php");
+require("imageResizer.php");
 
 //Register GET variables
 $size = @$_GET['size'];	//Requested output size
