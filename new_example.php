@@ -15,8 +15,8 @@
 require_once("ImageResizer.php");
 
 //Register GET variables
-$size = @$_GET['size'];	//Requested output size
-$img  = @$_GET['img'];	//Path (relative to "base" defined in config) to image to be resized
+$size = (isset($_GET['size'])) ? $_GET['size'] : null;	//Requested output size
+$img  = (isset($_GET['img'])) ? $_GET['img'] : null;	//Path (relative to "base" defined in config) to image to be resized
 
 //Catch configuration errors
 try {
