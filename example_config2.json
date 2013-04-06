@@ -6,7 +6,7 @@
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"cachePath":"C:\/Windows\/TEMP\/SWDF\/imageCache\/",
-	"signedHash":"341ca2bc",
+	"signedHash":"3e867077",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -17,7 +17,10 @@
 			"method":"fit",
 			"width":400,
 			"height":300,
-			"outputFormat":"image\/gif"
+			"outputFormat":"image\/gif",
+			"watermark":{
+				"path":"images\/watermark.png\/"
+			}
 		},
 		"2x":{
 			"id":"2x",

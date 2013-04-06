@@ -1358,8 +1358,10 @@ class SecureImageResizer {
 
 			//Check watermark
 			try {
-				$newWatermark=$this->_checkWatermark($size['watermark']);
-				$newSize['watermark']=$newWatermark;
+				if (isset($size['watermark'])){
+					$newWatermark=$this->_checkWatermark($size['watermark']);
+					$newSize['watermark']=$newWatermark;
+				}
 			} catch (Exception $e){
 				throw new Exception("Cannot add size. '".$newSize['id']."' ".$e->getMessage(), $e->getCode(), $e);
 			}
@@ -1373,8 +1375,45 @@ class SecureImageResizer {
 		
 	}
 	
-	protected function _sanitizeWatermark($watermark){
+	protected function _checkWatermark($watermark){
 		
+		$newWatermark=array();
+		
+		//Check we're dealing with something loosly resembling a watermark
+		if (!isset($watermark) || !is_array($watermark) || sizeof($watermark)===0)
+			return null;
+			
+		//Check for path
+		if (!isset($watermark['path']) && is_string($watermark['path']) && $watermark['path']!=="")
+			throw new Exception("No path specified for watermark image. Must be none empty string.");
+		
+		//Sanitize path
+		$newWatermark['path']=$this->sanitizeFilePath($watermark['path']);
+		
+		//Check it exists
+		if (!is_file($watermark['path']))
+			throw new Exception("Cannot find watermark image at path: ".$watermark['path']);
+		
+		//Sanitize other variables
+		if (isset($watermark['scale']))		$newWatermark['scale']	 = (float)$watermark['scale'];
+		if (isset($watermark['v']))		$newWatermark['v']	 = strtolower($watermark['v']);
+		if (isset($watermark['v']))		$newWatermark['v']	 = strtolower($watermark['v']);
+		if (isset($watermark['opacity']))	$newWatermark['opacity'] = (float)$watermark['opacity'];
+		if (isset($watermark['repeat']))	$newWatermark['repeat']	 = (bool)$watermark['repeat'];
+		
+		//Check v and h are valid (unless repeat=true
+		if (!isset($newWatermark['repeat']) || $newWatermark['repeat']!==true ){
+			if ( isset($newWatermark['v']) && ( in_array($newWatermark['v'], array("top","center","bottom"))===false) )
+				throw new Exception("Watermark element 'v' not correctly configured. Should be either: top, center or bottom.");
+			if ( isset($newWatermark['h']) && ( in_array($newWatermark['h'], array("left","center","right"))===false) )
+				throw new Exception("Watermark element 'h' not correctly configured. Should be either: left, center or right.");
+		}
+		
+		//Check opacity
+		if (isset($newWatermark['opacity']) && ( $newWatermark['opacity']<0 || $newWatermark['opacity']>100) )
+			throw new Exception("Watermark opacity not correctly configured. Should be between 0 and 100. '".$newWatermark['opacity']."' given.");
+		
+		return $newWatermark;
 	}
 
 
