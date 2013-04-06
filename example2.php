@@ -29,7 +29,7 @@ try {
 	 * 
 	 * You can pass configuration settings to the resizer in one of three ways:
 	 * 
-	 * 1. Pass them in an array or file to the constructor:		$resizer = new secureImageResizer(array | PATH_TO_JSON_FILE )
+	 * 1. Pass them in an array or file to the constructor:		$resizer = new SecureImageResizer(array | PATH_TO_JSON_FILE )
 	 * 2. Load them after initilizing with:				$resizer->loadConfig( array | PATH_TO_JSON_FILE )
 	 * 3. Set them one by one after initilizing:			$resizer->set( NAME, VALUE )
 	 * 
@@ -42,7 +42,7 @@ try {
 	 * We normally recommend storing your config in a seperate file as best
 	 * practice, but for simplicity it has been incorporated below:
 	 */
-	$resizer=new \SWDF\secureImageResizer();
+	$resizer=new \swdf\SecureImageResizer();
 
 	/**
 	 * Second, define the base and other settings.

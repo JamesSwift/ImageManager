@@ -25,7 +25,7 @@
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
-namespace SWDF;
+namespace swdf;
 
 
 
@@ -461,7 +461,7 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true && is_file($img_path)) {
 
 			//Load resizer class
-			$resizer=new imageResizer();
+			$resizer=new ImageResizer();
 
 			//Set JPEG quality
 			$resizer->quality=$_SWDF['settings']['images']['default_jpeg_quality'];
@@ -604,8 +604,11 @@ function clean_image_cache($delete_fname=null, $force=false){
 #############################################################################################################
 
 
+class Exception extends \Exception {
+	//Nothing to do here
+}
 
-class imageResizer {
+class ImageResizer {
 
 	private $source;
 	private $stream;
@@ -863,13 +866,13 @@ class imageResizer {
 }
 
 
-class secureImageResizer {
+class SecureImageResizer {
 	const   VERSION = "v0.3.0";
-	private $_config;
-	private $_paths;
-	private $_sizes;
-	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
-	private $_allowedMethods = array("original","fit","fill","stretch","scale");
+	protected $_config;
+	protected $_paths;
+	protected $_sizes;
+	protected $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
+	protected $_allowedMethods = array("original","fit","fill","stretch","scale");
 		
 	public function __construct($config=null){
 		//Load default config
@@ -880,9 +883,9 @@ class secureImageResizer {
 			//Rethrow any errors
 			try {
 				if ($this->loadConfig($config)===false){
-					throw new \Exception("Unable to load passed config.");
+					throw new Exception("Unable to load passed config.");
 				}
-			} catch (\Exception $e){
+			} catch (Exception $e){
 				throw $e;
 			}
 		}
@@ -892,7 +895,7 @@ class secureImageResizer {
 
 		//Check we're dealing with a path
 		if (!isset($path) || !is_string($path) || $path==="")
-			throw new \Exception("Cannot sanitize file-path. It must be a non-empty string.");
+			throw new Exception("Cannot sanitize file-path. It must be a non-empty string.");
 		
 		//Add trailing slash
 		$path=$path."/";
@@ -905,7 +908,7 @@ class secureImageResizer {
 
 		//Check path for directory traversing
 		if (strpos("/".$path, "/../")!==false)
-			throw new \Exception("Cannot sanitize file path: '".$path['path']."'. It appears to contain an attempt at directory traversal which may be a security breach.");
+			throw new Exception("Cannot sanitize file path: '".$path['path']."'. It appears to contain an attempt at directory traversal which may be a security breach.");
 
 		//Remove leading slash
 		if ($removeLeading===true && substr($path,0,1)==="/")
@@ -915,7 +918,7 @@ class secureImageResizer {
 	
 	}
 	
-	private function loadConfigFromFile($file){
+	protected function _loadConfigFromFile($file){
 		
 		//Does the file exist?
 		if (!is_file($file))
@@ -941,14 +944,14 @@ class secureImageResizer {
 		$this->_sizes=array(); 	
 	}
 	
-	private function loadSignedConfig($config){
+	protected function _loadSignedConfig($config){
 		
 		//Check we're dealing with a signed config
 		if (!isset($config['signedHash']))
 			return false;
 
 		//Recheck hash to see if it is valid
-		if ($this->signConfig($config)!==$config['signedHash'])
+		if ($this->_signConfig($config)!==$config['signedHash'])
 			return false;
 
 		//Load the signed (previously checked) paths and sizes
@@ -976,21 +979,21 @@ class secureImageResizer {
 			
 		//If not, try to load from JSON file
 		} else if (is_string($loadFrom) && is_file($loadFrom)) {
-			$config=$this->loadConfigFromFile($loadFrom);
+			$config=$this->_loadConfigFromFile($loadFrom);
 			if ($config===false)
-				throw new \Exception("Unable to parse config file: ".$loadFrom);
+				throw new Exception("Unable to parse config file: ".$loadFrom);
 		}
 		
 		//Were we able to load $config from somewhere?
 		if (!isset($config)) 
-			throw new \Exception("Unable to load configuration. Please pass a config array or a valid absolute path to a JSON file.");
+			throw new Exception("Unable to load configuration. Please pass a config array or a valid absolute path to a JSON file.");
 		
 		//Reset the class if requested
 		if ($clearOld===true) 
 			$this->loadDefaultConfig();
 		
 		//Has this configuration been signed previously? (if so load it without error checking to save CPU cycles)
-		if (isset($config['signedHash']) && $this->loadSignedConfig($config) )
+		if (isset($config['signedHash']) && $this->_loadSignedConfig($config) )
 			return $config;
 
 		//Process configuration
@@ -1015,7 +1018,7 @@ class secureImageResizer {
 			if ($saveChanges===true && is_string($loadFrom)){
 				
 				//Sign this new config
-				$newConfig['signedHash'] = $this->signConfig($newConfig);
+				$newConfig['signedHash'] = $this->_signConfig($newConfig);
 				
 				//write it back to disk
 				file_put_contents($loadFrom, json_indent(json_encode($newConfig)));
@@ -1023,7 +1026,7 @@ class secureImageResizer {
 
 			return $newConfig;
 			
-		} catch (\Exception $e) {
+		} catch (Exception $e) {
 			//These are configuration errors, so just rethrow them so the developer can deal with them
 			throw $e;
 		}
@@ -1046,13 +1049,13 @@ class secureImageResizer {
 		$config = $this->getConfig();
 
 		//Sign the config
-		$config['signedHash'] = $this->signConfig($config);
+		$config['signedHash'] = $this->_signConfig($config);
 		
 		//Sign and return it
 		return $config;
 	}
 	
-	protected function signConfig($config){
+	protected function _signConfig($config){
 		
 		//Check the config array actually exists
 		if (!(isset($config) && is_array($config)))
@@ -1074,7 +1077,7 @@ class secureImageResizer {
 	public function saveConfig($file, $overwrite=false, $format="json", $varName="SWDF_secureImageResizer_config_array"){
 		
 		if ($overwrite===false && is_file($file)) 
-			throw new \Exception("Unable to save settings. File '".$file."' already exists, and method is in non-overwrite mode.", 5);
+			throw new Exception("Unable to save settings. File '".$file."' already exists, and method is in non-overwrite mode.", 5);
 		
 		if ($format==="json"){
 			if (file_put_contents($file, json_indent(json_encode($this->getSignedConfig())) )!==false )
@@ -1085,7 +1088,7 @@ class secureImageResizer {
 				return true;
 		}
 		
-		throw new \Exception("An unknown error occured and the settings could not be saved to file: ".$file, 6);
+		throw new Exception("An unknown error occured and the settings could not be saved to file: ".$file, 6);
 	}
 	
 	public function set($setting, $value){
@@ -1096,14 +1099,14 @@ class secureImageResizer {
 		if ($setting==="base"){
 			//Check type
 			if (is_string($value)!==true || $value==="")
-				throw new \Exception("Cannot set '".$setting."'. Must be non-null string.");
+				throw new Exception("Cannot set '".$setting."'. Must be non-null string.");
 			
 			//Use correct slash and add trailing slash
 			$value=str_replace(Array('\\',"\\","//"),"/",$value."/");
 			
 			//Check directory exists
 			if (is_dir($value)===false)	
-				throw new \Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.");
+				throw new Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.");
 			
 			
 			
@@ -1111,7 +1114,7 @@ class secureImageResizer {
 		} else if ($setting==="cachePath"){
 			//Check type
 			if (is_string($value)!==true || $value==="")
-				throw new \Exception("Cannot set '".$setting."'. Must be non-null string.");
+				throw new Exception("Cannot set '".$setting."'. Must be non-null string.");
 			
 			//Use correct slash and add trailing slash
 			$value=str_replace(Array('\\',"\\","//"),"/",$value."/");
@@ -1119,14 +1122,14 @@ class secureImageResizer {
 			//Check directory exists (and create it if it doesn't)
 			if (is_dir($value)===false)
 				if (!mkdir($value, 0777, true) || is_dir($value)===false) 
-					throw new \Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.");
+					throw new Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.");
 			
 				
 		//Enable Caching
 		} else if ($setting==="enableCaching"){
 			//Check type
 			if (is_bool($value)===false)
-				throw new \Exception("Cannot set '".$setting."'. Must be of type boolean. Type give is ".gettype($value));
+				throw new Exception("Cannot set '".$setting."'. Must be of type boolean. Type give is ".gettype($value));
 			
 			
 		//Cache Time - maximum age of cache files
@@ -1138,29 +1141,29 @@ class secureImageResizer {
 		} else if ($setting==="defaultJpegQuality"){
 			$value=(int)$value;
 			if ($value<0 || $value>100)
-				throw new \Exception("Cannot set '".$setting."'. Must be between 0 and 100");
+				throw new Exception("Cannot set '".$setting."'. Must be between 0 and 100");
 		
 		//Default watermark opacity
 		} else if ($setting==="defaultWatermarkOpacity"){
 			$value=(int)$value;
 			if ($value<0 || $value>100)
-				throw new \Exception("Cannot set '".$setting."'. Must be between 0 and 100");
+				throw new Exception("Cannot set '".$setting."'. Must be between 0 and 100");
 		
 		//Default output format
 		} else if ($setting==="defaultOutputFormat"){
 			//Check type
 			if (gettype($value)!=="string")
-				throw new \Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting])."'";
+				throw new Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting])."'";
 			
 			//Check value
 			if (in_array($value,$this->getAllowedOutputFormats())===false)
-				throw new \Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()));
+				throw new Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()));
 		
 		//Default output size
 		} else if ($setting==="defaultSize"){
 			//check type
 			if (gettype($value)!=="string")
-				throw new \Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting])."'";
+				throw new Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting])."'";
 			
 		//Ignore signedHash
 		} else if ($setting==="signedHash"){
@@ -1168,7 +1171,7 @@ class secureImageResizer {
 		
 		//Catch unknown settings
 		} else {
-			throw new \Exception("Cannot set '".$setting."'. Specified setting doesn't exist.");
+			throw new Exception("Cannot set '".$setting."'. Specified setting doesn't exist.");
 		}
 		
 		//Store the verfied setting
@@ -1205,7 +1208,7 @@ class secureImageResizer {
 		
 		//Check we're dealing with an non-empty array
 		if (!isset($paths) || !is_array($paths) || sizeof($paths)<1)
-			throw new \Exception("Cannot add path(s). You must pass one or more non-empty arrays as arguments to this method.");
+			throw new Exception("Cannot add path(s). You must pass one or more non-empty arrays as arguments to this method.");
 		
 		//Create blank array to hold sanitized data
 		$newPaths=array();
@@ -1215,19 +1218,19 @@ class secureImageResizer {
 
 			//Check type
 			if (!is_array($path) || sizeof($path)===0)
-				throw new \Exception("Cannot add path. Paths must be non-empty arrays");
+				throw new Exception("Cannot add path. Paths must be non-empty arrays");
 
 			//Check required elements are there
 			if (isset($path['path'])===false || !is_string($path['path']) || $path['path']==="" )
-				throw new \Exception("Cannot add path. The passed array must contain a non-empty 'path' element.");
+				throw new Exception("Cannot add path. The passed array must contain a non-empty 'path' element.");
 
 			//Sanitize path
 			try { $newPath=$this->sanitizeFilePath($path['path'],true);
-			} catch (\Exception $e){ throw $e; }
+			} catch (Exception $e){ throw $e; }
 
 			//Check path doesn't already exist
 			if ($this->isPath($newPath) && $allowOverwrite!==true)
-				throw new \Exception("Cannot add path '".$newPath."'. It already exists.");
+				throw new Exception("Cannot add path '".$newPath."'. It already exists.");
 			
 			//Add basic data
 			$newPaths[$newPath]=array(
@@ -1292,7 +1295,7 @@ class secureImageResizer {
 
 		//Check we're dealing with an array
 		if (!isset($sizes) || !is_array($sizes) || sizeof($sizes)<1)
-			throw new \Exception("Cannot add size(s). You must pass one or more non-empty arrays to this method.");
+			throw new Exception("Cannot add size(s). You must pass one or more non-empty arrays to this method.");
 
 		//Create array to hold sanitized data
 		$newSizes=array();
@@ -1302,16 +1305,16 @@ class secureImageResizer {
 
 			//Check type
 			if (!is_array($size) || sizeof($size)===0)
-				throw new \Exception("Cannot add size. Paths must be non-empty arrays");
+				throw new Exception("Cannot add size. Paths must be non-empty arrays");
 
 			//Check required elements are there
 			if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||				
 				isset($size['method'])===false	|| $size['method']==="" || !is_string($size['method'])
 			){
 				if (isset($size['id']))
-					throw new \Exception("Cannot add size '".(string)$size['id']."'. The passed array must contain non-empty 'id' and 'method' elements.");
+					throw new Exception("Cannot add size '".(string)$size['id']."'. The passed array must contain non-empty 'id' and 'method' elements.");
 				
-				throw new \Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");						
+				throw new Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.");						
 			}
 			
 			//Create array to hold sanitized data
@@ -1329,36 +1332,36 @@ class secureImageResizer {
 			
 			//Check id
 			if (preg_match("/[^0-9a-zA-Z_\-]/", $size['id'])!==0)
-				throw new \Exception("Cannot add size. '".$size['id']."'. The id element must contain only numbers, letters, underscores or dashes. ");	
+				throw new Exception("Cannot add size. '".$size['id']."'. The id element must contain only numbers, letters, underscores or dashes. ");	
 
 			//Check method exists
 			if (in_array($newSize['method'], $this->_allowedMethods)===false)
-				throw new \Exception("Cannot add size. '".$newSize['id']."'. It has an invalid method element. Valid methods are: ".implode(", ", $this->allowedMethods));	
+				throw new Exception("Cannot add size. '".$newSize['id']."'. It has an invalid method element. Valid methods are: ".implode(", ", $this->allowedMethods));	
 			
 			//Checks for methods "fit", "fill", "stretch"
 			if ($newSize['method']==="fit" || $newSize['method']==="fill" || $newSize['method']==="stretch")
 				if (!isset($newSize['width']) || !isset($newSize['height']) )
-					throw new \Exception("Cannot add size. '".$newSize['id']."'. Width and Height must be defined for method '".$newSize['method']."'");	
+					throw new Exception("Cannot add size. '".$newSize['id']."'. Width and Height must be defined for method '".$newSize['method']."'");	
 			
 			//Checks for method "scale""
 			if ($newSize['method']==="scale")
 				if (!isset($newSize['scale']) || $newSize['scale']<=0 )
-					throw new \Exception("Cannot add size. '".$newSize['id']."'. Element 'scale' must be defined as a positive number when using method '".$newSize['method']."'");	
+					throw new Exception("Cannot add size. '".$newSize['id']."'. Element 'scale' must be defined as a positive number when using method '".$newSize['method']."'");	
 				
 			//Check output format
 			if (isset($newSize['outputFormat']) && in_array($newSize['outputFormat'], $this->_allowedOutputFormats)===false)
-				throw new \Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'outputFormat' must be one of: ".implode(", ",$this->_allowedOutputFormats).". Given output was: ".$newSize['outputFormat']);	
+				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'outputFormat' must be one of: ".implode(", ",$this->_allowedOutputFormats).". Given output was: ".$newSize['outputFormat']);	
 
 			//Check quality
 			if (isset($newSize['jpegOutputQuality']) && ($newSize['jpegOutputQuality']<0 || $newSize['jpegOutputQuality']>100))
-				throw new \Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'jpegOutputQuality' must be between 0 and 100. Given was: ".$newSize['jpegOutputQuality']);	
+				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'jpegOutputQuality' must be between 0 and 100. Given was: ".$newSize['jpegOutputQuality']);	
 
 			//Check watermark
 			try {
 				$newWatermark=$this->_checkWatermark($size['watermark']);
 				$newSize['watermark']=$newWatermark;
-			} catch (\Exception $e){
-				throw new \Exception("Cannot add size. '".$newSize['id']."' ".$e->getMessage(), $e->getCode(), $e);
+			} catch (Exception $e){
+				throw new Exception("Cannot add size. '".$newSize['id']."' ".$e->getMessage(), $e->getCode(), $e);
 			}
 			
 			//Discard any other elements and store the new path
