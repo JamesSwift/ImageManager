@@ -1021,7 +1021,7 @@ class secureImageResizer {
 				file_put_contents($loadFrom, json_indent(json_encode($newConfig)));
 			}
 
-			return true;
+			return $newConfig;
 			
 		} catch (\Exception $e) {
 			//These are configuration errors, so just rethrow them so the developer can deal with them
