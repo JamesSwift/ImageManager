@@ -11,14 +11,14 @@
  * 
  */
 
-//Load dependencies
+//Load dependencies (approx 2ms)
 require_once("ImageResizer.php");
 
 //Register GET variables
 $size = (isset($_GET['size'])) ? $_GET['size'] : null;	//Requested output size
 $img  = (isset($_GET['img'])) ? $_GET['img'] : null;	//Path (relative to "base" defined in config) to image to be resized
 
-//Catch configuration errors
+//Catch configuration errors (approx 0.4ms)
 try {
 	//Load the resizer
 	$resizer=new \swdf\SecureImageResizer();
