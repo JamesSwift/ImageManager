@@ -872,6 +872,7 @@ class SecureImageResizer {
 		//Sanitize image path
 		
 		//Check image exists
+		$this->getApplicablePath($img);
 		
 		//Find which path rule applies
 		
@@ -884,6 +885,9 @@ class SecureImageResizer {
 		return true;
 	}
 	
+	public function getApplicablePath($img){
+		return array();
+	}
 }
 
 class resizedImage {
