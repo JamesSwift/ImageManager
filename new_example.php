@@ -39,7 +39,7 @@ try {
 		
 	} catch (\Exception $e){
 		//TODO: setup error codes so can return correct http response
-		print "Sorry, your request couldn't be processed:\n";
+		print "Sorry, your request couldn't be processed:<br/>";
 		print $e->getMessage();
 	}
 

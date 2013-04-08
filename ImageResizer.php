@@ -866,10 +866,37 @@ class SecureImageResizer {
 		return new resizedImage(); 
 	}
 	
-	public function validateResizeRequest($img, $size=null){
-		//Check size, load default if not specified
+	public function validateResizeRequest($img, $requestedSize=null){
+		
+		//Check "base" defined
+		if (!isset($this->_config['base']))
+			throw new Exception("The base path hasn't been configured. Please configure it and try again. For help, consult the documentation.", 500);
+		
+		//If no size specified, load default size
+		if ($requestedSize===null || !is_string($requestedSize))
+			if (isset($this->_config['defaultSize']))
+				$requestedSize=$this->_config['defaultSize'];
+			else 
+				throw new Exception("No size specified, and no default size defined. Unable to validate request.", 404);
+			
+		
+		//Check size exists
+		$size=$this->getSize($requestedSize);
+		if (!isset($size) || !is_array($size) || sizeof($size)<=0)
+			throw new Exception("The size you requested ('".$size."') hasn't been defined. Unable to validate request.", 404);
+		
+		//Check image defined
+		if (!isset($img) || !is_string($img) || $img==="")
+			throw new Exception("Please specify an image to resize.", 404);
 		
 		//Sanitize image path
+		$img=$this->sanitizePath($img, true);
+		
+		//Check image exists
+		if (!is_file($this->_config['base'].$img))
+			throw new Exception("The image you requested could not be located. Please make sure it is specified relative to the base path you configured earlier.", 404);
+			
+
 		
 		//Check image exists
 		$this->getApplicablePath($img);
