@@ -313,7 +313,7 @@ class SecureImageResizer {
 		}
 	}
 	
-	public function sanitizePath($path, $removeLeading=false, $addTrailing=true){
+	public function sanitizePath($path, $removeLeading=false, $addTrailing=false){
 
 		//Check we're dealing with a path
 		if (!isset($path) || !is_string($path) || $path==="")
@@ -366,7 +366,7 @@ class SecureImageResizer {
 		$this->_sizes=array(); 	
 	}
 	
-	protected function _loadSignedConfig($config){
+	protected function _loadSignedConfig($config, $clearOld=false){
 		
 		//Check we're dealing with a signed config
 		if (!isset($config['signedHash']))
@@ -377,14 +377,14 @@ class SecureImageResizer {
 			return false;
 
 		//Load the signed (previously checked) paths and sizes
-		$this->_sizes=$config['sizes'];
-		$this->_paths=$config['paths'];
+		$this->_sizes=$config['sizes']+$this->_sizes;
+		$this->_paths=$config['paths']+$this->_paths;
 
 		//Unset value we don't want in our $this->_config array;
 		unset($config['paths'],$config['sizes'],$config['signedHash']);
 		
 		//Load the signed config settings
-		$this->_config=$config;
+		$this->_config=$config+$this->_config;
 
 		return true;
 		
@@ -409,7 +409,7 @@ class SecureImageResizer {
 		//Were we able to load $config from somewhere?
 		if (!isset($config)) 
 			throw new Exception("Unable to load configuration. Please pass a config array or a valid absolute path to a JSON file.");
-		
+
 		//Reset the class if requested
 		if ($clearOld===true) 
 			$this->loadDefaultConfig();
@@ -518,7 +518,7 @@ class SecureImageResizer {
 				throw new Exception("Cannot set '".$setting."'. Must be non-null string.");
 			
 			//Use correct slash and add trailing slash
-			$value=str_replace(Array('\\',"\\","//"),"/",$value."/");
+			$value=$this->sanitizePath($value, false, true);
 			
 			//Check directory exists
 			if (is_dir($value)===false)	
@@ -533,7 +533,7 @@ class SecureImageResizer {
 				throw new Exception("Cannot set '".$setting."'. Must be non-null string.");
 			
 			//Use correct slash and add trailing slash
-			$value=str_replace(Array('\\',"\\","//"),"/",$value."/");
+			$value=$this->sanitizePath($value, false, true);
 			
 			//Check directory exists (and create it if it doesn't)
 			if (is_dir($value)===false)
@@ -644,7 +644,7 @@ class SecureImageResizer {
 			$newPath=&$newPaths[$path['path']];
 			
 			//Sanitize variables
-			$newPath['path']=$this->sanitizePath($path['path'],true);
+			$newPath['path']=$this->sanitizePath($path['path'],true,true);
 			if (isset($path['disableCaching']))
 				$newPath['disableCaching']=(bool)$path['disableCaching'];
 
@@ -804,7 +804,7 @@ class SecureImageResizer {
 			throw new Exception("No path specified for watermark image. Must be none empty string.");
 		
 		//Sanitize path
-		$newWatermark['path']=$this->sanitizePath($watermark['path'], false, false);
+		$newWatermark['path']=$this->sanitizePath($watermark['path']);
 		
 		//Check it exists
 		if (!is_file($watermark['path']))
@@ -890,7 +890,7 @@ class SecureImageResizer {
 			throw new Exception("Please specify an image to resize.", 404);
 		
 		//Sanitize image path
-		$img=$this->sanitizePath($img, true);
+		$img=$this->sanitizePath($img,true);
 		
 		//Check image exists
 		if (!is_file($this->_config['base'].$img))

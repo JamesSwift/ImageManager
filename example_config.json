@@ -4,8 +4,8 @@
 	"defaultOutputFormat":"image/jpeg",
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
-	"cachePath":"C:/Windows/TEMP/SWDF/imageCache/",
-	"signedHash":"dfc43ab6",
+	"defaultSize":"original",
+	"signedHash":"f755e608",
 	"sizes":{
 		"original":{
 			"id":"original",
