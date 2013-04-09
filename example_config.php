@@ -102,14 +102,14 @@
 	$_SWDF['settings']['images']['sizes']['1']=Array(
 		"id"=>1,
 		"method"=>"fit",
-		"width"=>400,
-		"height"=>800,
+		"width"=>800,
+		"height"=>600,
 		"watermark"=>Array(
 			"path"=>$_SWDF['paths']['root']."images/watermark.png",
-			"scale"=>1.5,
+			"scale"=>1,
 			"opacity"=>40,
 			"repeat"=>true
-		),
+		)
 	);
 	
 	//Size 2 - Scales the image by 2x

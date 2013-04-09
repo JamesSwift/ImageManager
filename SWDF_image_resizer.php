@@ -480,7 +480,7 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 				if (isset($size['watermark']['opacity']) && ctype_digit(isset($size['watermark']['opacity']))){
 					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
 				}
-				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],@$size['watermark']['opacity'],@$size['watermark']['scale'],@$size['watermark']['repeat'],50,50);
+				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],@$size['watermark']['opacity'],@$size['watermark']['scale'],@$size['watermark']['repeat'],5,5);
 			}
 
 			//Render resized image

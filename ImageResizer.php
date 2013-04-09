@@ -48,20 +48,6 @@ class ImageResizer {
 	public $quality;
 
 
-	public function imagecopymerge_alpha($dst_im, $src_im, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h, $pct){ 
-	   // creating a cut resource 
-	   $cut = imagecreatetruecolor($src_w, $src_h); 
-
-	   // copying relevant section from background to the cut resource 
-	   imagecopy($cut, $dst_im, 0, 0, $dst_x, $dst_y, $src_w, $src_h); 
-
-	   // copying relevant section from watermark to the cut resource 
-	   imagecopy($cut, $src_im, 0, 0, $src_x, $src_y, $src_w, $src_h); 
-
-	   // insert cut resource to destination image 
-	   imagecopymerge($dst_im, $cut, $dst_x, $dst_y, 0, 0, $src_w, $src_h, $pct); 
-	} 		
-
 	public function load_image($source,$id="main"){
 		if (is_file($source)){
 			$properties=getimagesize($source);
@@ -83,7 +69,7 @@ class ImageResizer {
 						}
 					}
 
-					imagealphablending($this->img[$id]['stream'], false);
+					imagealphablending($this->img[$id]['stream'], true);
 					imagesavealpha($this->img[$id]['stream'], true);
 
 					$this->img[$id]['source']=$source;
@@ -100,10 +86,11 @@ class ImageResizer {
 	}
 
 	public function resize($method,$n_width=null,$n_height=null,$scale=null,$img_id="main"){
+		
 		if ($method==="original"){
 			return true;
 		} else if ($method==="fit"){
-
+			
 			if ($this->img[$img_id]['width']>=$this->img[$img_id]['height']){
 				$scale=$n_width/$this->img[$img_id]['width'];
 				if ($scale*$this->img[$img_id]['height']>$n_height){
@@ -121,7 +108,12 @@ class ImageResizer {
 
 			//Create blank image
 			$this->img['temp']['stream']=imagecreatetruecolor($n_width,$n_height);
-			imagealphablending($this->img['temp']['stream'], false);
+			
+			//Make background transparent
+			imagefill($this->img['temp']['stream'], 0, 0, 2130706432);
+			
+			//Allow alpha to be used
+			imagealphablending($this->img['temp']['stream'], true);
 			imagesavealpha($this->img['temp']['stream'], true);
 
 			//resize image
@@ -137,7 +129,11 @@ class ImageResizer {
 		} else if ($method==="fill"){
 			//Create blank image
 			$this->img['temp']['stream']=imagecreatetruecolor($n_width,$n_height);
-			imagealphablending($this->img['temp']['stream'], false);
+			
+			//Make background transparent
+			imagefill($this->img['temp']['stream'], 0, 0, 2130706432);
+			
+			//imagealphablending($this->img['temp']['stream'], true);
 			imagesavealpha($this->img['temp']['stream'], true);
 
 			//Determine scale
@@ -171,7 +167,11 @@ class ImageResizer {
 
 		} else if ($method==="stretch"){
 			$this->img['temp']['stream']=imagecreatetruecolor($n_width,$n_height);
-			imagealphablending($this->img['temp']['stream'], false);
+			
+			//Make background transparent
+			imagefill($this->img['temp']['stream'], 0, 0, 2130706432);
+			
+			//imagealphablending($this->img['temp']['stream'], true);
 			imagesavealpha($this->img['temp']['stream'], true);
 
 			if (imagecopyresampled($this->img['temp']['stream'], $this->img[$img_id]['stream'], 0, 0, 0, 0, $n_width, $n_height, $this->img[$img_id]['width'], $this->img[$img_id]['height'])){
@@ -185,7 +185,9 @@ class ImageResizer {
 			$n_height = $this->img[$img_id]['height']*$scale;
 
 			$this->img['temp']['stream']=imagecreatetruecolor($n_width, $n_height);
-			imagealphablending($this->img['temp']['stream'], false);
+			//Make background transparent
+			imagefill($this->img['temp']['stream'], 0, 0, 2130706432);
+			//imagealphablending($this->img['temp']['stream'], true);
 			imagesavealpha($this->img['temp']['stream'], true);
 
 			if (imagecopyresampled($this->img['temp']['stream'], $this->img[$img_id]['stream'], 0, 0, 0, 0, $this->img[$img_id]['width']*$scale, $this->img[$img_id]['height']*$scale, $this->img[$img_id]['width'], $this->img[$img_id]['height'])){				
@@ -207,44 +209,60 @@ class ImageResizer {
 
 			//Repeat the watermark in a pattern?
 			if ($repeat==false){
+				//Default center
+				$h_pos=($this->img['main']['width']/2)-($this->img['wm']['width']/2);
+				
 				if ($h=="left"){ $h_pos=0; }
-				if ($h=="center"){ $h_pos=($this->img['main']['width']/2)-($this->img['wm']['width']/2); }
 				if ($h=="right"){ $h_pos=$this->img['main']['width']-$this->img['wm']['width']; }
 
+				//Default center
+				$v_pos=($this->img['main']['height']/2)-($this->img['wm']['height']/2);
 				if ($v=="top"){ $v_pos=0; }
-				if ($v=="center"){ $v_pos=($this->img['main']['height']/2)-($this->img['wm']['height']/2); }
 				if ($v=="bottom"){ $v_pos=$this->img['main']['height']-$this->img['wm']['height']; }
 
+				//Merge the watermark onto the background
+				imagecopy(	$this->img['main']['stream'],
+						$this->img['wm']['stream'],
+						$h_pos,
+						$v_pos,
+						0,
+						0,
+						$this->img['wm']['width'],
+						$this->img['wm']['height']
+				);
 
-				if ($this->imagecopymerge_alpha(	
-											$this->img['main']['stream'], $this->img['wm']['stream'],
-											$h_pos,$v_pos,
-											0, 0, 
-											$this->img['wm']['width'], $this->img['wm']['height'],
-											$opacity
-				)){
-					return true;
-				}
+				return true;
+				
 			} else {
-				$x=$xpad;$i=0;$y=0;
-				while ($x<$this->img['main']['width'] || $y<$this->img['main']['height']){
-					$this->imagecopymerge_alpha(	$this->img['main']['stream'], $this->img['wm']['stream'],
-												$x,$y,
-												0, 0, 
-												$this->img['wm']['width'], $this->img['wm']['height'],
-												$opacity
+				//Turn percentages into decimal
+				$xpad=round( ($xpad/100)*$this->img['main']['width'] );
+				$ypad=round( ($ypad/100)*$this->img['main']['height'] );
+				
+				$x=$xpad;$y=$ypad;$i=0;
+				while ($x<$this->img['main']['width'] && $y<$this->img['main']['height'] ){
+					//Place a watermark
+					imagecopy(	$this->img['main']['stream'],
+							$this->img['wm']['stream'],
+							$x,
+							$y,
+							0,
+							0,
+							$this->img['wm']['width'],
+							$this->img['wm']['height']
 					);
-					$i+=($this->img['wm']['width']/2);
-					if ($i>=($this->img['main']['width'])){
-						$i=0;
-					}
-					if ($x<$this->img['main']['width']){
-						$x=$x+$this->img['wm']['width']+$xpad;
-					} else {
-						$y=$y+$this->img['wm']['height']+$ypad;
-						$x=-$i;
+					
+					//Walk it right one step
+					$x+=$this->img['wm']['width']+$xpad;
+					
+					//Move down to a new line
+					if ($x>=$this->img['main']['width']){
+						$y+=($this->img['wm']['height']+$ypad);
+						$i++;
+						//Offset the new line
+						$x=0-round( ($i%3)*(($this->img['wm']['width']+$xpad)/3) );
 					}
 				}
+								
 			}
 		}
 		return false;
@@ -255,6 +273,8 @@ class ImageResizer {
 			$output_type=$this->img['main']['type'];
 		}
 
+		imageinterlace($this->img['main']['stream'], true);
+		
 		//Start a new buffer
 		ob_start();
 
