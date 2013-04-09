@@ -63,34 +63,37 @@ class ImageResizer {
 
 		//find the most opaque pixel in the image (the one with the smallest alpha value)
 		$minalpha = 127;
-		for ($x = 0; $x < $w; $x++)
+		for ($x = 0; $x < $w; $x++) {
 			for ($y = 0; $y < $h; $y++) {
 				$alpha = ( imagecolorat($img, $x, $y) >> 24 ) & 0xFF;
-				if ($alpha < $minalpha) {
+				if ($alpha < $minalpha)
 					$minalpha = $alpha;
-				}
 			}
+		}
 
 		//loop through image pixels and modify alpha for each
 		for ($x = 0; $x < $w; $x++) {
 			for ($y = 0; $y < $h; $y++) {
 				//get current alpha value (represents the TANSPARENCY!)
 				$colorxy = imagecolorat($img, $x, $y);
-				$alpha = ( $colorxy >> 24 ) & 0xFF;
+				$colors=imagecolorsforindex($img, $colorxy);
+				$alpha=&$colors['alpha'];
+				
 				//calculate new alpha
-				if ($minalpha !== 127) {
-					$alpha = 127 + 127 * $opacity * ( $alpha - 127 ) / ( 127 - $minalpha );
+				if ($minalpha !== 127){
+					$colors['alpha'] = 127 + ( ( (127 * $opacity) * ( $colors['alpha'] - 127 ) ) / ( 127 - $minalpha ) );
 				} else {
-					$alpha += 127 * $opacity;
+					$colors['alpha'] += 127 * $opacity;
 				}
+				
 				//get the color index with new alpha
-				$alphacolorxy = imagecolorallocatealpha($img, ( $colorxy >> 16 ) & 0xFF, ( $colorxy >> 8 ) & 0xFF, $colorxy & 0xFF, $alpha);
+				$newcolorxy = imagecolorallocatealpha($img, $colors['red'],$colors['green'], $colors['blue'], $colors['alpha']);
+				
 				//set pixel with the new color + opacity
-				if (!imagesetpixel($img, $x, $y, $alphacolorxy)) {
-					return false;
-				}
+				imagesetpixel($img, $x, $y, $newcolorxy);
 			}
 		}
+		
 		return true;
 	}
 
