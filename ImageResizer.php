@@ -47,6 +47,52 @@ class ImageResizer {
 	private $compatible_mime_types=Array("image/jpeg","image/jp2","image/png","image/gif");
 	public $quality;
 
+	
+	public function filter_opacity($img_name, $opacity=100) {
+
+		
+		$img=&$this->img[$img_name]['stream'];
+		$opacity /= 100;
+
+		//get image width and height
+		$w = imagesx($img);
+		$h = imagesy($img);
+
+		//turn alpha blending off
+		imagealphablending($img, false);
+
+		//find the most opaque pixel in the image (the one with the smallest alpha value)
+		$minalpha = 127;
+		for ($x = 0; $x < $w; $x++)
+			for ($y = 0; $y < $h; $y++) {
+				$alpha = ( imagecolorat($img, $x, $y) >> 24 ) & 0xFF;
+				if ($alpha < $minalpha) {
+					$minalpha = $alpha;
+				}
+			}
+
+		//loop through image pixels and modify alpha for each
+		for ($x = 0; $x < $w; $x++) {
+			for ($y = 0; $y < $h; $y++) {
+				//get current alpha value (represents the TANSPARENCY!)
+				$colorxy = imagecolorat($img, $x, $y);
+				$alpha = ( $colorxy >> 24 ) & 0xFF;
+				//calculate new alpha
+				if ($minalpha !== 127) {
+					$alpha = 127 + 127 * $opacity * ( $alpha - 127 ) / ( 127 - $minalpha );
+				} else {
+					$alpha += 127 * $opacity;
+				}
+				//get the color index with new alpha
+				$alphacolorxy = imagecolorallocatealpha($img, ( $colorxy >> 16 ) & 0xFF, ( $colorxy >> 8 ) & 0xFF, $colorxy & 0xFF, $alpha);
+				//set pixel with the new color + opacity
+				if (!imagesetpixel($img, $x, $y, $alphacolorxy)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 
 	public function load_image($source,$id="main"){
 		if (is_file($source)){
@@ -200,13 +246,17 @@ class ImageResizer {
 		return false;
 	}
 
-	public function add_watermark($path,$v="center",$h="center",$opacity=85,$scale=1,$repeat=false,$xpad=0,$ypad=0){
+	public function add_watermark($path,$v="center",$h="center",$opacity=100,$scale=1,$repeat=false,$xpad=0,$ypad=0){
 		if ($this->load_image($path,"wm")){
 
 			if ($scale!="" && $scale!=1){
 				$this->resize("scale",null,null,$scale,"wm");
 			}
-
+			
+			if ($opacity!=100){
+				$this->filter_opacity("wm",$opacity);
+			}
+			
 			//Repeat the watermark in a pattern?
 			if ($repeat==false){
 				//Default center
