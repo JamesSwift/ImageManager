@@ -107,7 +107,7 @@
 		"watermark"=>Array(
 			"path"=>$_SWDF['paths']['root']."images/watermark.png",
 			"scale"=>1,
-			"opacity"=>30,
+			"opacity"=>100,
 			"repeat"=>true
 		)
 	);

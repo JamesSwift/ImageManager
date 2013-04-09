@@ -292,7 +292,9 @@ class ImageResizer {
 				$xpad=round( ($xpad/100)*$this->img['main']['width'] );
 				$ypad=round( ($ypad/100)*$this->img['main']['height'] );
 				
-				$x=$xpad;$y=$ypad;$i=0;
+				$x=$xpad/2;
+				$y=$ypad/2;
+				$i=0;
 				while ($x<$this->img['main']['width'] && $y<$this->img['main']['height'] ){
 					//Place a watermark
 					imagecopy(	$this->img['main']['stream'],
