@@ -976,6 +976,8 @@ class SecureImageResizer {
 		$path = $this->getApplicablePath($img);
 		
 		//Check path allowed
+		if ($path===null)
+			throw new Exception("Access denied. Access to the image you requested is restricted.", 403);
 		
 		//Check this size is allowed
 		
@@ -1000,10 +1002,9 @@ class SecureImageResizer {
 		//Cycle through paths untill match is found
 		$pathSize=sizeof($path);$i=0;
 		while($i<$pathSize){
-			print "(".implode("/", $path).")<br>";
 			//Does this path exist
-			if (isset($this->_paths[implode("/", $path)]))
-				return $this->getPath(implode("/", $path));
+			if (isset($this->_paths[implode("/", $path)])."/")
+				return $this->getPath(implode("/", $path)."/");
 				
 			//No, so move up a directory
 			array_pop($path);
