@@ -987,6 +987,9 @@ class SecureImageResizer {
 		if ($path===null)
 			throw new Exception("Access denied. Access to the image you requested is restricted.", 403);
 		
+		//Get allowed sizes for this path
+		$allowedSizes = $this->getAllowedSizes($path['path']);
+		
 		//Check this size is allowed
 		
 		return true;
@@ -1024,7 +1027,13 @@ class SecureImageResizer {
 	}
 	
 	public function getAllowedSizes($path){
+		//Check path exists
 		
+		//If allowSizes not defined, set to be all sizes, else set to contents
+		
+		//If denySizes defined, subtract from previous array
+		
+		//return array
 		
 	}
 }
