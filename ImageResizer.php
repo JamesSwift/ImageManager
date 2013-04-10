@@ -747,10 +747,18 @@ class SecureImageResizer {
 	}
 	
 	public function getPath($path){
+		//Check path is string
+		if (!is_string($path))
+			return false;
+		
+		//Add slash if missing
+		if (substr($path, -1, 1)!=="/")
+			$path.="/";
+		
 		//Check path exists
-		if (isset($this->_paths[(string)$path])){
+		if (isset($this->_paths[(string)$path]))
 			return $this->_paths[$path];
-		}
+
 		return false;
 	}
 	
@@ -1013,6 +1021,11 @@ class SecureImageResizer {
 		
 		//The path couldn't be found
 		return null;
+	}
+	
+	public function getAllowedSizes($path){
+		
+		
 	}
 }
 
