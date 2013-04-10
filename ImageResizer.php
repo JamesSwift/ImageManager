@@ -957,31 +957,25 @@ class SecureImageResizer {
 			
 		
 		//Check size exists
-		$size=$this->getSize($requestedSize);
+		$size = $this->getSize($requestedSize);
 		if (!isset($size) || !is_array($size) || sizeof($size)<=0)
-			throw new Exception("The size you requested ('".$size."') hasn't been defined. Unable to validate request.", 404);
+			throw new Exception("The size you requested ('".$size."') doesn't exist. Unable to validate request.", 404);
 		
 		//Check image defined
 		if (!isset($img) || !is_string($img) || $img==="")
 			throw new Exception("Please specify an image to resize.", 404);
 		
 		//Sanitize image path
-		$img=$this->sanitizePath($img,true);
+		$img = $this->sanitizePath($img,true);
 		
 		//Check image exists
 		if (!is_file($this->_config['base'].$img))
-			throw new Exception("The image you requested could not be located. Please make sure it is specified relative to the base path you configured earlier.", 404);
+			throw new Exception("The image you requested could not be located.", 404);
 			
-
-		
-		//Check image exists
-		$this->getApplicablePath($img);
-		
 		//Find which path rule applies
+		$path = $this->getApplicablePath($img);
 		
 		//Check path allowed
-		
-		//Find allowed sizes
 		
 		//Check this size is allowed
 		
@@ -989,7 +983,35 @@ class SecureImageResizer {
 	}
 	
 	public function getApplicablePath($img){
-		return array();
+		
+		//Clean up path
+		$img = $this->sanitizePath($img,true);
+		
+		//Create array of path parts
+		$path=explode("/",$img);
+		
+		//Check array of use
+		if (!is_array($path) || sizeof($path)<=1)
+			return null;
+		
+		//remove image from $path
+		array_pop($path);
+		
+		//Cycle through paths untill match is found
+		$pathSize=sizeof($path);$i=0;
+		while($i<$pathSize){
+			print "(".implode("/", $path).")<br>";
+			//Does this path exist
+			if (isset($this->_paths[implode("/", $path)]))
+				return $this->getPath(implode("/", $path));
+				
+			//No, so move up a directory
+			array_pop($path);
+			$i++;	
+		}
+		
+		//The path couldn't be found
+		return null;
 	}
 }
 
