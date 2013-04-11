@@ -989,7 +989,7 @@ class SecureImageResizer {
 		
 		//Get allowed sizes for this path
 		$allowedSizes = $this->getAllowedSizes($path['path']);
-		
+
 		//Check this size is allowed
 		
 		return true;
@@ -1026,15 +1026,28 @@ class SecureImageResizer {
 		return null;
 	}
 	
-	public function getAllowedSizes($path){
+	public function getAllowedSizes($forPath){
 		//Check path exists
+		if (!is_string($forPath) || !isset($this->_paths[$forPath]))
+			return null;
+		
+		$path = $this->_paths[$forPath];
+		$allowedSizes = array();
+		
+		//By default load allowSizes
+		if (isset($path['allowSizes']) && is_array($path['allowSizes']))
+			$allowedSizes=$path['allowSizes'];
 		
 		//If allowSizes not defined, set to be all sizes, else set to contents
+		if ( !isset($path['allowSizes']) || (is_array($path['allowSizes']) && sizeof($path['allowSizes'])<=0) || strtolower($path['allowSizes'])==="all" )
+			$allowedSizes = array_keys($this->_sizes);
 		
 		//If denySizes defined, subtract from previous array
+		if (isset($path['denySizes']) && is_array($path['denySizes']) )
+			array_diff($allowedSizes, $path['denySizes']);
 		
 		//return array
-		
+		return $allowedSizes;
 	}
 }
 
