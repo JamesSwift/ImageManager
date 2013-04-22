@@ -1135,7 +1135,7 @@ class SecureImageResizer {
 		if ($final==="original"){
 			
 			//Read the mime type from the image
-			$final = strtolower(image_type_to_mime_type(exif_imagetype($this->config['base'].$img)));
+			$final = strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$img)));
 
 			//Check the image was readable
 			if ($final===false)
