@@ -5,7 +5,7 @@
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"defaultSize":"original",
-	"signedHash":"533006ea",
+	"signedHash":"1d05f146",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -16,7 +16,7 @@
 			"method":"fit",
 			"width":400,
 			"height":300,
-			"defaultOutputFormat":"image/gif",
+			"defaultOutputFormat":"image/jpeg",
 			"watermark":{
 				"path":"images/watermark.png",
 				"opacity":80,
@@ -60,7 +60,7 @@
 		},
 		"images/graphics/":{
 			"path":"images/graphics/",
-			"defaultOutputFormat":"image/png"
+			"defaultOutputFormat":"image/gif"
 		}
 	}
 }

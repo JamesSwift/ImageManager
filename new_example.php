@@ -32,7 +32,7 @@ try {
 	//Catch errors while resizing
 	try {
 		//Resize the requested image
-		$new_image = $resizer->request($img, $size, "images/jpeg");
+		$new_image = $resizer->request($img, $size);
 
 		//Output the image to the user
 		$new_image->outputHttp();

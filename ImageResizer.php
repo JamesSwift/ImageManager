@@ -961,10 +961,10 @@ class SecureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public function request($img, $size=null, $output=null){ 
+	public function request($img, $size=null, $outputFormat=null){ 
 		
 		//Validate the request. If invalid, an exception will be thrown and passed back up to the caller
-		$request = $this->validateRequest($img, $size);
+		$request = $this->validateRequest($img, $size, $outputFormat);
 
 		//Check if we should use cached version
 		if (	isset($this->_config["enableCaching"]) && $this->_config["enableCaching"]===true &&
@@ -972,7 +972,7 @@ class SecureImageResizer {
 			!(isset($request['size']['disableCaching']) && $request['size']['disableCaching']===true)
 		){
 			//Load cached version if it exists
-			$cachedImage = $this->getCachedImage($request['img'], $request['size']['id'], $output);
+			$cachedImage = $this->getCachedImage($request['img'], $request['size']['id'], $request['outputFormat']);
 			
 			//If exists, return it
 			if ($cachedImage instanceof CachedImage)
@@ -992,7 +992,7 @@ class SecureImageResizer {
 		return new ResizedImage(); 
 	}
 	
-	public function validateRequest($img, $requestedSize=null, $output=null){
+	public function validateRequest($img, $requestedSize=null, $outputFormat=null){
 		
 		//Check "base" defined
 		if (!isset($this->_config['base']))
@@ -1035,11 +1035,17 @@ class SecureImageResizer {
 		if (in_array($size['id'], $allowedSizes)===false)
 			throw new Exception("The image size you requested is not allowed in this direcotry.", 403);
 		
+		//Check the outputFormat is allowed
+		if ($outputFormat!==null)
+			if (!is_string($outputFormat) || in_array(strtolower($outputFormat), $this->getAllowedOutputFormats())===false)
+				throw new Exception("The image format you requested isn't supported. The following formats are supported: ".implode(", ",$this->getAllowedOutputFormats()), 404);
+		
 		//Return sanitized data
 		return array(
 			"img"=>$img,
 			"path"=>$path,
-			"size"=>$size
+			"size"=>$size,
+			"outputFormat"=>strtolower($outputFormat)
 		);
 	}
 	
@@ -1106,11 +1112,11 @@ class SecureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public function isCached($img, $size, $output){
+	public function isCached($img, $size, $outputFormat){
 		
 	}
 	
-	public function getCachedImage($img, $size, $output){
+	public function getCachedImage($img, $size, $outputFormat){
 		return new CachedImage();
 	}
 	
