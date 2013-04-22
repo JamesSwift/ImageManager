@@ -953,8 +953,27 @@ class SecureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	public function resize($img, $size=null){ 
+		
+		//Validate the request. If invalid, an exception will be thrown and passed back up to the caller
 		$this->validateResizeRequest($img, $size);
-				
+			
+		//Sanitize img
+		
+		//Check if we should use cached version
+		
+			//Is caching enabled (globaly, for this path, for this size)
+		
+			//Does a cached version exists
+		
+			//Is it valid
+		
+		//If not render a new version
+		
+			//load ImageResizer
+		
+			//Resize the image
+		
+		//Create new ResizedImage object, fill it with data and return it
 		return new resizedImage(); 
 	}
 	
