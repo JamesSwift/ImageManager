@@ -1072,6 +1072,9 @@ class resizedImage {
  * @author Dave Perrett
  * @copyright Copyright Dave Perret 2008 - see http://www.daveperrett.com/articles/2008/03/11/format-json-with-php/
  * @param string $json The original JSON string to process.
+ * @param string $indentStr The characters to use to indent. Default is "\t" for tab.
+ * @param string $newLine The character to use to signify a new line. Defaultis "\n" for newline.
+ * @param bool $unescapeSlashes By default json-encode escapes forward slashes even though it's not necesary. If you want to pretify your json, you can unescape them. This default to true.
  * @return string Indented version of the original JSON string.
  */
 function json_indent($json, $indentStr = "\t", $newLine = "\n", $unescapeSlashes=true) {
