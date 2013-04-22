@@ -974,7 +974,7 @@ class SecureImageResizer {
 			//Resize the image
 		
 		//Create new ResizedImage object, fill it with data and return it
-		return new resizedImage(); 
+		return new ResizedImage(); 
 	}
 	
 	public function validateResizeRequest($img, $requestedSize=null){
@@ -1083,7 +1083,7 @@ class SecureImageResizer {
 	}
 }
 
-class resizedImage {
+class ResizedImage {
 	public function outputHttp() {}
 	public function save() {}
 }
