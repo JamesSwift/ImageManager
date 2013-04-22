@@ -1017,7 +1017,7 @@ class SecureImageResizer {
 		$allowedSizes = $this->getAllowedSizes($path['path']);
 
 		//Check this size is allowed
-		if (in_array($size, $allowedSizes)===false)
+		if (in_array($size['id'], $allowedSizes)===false)
 			throw new Exception("The image size you requested could not be located.", 404);
 		
 		return true;
