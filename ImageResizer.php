@@ -732,11 +732,19 @@ class SecureImageResizer {
 			if (isset($path['allowSizes']) && is_array($path['allowSizes']))
 				foreach($path['allowSizes'] as $size)
 					$newPath['allowSizes'][]=(string)$size;
+			
+			//If allowSizes is "all" set it
+			if (!isset($newPath['allowSizes']) && isset($path['allowSizes']) && is_string($path['allowSizes']) && strtolower($path['allowSizes'])==="all")
+				$newPath['allowSizes']="all";
 
 			//If denySizes defined, remove any keys, convert to string, and add it
 			if (isset($path['denySizes']) && is_array($path['denySizes']))
 				foreach($path['denySizes'] as $size)
 					$newPath['denySizes'][]=(string)$size;
+			
+			//If denySizes is "all" set it
+			if (!isset($newPath['denySizes']) && isset($path['denySizes']) && is_string($path['denySizes']) && strtolower($path['denySizes'])==="all")
+				$newPath['denySizes']="all";
 
 			//Store the new path
 			$this->_paths[$newPath['path']]=$newPath;
@@ -1038,8 +1046,8 @@ class SecureImageResizer {
 		if (isset($path['allowSizes']) && is_array($path['allowSizes']))
 			$allowedSizes=$path['allowSizes'];
 		
-		//If allowSizes not defined, set to be all sizes, else set to contents
-		if ( !isset($path['allowSizes']) || (is_array($path['allowSizes']) && sizeof($path['allowSizes'])<=0) || strtolower($path['allowSizes'])==="all" )
+		//If allowSizes not defined (or set to "all"), set to be all sizes, else set to contents
+		if ( !isset($path['allowSizes']) || (is_array($path['allowSizes']) && sizeof($path['allowSizes'])<=0) || $path['allowSizes']==="all" )
 			$allowedSizes = array_keys($this->_sizes);
 		
 		//If denySizes defined, subtract from previous array
