@@ -1034,7 +1034,7 @@ class SecureImageResizer {
 		$path = $this->_paths[$forPath];
 		$allowedSizes = array();
 		
-		//By default load allowSizes
+		//By default load allowSizes (if they exists)
 		if (isset($path['allowSizes']) && is_array($path['allowSizes']))
 			$allowedSizes=$path['allowSizes'];
 		
@@ -1045,6 +1045,10 @@ class SecureImageResizer {
 		//If denySizes defined, subtract from previous array
 		if (isset($path['denySizes']) && is_array($path['denySizes']) )
 			array_diff($allowedSizes, $path['denySizes']);
+		
+		//If denySizes set to "all", just return a blank array
+		if (isset($path['denySizes']) && is_string($path['denySizes']) && $path['denySizes']==="all")
+			$allowedSizes=array();
 		
 		//return array
 		return $allowedSizes;
