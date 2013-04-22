@@ -972,7 +972,7 @@ class SecureImageResizer {
 			!(isset($request['size']['disableCaching']) && $request['size']['disableCaching']===true)
 		){
 			//Load cached version if it exists
-			$cachedImage = $this->getCachedImage($request['img'], $request['size']['id'], $request['outputFormat']);
+			$cachedImage = $this->getCachedImage($request['img'], $request['size']['id'], $request['finalOutputFormat']);
 			
 			//If exists, return it
 			if ($cachedImage instanceof CachedImage)
@@ -982,7 +982,7 @@ class SecureImageResizer {
 		//If not render a new version
 		
 		//load ImageResizer
-		$resizer= new ImageResizer();
+		$resizer = new ImageResizer();
 
 		//Resize the image
 			
@@ -1039,13 +1039,16 @@ class SecureImageResizer {
 		if ($outputFormat!==null)
 			if (!is_string($outputFormat) || in_array(strtolower($outputFormat), $this->getAllowedOutputFormats())===false)
 				throw new Exception("The image format you requested isn't supported. The following formats are supported: ".implode(", ",$this->getAllowedOutputFormats()), 404);
+			
+		//Check the final format is allowed
+		$finalOutputFormat = $this->getFinalOutputFormat($img, $path, $size, $outputFormat);
 		
 		//Return sanitized data
 		return array(
 			"img"=>$img,
 			"path"=>$path,
 			"size"=>$size,
-			"outputFormat"=>strtolower($outputFormat)
+			"finalOutputFormat"=>strtolower($finalOutputFormat)
 		);
 	}
 	
@@ -1108,16 +1111,77 @@ class SecureImageResizer {
 		return $allowedSizes;
 	}
 	
+	public function getFinalOutputFormat($img, array $path, array $size, $outputFormat=null) {
+		
+		//Sanitize the image
+		$img = $this->sanitizePath($img, true);
+		
+		//Check the image exists
+		if (!is_file($this->_config['base'].$img))
+			throw new Exception("The image could not be located.");
+
+		$final = $this->_config['defaultOutputFormat'];
+		
+		if (isset($path['defaultOutputFormat']))
+			$final=$path['defaultOutputFormat'];
+		
+		if (isset($size['defaultOutputFormat']))
+			$final=$size['defaultOutputFormat'];
+		
+		if ($outputFormat!==null)
+			$final=strtolower($outputFormat);
+		
+		//If we're in "original" mode, get the output type of the image
+		if ($final==="original"){
+			
+			//Read the mime type from the image
+			$final = strtolower(image_type_to_mime_type(exif_imagetype($this->config['base'].$img)));
+
+			//Check the image was readable
+			if ($final===false)
+				throw new Exception("Couldn't read from the specified image. It may be corrupt.");
+		}
+
+		//Check the detected mime type is allowed
+		if (in_array($final, $this->getAllowedOutputFormats())!==false && $final!=="original")
+			return $final;
+		
+		//A bad mime type was detected
+		return false;
+	}
+	
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	public function isCached($img, $size, $outputFormat){
-		
+		$cacheName = $this->_generateCacheName($img, $size, $outputFormat);
 	}
 	
 	public function getCachedImage($img, $size, $outputFormat){
+		
+		//Is the cached image existant and up-to-date
+		if ( $this->isCached($img, $size, $outputFormat)===false )
+			return null;
+		
 		return new CachedImage();
+	}
+	
+	protected function _generateCacheName($img, $size, $outputFormat){
+		
+		//If they passed the name of a size, try to get it
+		if (is_string($size))
+			$size=$this->getSize($size);
+		
+		//Check we managed to get the size array
+		if (!is_array($size))
+			return false;
+		
+		//Sort the array
+		array_multisort($size);
+		
+		//Hash everything into a filename
+		return md5($img)."-".md5(json_encode($size).$outputFormat).".cache";
 	}
 	
 	public function cleanCache(){
