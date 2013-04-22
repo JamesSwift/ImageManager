@@ -842,7 +842,7 @@ class SecureImageResizer {
 			if (isset($size['width']))		$newSize['width']		= (int)$size['width'];
 			if (isset($size['height']))		$newSize['height']		= (int)$size['height'];
 			if (isset($size['scale']))		$newSize['scale']		= (float)$size['scale'];
-			if (isset($size['outputFormat']))	$newSize['outputFormat']	= strtolower($size['outputFormat']);
+			if (isset($size['defaultOutputFormat']))	$newSize['defaultOutputFormat']	= strtolower($size['defaultOutputFormat']);
 			if (isset($size['jpegOutputQuality']))	$newSize['jpegOutputQuality']	= (int)$size['jpegOutputQuality'];
 			if (isset($size['disableCaching']))	$newSize['disableCaching']	= (bool)$size['disableCaching'];
 			
@@ -865,8 +865,8 @@ class SecureImageResizer {
 					throw new Exception("Cannot add size. '".$newSize['id']."'. Element 'scale' must be defined as a positive number when using method '".$newSize['method']."'");	
 				
 			//Check output format
-			if (isset($newSize['outputFormat']) && in_array($newSize['outputFormat'], $this->_allowedOutputFormats)===false)
-				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'outputFormat' must be one of: ".implode(", ",$this->_allowedOutputFormats).". Given output was: ".$newSize['outputFormat']);	
+			if (isset($newSize['defaultOutputFormat']) && in_array($newSize['defaultOutputFormat'], $this->_allowedOutputFormats)===false)
+				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'defaultOutputFormat' must be one of: ".implode(", ",$this->_allowedOutputFormats).". Given output was: ".$newSize['defaultOutputFormat']);	
 
 			//Check quality
 			if (isset($newSize['jpegOutputQuality']) && ($newSize['jpegOutputQuality']<0 || $newSize['jpegOutputQuality']>100))

@@ -16,7 +16,7 @@
 			"method":"fit",
 			"width":400,
 			"height":300,
-			"outputFormat":"image/gif",
+			"defaultOutputFormat":"image/gif",
 			"watermark":{
 				"path":"images/watermark.png",
 				"opacity":80,
