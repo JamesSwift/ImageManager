@@ -374,7 +374,7 @@ class SecureImageResizer {
 	protected $_config;
 	protected $_paths;
 	protected $_sizes;
-	protected $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
+	protected $_allowedOutputFormats = array("original","image/jpeg","image/jp2","image/png","image/gif");
 	protected $_allowedMethods = array("original","fit","fill","stretch","scale");
 		
 	public function __construct($config=null){
@@ -435,7 +435,7 @@ class SecureImageResizer {
 			"enableCaching"=>true,
 			"cacheTime"=>60*60, //1 Hour
 			"defaultWatermarkOpacity"=>50,
-			"defaultOutputFormat"=>"image/jpeg",
+			"defaultOutputFormat"=>"original",
 			"defaultJpegQuality"=>90
 		);
 		$this->_paths=array();
@@ -647,8 +647,10 @@ class SecureImageResizer {
 			if (gettype($value)!=="string")
 				throw new Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting])."'";
 			
+			$value=strtolower($value);
+			
 			//Check value
-			if (in_array($value,$this->getAllowedOutputFormats())===false)
+			if (in_array($value,$this->getAllowedOutputFormats())===false && $value!=="original")
 				throw new Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()));
 		
 		//Default output size
@@ -727,6 +729,13 @@ class SecureImageResizer {
 			//Check path doesn't already exist
 			if ($this->isPath($newPath['path']) && $allowOverwrite!==true)
 				throw new Exception("Cannot add path '".$newPath['path']."'. It already exists.");
+			
+			//If defaultOuputFormat defined, check it is allowed and add it
+			if (isset($path['defaultOutputFormat']))
+				if (!is_string($path['defaultOutputFormat']) || in_array(strtolower($path['defaultOutputFormat']), $this->getAllowedOutputFormats())===false)
+					throw new Exception("Cannot add path '".$newPath['path']."'. The defaultOutputFormat you specified isn't allowed. It must be one of: ".implode(", ",$this->getAllowedOutputFormats()));
+				else
+					$newPath['defaultOutputFormat']=strtolower($path['defaultOutputFormat']);
 			
 			//If allowSizes defined, remove any keys, convert to strings, and add it
 			if (isset($path['allowSizes']) && is_array($path['allowSizes']))
@@ -977,12 +986,13 @@ class SecureImageResizer {
 
 		//Resize the image
 			
+		//render it in desired output
 		
 		//Create new ResizedImage object, fill it with data and return it
 		return new ResizedImage(); 
 	}
 	
-	public function validateRequest($img, $requestedSize=null){
+	public function validateRequest($img, $requestedSize=null, $output=null){
 		
 		//Check "base" defined
 		if (!isset($this->_config['base']))

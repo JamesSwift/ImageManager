@@ -1,11 +1,11 @@
 {
 	"enableCaching":true,
 	"cacheTime":2419200,
-	"defaultOutputFormat":"image/jpeg",
+	"defaultOutputFormat":"original",
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"defaultSize":"original",
-	"signedHash":"f755e608",
+	"signedHash":"533006ea",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -57,6 +57,10 @@
 		"images/webcam/":{
 			"path":"images/webcam/",
 			"disableCaching":true
+		},
+		"images/graphics/":{
+			"path":"images/graphics/",
+			"defaultOutputFormat":"image/png"
 		}
 	}
 }
