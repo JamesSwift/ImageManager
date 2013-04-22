@@ -1156,6 +1156,8 @@ class SecureImageResizer {
 	
 	public function isCached($img, $size, $outputFormat){
 		$cacheName = $this->_generateCacheName($img, $size, $outputFormat);
+		
+		//TODO: CHeck time and date etc.
 	}
 	
 	public function getCachedImage($img, $size, $outputFormat){
@@ -1163,6 +1165,8 @@ class SecureImageResizer {
 		//Is the cached image existant and up-to-date
 		if ( $this->isCached($img, $size, $outputFormat)===false )
 			return null;
+		
+		//TODO
 		
 		return new CachedImage();
 	}
