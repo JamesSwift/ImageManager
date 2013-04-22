@@ -433,7 +433,7 @@ class SecureImageResizer {
 		$this->_config=array(
 			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
 			"enableCaching"=>true,
-			"cacheTime"=>2419200, //28 days
+			"cacheTime"=>60*60, //1 Hour
 			"defaultWatermarkOpacity"=>50,
 			"defaultOutputFormat"=>"image/jpeg",
 			"defaultJpegQuality"=>90
@@ -952,32 +952,37 @@ class SecureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public function resize($img, $size=null){ 
+	public function request($img, $size=null, $output=null){ 
 		
 		//Validate the request. If invalid, an exception will be thrown and passed back up to the caller
-		$this->validateResizeRequest($img, $size);
-			
-		//Sanitize img
-		
+		$request = $this->validateRequest($img, $size);
+
 		//Check if we should use cached version
-		
-			//Is caching enabled (globaly, for this path, for this size)
-		
-			//Does a cached version exists
-		
-			//Is it valid
+		if (	isset($this->_config["enableCaching"]) && $this->_config["enableCaching"]===true &&
+			!(isset($request['path']['disableCaching']) && $request['path']['disableCaching']===true) && 
+			!(isset($request['size']['disableCaching']) && $request['size']['disableCaching']===true)
+		){
+			//Load cached version if it exists
+			$cachedImage = $this->getCachedImage($request['img'], $request['size']['id'], $output);
+			
+			//If exists, return it
+			if ($cachedImage instanceof CachedImage)
+				return $cachedImage;
+		}
 		
 		//If not render a new version
 		
-			//load ImageResizer
-		
-			//Resize the image
+		//load ImageResizer
+		$resizer= new ImageResizer();
+
+		//Resize the image
+			
 		
 		//Create new ResizedImage object, fill it with data and return it
 		return new ResizedImage(); 
 	}
 	
-	public function validateResizeRequest($img, $requestedSize=null){
+	public function validateRequest($img, $requestedSize=null){
 		
 		//Check "base" defined
 		if (!isset($this->_config['base']))
@@ -993,7 +998,7 @@ class SecureImageResizer {
 		//Check size exists
 		$size = $this->getSize($requestedSize);
 		if (!isset($size) || !is_array($size) || sizeof($size)<=0)
-			throw new Exception("The size you requested ('".$size."') doesn't exist. Unable to validate request.", 404);
+			throw new Exception("The size you requested doesn't exist. Unable to validate request.", 404);
 		
 		//Check image defined
 		if (!isset($img) || !is_string($img) || $img==="")
@@ -1018,9 +1023,14 @@ class SecureImageResizer {
 
 		//Check this size is allowed
 		if (in_array($size['id'], $allowedSizes)===false)
-			throw new Exception("The image size you requested could not be located.", 404);
+			throw new Exception("The image size you requested is not allowed in this direcotry.", 403);
 		
-		return true;
+		//Return sanitized data
+		return array(
+			"img"=>$img,
+			"path"=>$path,
+			"size"=>$size
+		);
 	}
 	
 	public function getApplicablePath($img){
@@ -1081,11 +1091,45 @@ class SecureImageResizer {
 		//return array
 		return $allowedSizes;
 	}
+	
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	public function isCached($img, $size, $output){
+		
+	}
+	
+	public function getCachedImage($img, $size, $output){
+		return new CachedImage();
+	}
+	
+	public function cleanCache(){
+		
+	}
+	
+	public function emptyCache(){
+		
+	}
 }
 
-class ResizedImage {
+class Image {
 	public function outputHttp() {}
-	public function save() {}
+	public function save() {}	
+}
+
+class ResizedImage extends Image {
+
+}
+
+class CachedImage extends Image {
+	public function getLocation(){
+		
+	}
+	
+	public function delete(){
+		
+	}
 }
 
 
