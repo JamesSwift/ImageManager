@@ -971,7 +971,6 @@ class SecureImageResizer {
 			else 
 				throw new Exception("No size specified, and no default size defined. Unable to validate request.", 404);
 			
-		
 		//Check size exists
 		$size = $this->getSize($requestedSize);
 		if (!isset($size) || !is_array($size) || sizeof($size)<=0)
@@ -993,12 +992,14 @@ class SecureImageResizer {
 		
 		//Check path allowed
 		if ($path===null)
-			throw new Exception("Access denied. Access to the image you requested is restricted.", 403);
+			throw new Exception("Access denied. Access to the directory containing the image you requested is restricted.", 403);
 		
 		//Get allowed sizes for this path
 		$allowedSizes = $this->getAllowedSizes($path['path']);
 
 		//Check this size is allowed
+		if (in_array($size, $allowedSizes)===false)
+			throw new Exception("The image size you requested could not be located.", 404);
 		
 		return true;
 	}
