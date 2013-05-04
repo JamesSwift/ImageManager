@@ -990,7 +990,7 @@ class SecureImageResizer {
 		//render it in desired output
 		
 		//Create new ResizedImage object, fill it with data and return it
-		return new ResizedImage(); 
+		return new ResizedImage($this->_config['base'].$img); 
 	}
 	
 	public function validateRequest($img, $requestedSize=null, $outputFormat=null){
@@ -1180,18 +1180,20 @@ class SecureImageResizer {
 		if (filemtime($this->_config['cachePath'].$cacheName) < time()-$this->_config['cacheTime'])
 			return false;
 		
-		return true;
+		return $cacheName;
 	}
 	
 	public function getCachedImage($img, $size, $outputFormat){
 		
+		//Check the cached image exists
+		$cacheName = $this->isCached($img, $size, $outputFormat);
+		
 		//Is the cached image existant and up-to-date
-		if ( $this->isCached($img, $size, $outputFormat)===false )
+		if ($cacheName===false )
 			return null;
 		
-		//TODO
-		
-		return new CachedImage();
+		//Load data into new CachedImage
+		return new CachedImage($this->_config['cachePath'].$cacheName);
 	}
 	
 	protected function _generateCacheName($img, $size, $outputFormat){
@@ -1221,6 +1223,12 @@ class SecureImageResizer {
 }
 
 class Image {
+	public function __construct($img){
+		//Detrmine if $img is path or data
+		
+		//populate data
+	}
+		
 	public function outputHttp() {}
 	public function save() {}	
 }
