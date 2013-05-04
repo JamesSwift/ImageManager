@@ -431,7 +431,8 @@ class SecureImageResizer {
 	
 	public function loadDefaultConfig(){
 		$this->_config=array(
-			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache/",
+			"base"=>$this->sanitizePath(dirname(__FILE__), false, true),
+			"cachePath"=>$this->sanitizePath(\sys_get_temp_dir()."/SWDF/imageCache/", false, true),
 			"enableCaching"=>true,
 			"cacheTime"=>60*60, //1 Hour
 			"defaultWatermarkOpacity"=>50,
@@ -1155,15 +1156,31 @@ class SecureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	public function isCached($img, $size, $outputFormat){
-		$cacheName = $this->_generateCacheName($img, $size, $outputFormat);
 		
+		//Does the original image exist?
+		if (!is_file($this->_config['base'].$img))
+			return false;
+		
+		//Stringify the settings for this image
+		$cacheName = $this->_generateCacheName($img, $size, $outputFormat);
+
+		//Check we were able to generate a cache name
 		if ($cacheName === false)
 			return false;
 		
+		//Does a cached version of the image exist?
 		if (!is_file($this->_config['cachePath'].$cacheName))
 			return false;
 		
-		//TODO: Check time and date etc.
+		//Check the cache file isn't obsolete
+		if (filemtime($this->_config['base'].$img) > filemtime($this->_config['cachePath'].$cacheName))
+			return false;
+		
+		//Check the cached file hasn't expired
+		if (filemtime($this->_config['cachePath'].$cacheName) < time()-$this->_config['cacheTime'])
+			return false;
+		
+		return true;
 	}
 	
 	public function getCachedImage($img, $size, $outputFormat){
@@ -1191,7 +1208,7 @@ class SecureImageResizer {
 		array_multisort($size);
 		
 		//Hash everything into a filename
-		return md5($img)."-".md5(json_encode($size).$outputFormat).".cache";
+		return md5(json_encode($img))."-".md5(json_encode($size).json_encode($outputFormat)).".cache";
 	}
 	
 	public function cleanCache(){
