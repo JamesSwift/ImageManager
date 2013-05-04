@@ -431,7 +431,7 @@ class SecureImageResizer {
 	
 	public function loadDefaultConfig(){
 		$this->_config=array(
-			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache",
+			"cachePath"=>\sys_get_temp_dir()."/SWDF/imageCache/",
 			"enableCaching"=>true,
 			"cacheTime"=>60*60, //1 Hour
 			"defaultWatermarkOpacity"=>50,
@@ -1157,7 +1157,13 @@ class SecureImageResizer {
 	public function isCached($img, $size, $outputFormat){
 		$cacheName = $this->_generateCacheName($img, $size, $outputFormat);
 		
-		//TODO: CHeck time and date etc.
+		if ($cacheName === false)
+			return false;
+		
+		if (!is_file($this->_config['cachePath'].$cacheName))
+			return false;
+		
+		//TODO: Check time and date etc.
 	}
 	
 	public function getCachedImage($img, $size, $outputFormat){
