@@ -29,8 +29,6 @@ try {
 	//Load the configuration
 	$resizer->loadConfig("example_config.json");
 	
-	print_r($resizer->getConfig());
-	
 	//Catch errors while resizing
 	try {
 		//Resize the requested image
