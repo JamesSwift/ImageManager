@@ -627,7 +627,10 @@ class SecureImageResizer {
 			
 		//Cache Time - maximum age of cache files
 		} else if ($setting==="cacheTime"){
+			if (ctype_digit($value)===false)
+				throw new Exception("Cannot set '".$setting."'. Must be positive integar. Given value was: '".$value."'.");
 			$value=(int)$value;
+			
 			
 			
 		//Default JPEG quality
