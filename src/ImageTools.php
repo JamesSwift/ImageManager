@@ -1222,7 +1222,7 @@ class SecureImageResizer {
 		return md5(json_encode($img))."-".md5(json_encode($size).json_encode($outputFormat)).".cache";
 	}
 	
-	public function cleanCache(){
+	public function cleanCache($emptyCache=false){
 		//Check cached files are accessible
 		if (!isset($this->_config['cachePath']) || !is_dir($this->_config['cachePath']))
 			return false;
@@ -1245,17 +1245,14 @@ class SecureImageResizer {
 				continue;
 			
 			//Check if file has expired, and unlink
-			if (filemtime($this->_config['cachePath']."/".$file) < time()-$this->_config['cacheTime'])
+			if (filemtime($this->_config['cachePath']."/".$file) < time()-$this->_config['cacheTime'] || $emptyCache===true)
 				if (!unlink($this->_config['cachePath']."/".$file))
 					return false;
 		}
 		return true;
 		
 	}
-	
-	public function emptyCache(){
-		
-	}
+
 }
 
 class Image {
