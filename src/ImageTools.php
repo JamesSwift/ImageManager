@@ -969,9 +969,13 @@ class SecureImageResizer {
 		
 		//Validate the request. If invalid, an exception will be thrown and passed back up to the caller
 		$request = $this->validateRequest($img, $size, $outputFormat);
+		
+		//If requested original, just return the image
+		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$img)))===$request['finalOutputFormat'])
+			return new ResizedImage(file_get_contents($this->_config['base'].$img), $request['finalOutputFormat']); 
 
 		//Check if we should use cached version
-		if (	isset($this->_config["enableCaching"]) && $this->_config["enableCaching"]===true &&
+		if (	isset($this->_config['enableCaching']) && $this->_config['enableCaching']===true &&
 			!(isset($request['path']['disableCaching']) && $request['path']['disableCaching']===true) && 
 			!(isset($request['size']['disableCaching']) && $request['size']['disableCaching']===true)
 		){
@@ -985,15 +989,22 @@ class SecureImageResizer {
 		
 		//If not render a new version
 		
-		//load ImageResizer
+		//Init ImageResizer
 		$resizer = new ImageResizer($this->_config['base'].$img);
 		
 		//Set JPEG Quality
-		$resizer->quality=(isset($request['size']['jpegQuality'])) ? $request['size']['jpegQuality'] : $this->_config['defaultJpegQuality'];
-
-		$resizer->load_image($this->_config['base'].$img);
+		$resizer->quality=(isset($request['size']['jpegQuality'])) ? $request['size']['jpegQuality'] : $this->_config['defaultJpegQuality']; //TODO: Perhaps allow directory-wide quality settings
 		
+		//Load the image to be resized
+		$resizer->load_image($this->_config['base'].$img);
+				
 		//Resize the image
+		if ($request['size']['method']!=="original" && $request['size']['method']!=="scale")
+			$resizer->resize($request['size']['method'], $request['size']['width'], $request['size']['height']);
+		if ($request['size']['method']==="scale")
+			$resizer->resize($request['size']['method'], null, null, $request['size']['scale']);
+		
+		//TODO: Watermark
 			
 		//Render the image in desired output format
 		$resizedImage = $resizer->output_image($request['finalOutputFormat']);

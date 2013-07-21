@@ -17,13 +17,14 @@ require("src/ImageTools.php");
 //Register GET variables
 $size = (isset($_GET['size'])) ? $_GET['size'] : null;	//Requested output size
 $img  = (isset($_GET['img'])) ? $_GET['img'] : null;	//Path (relative to "base" defined in config) to image to be resized
+$format  = (isset($_GET['format'])) ? $_GET['format'] : null;	//The mime-type of ourput (e.g. image/jpeg)
 
 //Catch configuration errors (approx 0.4ms)
 try {
 	//Load the resizer
 	$resizer=new \JamesSwift\SecureImageResizer();
 	
-	//Define the base path (all other paths are relative to this point)
+	//Define the base path (most other paths are relative to this point)
 	$resizer->set("base", dirname(__FILE__) );
 	
 	//Load the configuration
@@ -32,7 +33,7 @@ try {
 	//Catch errors while resizing
 	try {
 		//Resize the requested image
-		$new_image = $resizer->request($img, $size);
+		$new_image = $resizer->request($img, $size, $format);
 
 		//Output the image to the user
 		$new_image->outputHttp();
