@@ -250,7 +250,7 @@ class ImageResizer {
 		return false;
 	}
 
-	public function add_watermark($path,$v="center",$h="center",$opacity=100,$scale=1,$repeat=false,$xpad=0,$ypad=0){
+	public function add_watermark($path,$vAlign="center",$h="center",$opacity=100,$scale=1,$repeat=false,$vPad=0,$hPad=0){
 		if ($this->load_image($path,"wm")){
 
 			if ($scale!="" && $scale!=1){
@@ -271,8 +271,8 @@ class ImageResizer {
 
 				//Default center
 				$v_pos=($this->img['main']['height']/2)-($this->img['wm']['height']/2);
-				if ($v=="top"){ $v_pos=0; }
-				if ($v=="bottom"){ $v_pos=$this->img['main']['height']-$this->img['wm']['height']; }
+				if ($vAlign=="top"){ $v_pos=0; }
+				if ($vAlign=="bottom"){ $v_pos=$this->img['main']['height']-$this->img['wm']['height']; }
 
 				//Merge the watermark onto the background
 				imagecopy(	$this->img['main']['stream'],
@@ -289,11 +289,11 @@ class ImageResizer {
 				
 			} else {
 				//Turn percentages into decimal
-				$xpad=round( ($xpad/100)*$this->img['main']['width'] );
-				$ypad=round( ($ypad/100)*$this->img['main']['height'] );
+				//$hPad=round( ($hPad/100)*$this->img['main']['width'] );
+				//$vPad=round( ($vPad/100)*$this->img['main']['height'] );
 				
-				$x=$xpad/2;
-				$y=$ypad/2;
+				$x=floor($hPad/2);
+				$y=floor($vPad/2);
 				$i=0;
 				while ($x<$this->img['main']['width'] && $y<$this->img['main']['height'] ){
 					//Place a watermark
@@ -308,14 +308,15 @@ class ImageResizer {
 					);
 					
 					//Walk it right one step
-					$x+=$this->img['wm']['width']+$xpad;
+					$x+=$this->img['wm']['width']+$hPad;
 					
 					//Move down to a new line
 					if ($x>=$this->img['main']['width']){
-						$y+=($this->img['wm']['height']+$ypad);
+						
+						$y+=($this->img['wm']['height']+$vPad);
 						$i++;
 						//Offset the new line
-						$x=0-round( ($i%3)*(($this->img['wm']['width']+$xpad)/3) );
+						$x=0-round( ($i%3)*(($this->img['wm']['width']+$hPad)/3) );
 					}
 				}
 								
@@ -912,22 +913,44 @@ class SecureImageResizer {
 		$newWatermark['path']=$this->sanitizePath($watermark['path']);
 		
 		//Check it exists
-		if (!is_file($watermark['path']))
+		if (!is_file($this->_config['base'].$watermark['path']))
 			throw new Exception("Cannot find watermark image at path: ".$watermark['path']);
 		
 		//Sanitize other variables
 		if (isset($watermark['scale']))		$newWatermark['scale']	 = (float)$watermark['scale'];
-		if (isset($watermark['v']))		$newWatermark['v']	 = strtolower($watermark['v']);
-		if (isset($watermark['v']))		$newWatermark['v']	 = strtolower($watermark['v']);
+		if (isset($watermark['vAlign']))	$newWatermark['vAlign']	 = strtolower($watermark['vAlign']);
+		if (isset($watermark['hAlign']))	$newWatermark['hAlign']	 = strtolower($watermark['hAlign']);
 		if (isset($watermark['opacity']))	$newWatermark['opacity'] = (float)$watermark['opacity'];
 		if (isset($watermark['repeat']))	$newWatermark['repeat']	 = (bool)$watermark['repeat'];
+		if (isset($watermark['vPad']))		$newWatermark['vPad']	 = (int)$watermark['vPad'];
+		if (isset($watermark['hPad']))		$newWatermark['hPad']	 = (int)$watermark['hPad'];
 		
-		//Check v and h are valid (unless repeat=true
+		//Check vAlign and hAlign are valid (unless repeat=true)
 		if (!isset($newWatermark['repeat']) || $newWatermark['repeat']!==true ){
-			if ( isset($newWatermark['v']) && ( in_array($newWatermark['v'], array("top","center","bottom"))===false) )
-				throw new Exception("Watermark element 'v' not correctly configured. Should be either: top, center or bottom.");
-			if ( isset($newWatermark['h']) && ( in_array($newWatermark['h'], array("left","center","right"))===false) )
-				throw new Exception("Watermark element 'h' not correctly configured. Should be either: left, center or right.");
+			if ( isset($newWatermark['vAlign']) && ( in_array($newWatermark['vAlign'], array("top","center","bottom"))===false) )
+				throw new Exception("Watermark element 'vAlign' not correctly configured. Should be either: top, center or bottom.");
+			if ( isset($newWatermark['hAlign']) && ( in_array($newWatermark['hAlign'], array("left","center","right"))===false) )
+				throw new Exception("Watermark element 'hAlign' not correctly configured. Should be either: left, center or right.");
+		} else {
+			unset($newWatermark['vAlign'], $newWatermark['hAlign']);
+		}
+		
+		//Check vPad and hPad are in range
+		if (isset($newWatermark['repeat']) && $newWatermark['repeat']===true ){
+			//Get dimensions of watermark image
+			$properties=getimagesize($this->_config['base'].$newWatermark['path']);
+			if ($properties===false)
+				throw new Exception("Unable to read dimensions of watermark image. Please check the 'path' element is pointing to a valid image. Given path was: ".$this->_config['base'].$newWatermark['path']);
+			
+			if (isset($newWatermark['vPad']) && $newWatermark['vPad']<=($properties[1]*-1) )
+				throw new Exception("Watermark element 'vPad' out of bounds. Minimum setting for given image is: ".(($properties[1]*-1)+1));
+			
+			if (isset($newWatermark['hPad']) && $newWatermark['hPad']<=($properties[0]*-1) )
+				throw new Exception("Watermark element 'hPad' out of bounds. Minimum setting for given image is: ".(($properties[0]*-1)+1));
+				
+			
+		} else {
+			unset($newWatermark['vPad'], $newWatermark['hPad']);
 		}
 		
 		//Check opacity
@@ -935,6 +958,7 @@ class SecureImageResizer {
 			throw new Exception("Watermark opacity not correctly configured. Should be between 0 and 100. '".$newWatermark['opacity']."' given.");
 		
 		return $newWatermark;
+		
 	}
 
 
@@ -999,12 +1023,16 @@ class SecureImageResizer {
 		$resizer->load_image($this->_config['base'].$img);
 				
 		//Resize the image
-		if ($request['size']['method']!=="original" && $request['size']['method']!=="scale")
-			$resizer->resize($request['size']['method'], $request['size']['width'], $request['size']['height']);
-		if ($request['size']['method']==="scale")
-			$resizer->resize($request['size']['method'], null, null, $request['size']['scale']);
+		if ($request['size']['method']!=="original") {
+			$params=$request['size']+array("method"=>null,"width"=>null,"height"=>null,"scale"=>null);
+			$resizer->resize($params['method'],$params['width'],$params['height'],$params['scale']);
+		}
 		
-		//TODO: Watermark
+		//Add watermark
+		if (isset($request['size']['watermark']) && is_array($request['size']['watermark'])){
+			$params=$request['size']['watermark']+array("path"=>null,"vAlign"=>null,"hAlign"=>null,"opacity"=>null,"scale"=>null,"repeat"=>null,"vPad"=>null,"hPad"=>null);
+			$resizer->add_watermark($params['path'],$params['vAlign'],$params['hAlign'],$params['opacity'],$params['scale'],$params['repeat'],$params['vPad'],$params['hPad']);
+		}
 			
 		//Render the image in desired output format
 		$resizedImage = $resizer->output_image($request['finalOutputFormat']);

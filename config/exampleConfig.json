@@ -5,7 +5,7 @@
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"defaultSize":"original",
-	"signedHash":"2d38b1c5",
+	"signedHash":"d404a6f7",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -19,8 +19,10 @@
 			"defaultOutputFormat":"image/jpeg",
 			"watermark":{
 				"path":"images/watermark.png",
-				"opacity":80,
-				"repeat":true
+				"opacity":20,
+				"repeat":true,
+				"vPad":-2,
+				"hPad":10
 			}
 		},
 		"2x":{
