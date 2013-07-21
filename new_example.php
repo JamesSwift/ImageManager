@@ -11,8 +11,8 @@
  * 
  */
 
-//Load dependencies (approx 2ms)
-require_once("ImageResizer.php");
+//Load dependencies
+require("src/ImageTools.php");
 
 //Register GET variables
 $size = (isset($_GET['size'])) ? $_GET['size'] : null;	//Requested output size
@@ -21,7 +21,7 @@ $img  = (isset($_GET['img'])) ? $_GET['img'] : null;	//Path (relative to "base" 
 //Catch configuration errors (approx 0.4ms)
 try {
 	//Load the resizer
-	$resizer=new \swdf\SecureImageResizer();
+	$resizer=new \JamesSwift\SecureImageResizer();
 	
 	//Define the base path (all other paths are relative to this point)
 	$resizer->set("base", dirname(__FILE__) );

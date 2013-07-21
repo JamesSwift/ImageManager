@@ -1,8 +1,8 @@
 <?php
 /**
- * SWDF Image Resier
+ * James Swift - Image Tools
  * 
- * This script allows you to automate the resizing of images on your website. 
+ * The following code allows you to automate the resizing of images on your website. 
  * 
  * The ImageResizer class uses the GD2 PHP library and allows you to make simple
  * modifications to images in your filesystem. 
@@ -24,11 +24,11 @@
  * 
  * @author James Swift <me@james-swift.com>
  * @version v0.3.0
- * @package SWDF_image_resizer
+ * @package James-Swift/ImageTools
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
-namespace swdf;
+namespace JamesSwift;
 
 
 class Exception extends \Exception {
@@ -432,7 +432,7 @@ class SecureImageResizer {
 	public function loadDefaultConfig(){
 		$this->_config=array(
 			"base"=>$this->sanitizePath(dirname(__FILE__), false, true),
-			"cachePath"=>$this->sanitizePath(\sys_get_temp_dir()."/SWDF/imageCache/", false, true),
+			"cachePath"=>$this->sanitizePath(\sys_get_temp_dir()."/James-Swift/ImageTools/imageCache/", false, true),
 			"enableCaching"=>true,
 			"cacheTime"=>60*60, //1 Hour
 			"defaultWatermarkOpacity"=>50,
@@ -560,14 +560,14 @@ class SecureImageResizer {
 		//Stringify it and hash it
 		return	hash("crc32",
 				var_export($config, true).
-				" <- Compatible config file for SWDF/secureImageResizer ".
+				" <- Compatible config file for James-Swift/SecureImageResizer ".
 				self::VERSION.
 				" by James Swift"
 			);
 	}
 	
 
-	public function saveConfig($file, $overwrite=false, $format="json", $varName="SWDF_secureImageResizer_config_array"){
+	public function saveConfig($file, $overwrite=false, $format="json", $varName="SecureImageResizer_config_array"){
 		
 		if ($overwrite===false && is_file($file)) 
 			throw new Exception("Unable to save settings. File '".$file."' already exists, and method is in non-overwrite mode.", 5);
