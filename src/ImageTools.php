@@ -1183,7 +1183,7 @@ class SecureImageResizer {
 			return false;
 		
 		//Check the cached file hasn't expired
-		if (filemtime($this->_config['cachePath'].$cacheName) < time()-$this->_config['cacheTime'])
+		if ($this->_config['cacheTime']>0 && filemtime($this->_config['cachePath'].$cacheName) < time()-$this->_config['cacheTime'])
 			return false;
 		
 		return $cacheName;
@@ -1220,6 +1220,13 @@ class SecureImageResizer {
 	}
 	
 	public function cleanCache(){
+		//check cache location defined
+		//check directory exists
+		//check cache settings are sensible
+		//cycle through all files in cache directory
+			//check filemtime against cache time
+				//unlink if too old
+		return true;
 		
 	}
 	
