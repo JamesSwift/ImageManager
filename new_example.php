@@ -15,9 +15,9 @@
 require("src/ImageTools.php");
 
 //Register GET variables
-$size = (isset($_GET['size'])) ? $_GET['size'] : null;	//Requested output size
-$img  = (isset($_GET['img'])) ? $_GET['img'] : null;	//Path (relative to "base" defined in config) to image to be resized
-$format  = (isset($_GET['format'])) ? $_GET['format'] : null;	//The mime-type of ourput (e.g. image/jpeg)
+$size	= (isset($_GET['size'])) ?	$_GET['size']	: null;	//Requested output size
+$img	= (isset($_GET['img'])) ?	$_GET['img']	: null;	//Path (relative to "base" defined in config) to image to be resized
+$format = (isset($_GET['format'])) ?	$_GET['format'] : null;	//The mime-type of ourput (e.g. image/jpeg)
 
 //Catch configuration errors (approx 0.4ms)
 try {
@@ -33,13 +33,13 @@ try {
 	//Catch errors while resizing
 	try {
 		//Resize the requested image
-		$new_image = $resizer->request($img, $size, $format);
+		$newImage = $resizer->request($img, $size, $format);
 
 		//Output the image to the user
-		$new_image->outputHttp();
+		$newImage->outputHttp();
 		
 	} catch (\Exception $e){
-		//TODO: setup error codes so can return correct http response
+		//TODO: Update all error codes so this part can return correct http response
 		print "Sorry, your request couldn't be processed:<br/>";
 		print $e->getMessage();
 	}
