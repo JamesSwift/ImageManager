@@ -27,7 +27,7 @@ try {
 	$resizer->set("base", dirname(__FILE__) );
 	
 	//Load the configuration
-	$resizer->loadConfig("config/example_config.json");
+	$resizer->loadConfig("config/exampleConfig.json");
 	
 	//Catch errors while resizing
 	try {
