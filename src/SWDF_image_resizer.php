@@ -461,7 +461,7 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true && is_file($img_path)) {
 
 			//Load resizer class
-			$resizer=new ImageResizer();
+			$resizer=new \JamesSwift\ImageResizer();
 
 			//Set JPEG quality
 			$resizer->quality=$_SWDF['settings']['images']['default_jpeg_quality'];
