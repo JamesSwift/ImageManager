@@ -847,7 +847,7 @@ class SecureImageResizer {
 			if (isset($size['height']))		$newSize['height']		= (int)$size['height'];
 			if (isset($size['scale']))		$newSize['scale']		= (float)$size['scale'];
 			if (isset($size['defaultOutputFormat']))	$newSize['defaultOutputFormat']	= strtolower($size['defaultOutputFormat']);
-			if (isset($size['jpegOutputQuality']))	$newSize['jpegOutputQuality']	= (int)$size['jpegOutputQuality'];
+			if (isset($size['jpegQuality']))	$newSize['jpegQuality']	= (int)$size['jpegQuality'];
 			if (isset($size['disableCaching']))	$newSize['disableCaching']	= (bool)$size['disableCaching'];
 			
 			//Check id
@@ -873,8 +873,8 @@ class SecureImageResizer {
 				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'defaultOutputFormat' must be one of: ".implode(", ",$this->_allowedOutputFormats).". Given output was: ".$newSize['defaultOutputFormat']);	
 
 			//Check quality
-			if (isset($newSize['jpegOutputQuality']) && ($newSize['jpegOutputQuality']<0 || $newSize['jpegOutputQuality']>100))
-				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'jpegOutputQuality' must be between 0 and 100. Given was: ".$newSize['jpegOutputQuality']);	
+			if (isset($newSize['jpegQuality']) && ($newSize['jpegQuality']<0 || $newSize['jpegQuality']>100))
+				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'jpegQuality' must be between 0 and 100. Given was: ".$newSize['jpegQuality']);	
 
 			//Check watermark
 			try {
@@ -987,15 +987,15 @@ class SecureImageResizer {
 		
 		//load ImageResizer
 		$resizer = new ImageResizer($this->_config['base'].$img);
+		
+		//Set JPEG Quality
+		$resizer->quality=(isset($request['size']['jpegQuality'])) ? $request['size']['jpegQuality'] : $this->_config['defaultJpegQuality'];
 
 		$resizer->load_image($this->_config['base'].$img);
 		
 		//Resize the image
-		
-		//TODO: fetch right quality
-		$resizer->quality=100;
 			
-		//render it in desired output
+		//Render the image in desired output format
 		$resizedImage = $resizer->output_image($request['finalOutputFormat']);
 		
 		//Create new ResizedImage object, fill it with data and return it
