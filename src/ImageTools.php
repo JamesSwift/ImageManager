@@ -432,13 +432,13 @@ class SecureImageResizer {
 	public function loadDefaultConfig(){
 		$this->_config=array(
 			"base"=>$this->sanitizePath(dirname(__FILE__), false, true),
-			"cachePath"=>$this->sanitizePath(\sys_get_temp_dir()."/James-Swift/ImageTools/imageCache/", false, true),
 			"enableCaching"=>true,
 			"cacheTime"=>60*60, //1 Hour
 			"defaultWatermarkOpacity"=>50,
 			"defaultOutputFormat"=>"original",
 			"defaultJpegQuality"=>90
 		);
+		$this->set("cachePath",$this->sanitizePath(\sys_get_temp_dir()."/James-Swift/ImageTools/imageCache/", false, true));
 		$this->_paths=array();
 		$this->_sizes=array(); 	
 	}
