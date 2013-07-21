@@ -1003,15 +1003,12 @@ class SecureImageResizer {
 		
 		//If requested original, just return the image
 		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$img)))===$request['finalOutputFormat'])
-			return new ResizedImage(file_get_contents($this->_config['base'].$img), $request['finalOutputFormat']); 
+			return new ResizedImage($this->_config['base'].$img); 
 
 		//Check if we should use cached version
-		if (	isset($this->_config['enableCaching']) && $this->_config['enableCaching']===true &&
-			!(isset($request['path']['disableCaching']) && $request['path']['disableCaching']===true) && 
-			!(isset($request['size']['disableCaching']) && $request['size']['disableCaching']===true)
-		){
+		if ($request['useCache']===true){
 			//Load cached version if it exists
-			$cachedImage = $this->getCachedImage($request['img'], $request['size']['id'], $request['finalOutputFormat']);
+			$cachedImage = $this->getCachedImage($request['img'], $request['size'], $request['path'], $request['finalOutputFormat']);
 			
 			//If exists, return it
 			if ($cachedImage instanceof CachedImage)
@@ -1022,9 +1019,9 @@ class SecureImageResizer {
 		
 		//Init ImageResizer
 		$resizer = new ImageResizer();
-		
+
 		//Set JPEG Quality
-		$resizer->quality=(isset($request['size']['jpegQuality'])) ? $request['size']['jpegQuality'] : $this->_config['defaultJpegQuality']; //TODO: Perhaps allow directory-wide quality settings
+		$resizer->quality=$request['finalJpegQuality'];
 		
 		//Load the image to be resized
 		$resizer->load_image($this->_config['base'].$img);
@@ -1045,7 +1042,11 @@ class SecureImageResizer {
 		$resizedImage = $resizer->output_image($request['finalOutputFormat']);
 		
 		//Cache image if enabled
-		//TODO: sort out cache on.off priority
+		if ($request['useCache']===true){
+			$cacheName=$this->_generateCacheName($img, $request['size'], $request['path'], $request['finalOutputFormat']);
+			if ($cacheName!=false)
+				file_put_contents ($this->_config['cachePath'].$cacheName, $resizedImage);
+		}
 		
 		//Create new ResizedImage object, fill it with data and return it
 		return new ResizedImage($resizedImage, $request['finalOutputFormat']); 
@@ -1102,12 +1103,25 @@ class SecureImageResizer {
 		//Check the final format is allowed
 		$finalOutputFormat = $this->getFinalOutputFormat($img, $path, $size, $outputFormat);
 		
+		//Work out final Jpeg Quality for this request
+		$finalJpegQuality = $this->getFinalJpegQuality($img, $path, $size);
+		
+		$useCache=false;
+		if (	isset($this->_config['enableCaching']) && $this->_config['enableCaching']===true &&
+			!(isset($path['disableCaching']) && $path['disableCaching']===true) && 
+			!(isset($size['disableCaching']) && $size['disableCaching']===true)
+		)
+			$useCache=true;
+		
 		//Return sanitized data
 		return array(
 			"img"=>$img,
 			"path"=>$path,
 			"size"=>$size,
-			"finalOutputFormat"=>strtolower($finalOutputFormat)
+			"finalOutputFormat"=>strtolower($finalOutputFormat),
+			"finalJpegQuality"=>$finalJpegQuality,
+			"useCache"=>$useCache
+			
 		);
 	}
 	
@@ -1206,21 +1220,46 @@ class SecureImageResizer {
 			return $final;
 		
 		//A bad mime type was detected
-		return false;
+		throw new Exception("Unable to determine an allowed output mime-type for this request. Please check the server configuration. The requested mime-type was: ".$final);
+	}
+	
+	public function getFinalJpegQuality($img, array $path, array $size) {
+		
+		//Sanitize the image
+		$img = $this->sanitizePath($img, true);
+		
+		//Check the image exists
+		if (!is_file($this->_config['base'].$img))
+			throw new Exception("The image could not be located.");
+
+		if (isset($this->_config['defaultJpegQuality']))
+			$final = $this->_config['defaultJpegQuality'];
+		
+		if (isset($path['defaultJpegQuality']))
+			$final=$path['defaultJpegQuality'];
+		
+		if (isset($size['jpegQuality']))
+			$final=$size['jpegQuality'];
+	
+		if (isset($final))
+			return $final;
+		
+		//No quality specified anywhere. Something is seriously wrong.
+		throw new Exception("Unable to determine which JPEG quality should be used with this request. Please check your configuration files as this should be impossible.");
 	}
 	
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public function isCached($img, $size, $outputFormat){
+	public function isCached($img, $size, $path, $outputFormat){
 		
 		//Does the original image exist?
 		if (!is_file($this->_config['base'].$img))
 			return false;
 		
 		//Stringify the settings for this image
-		$cacheName = $this->_generateCacheName($img, $size, $outputFormat);
+		$cacheName = $this->_generateCacheName($img, $size, $path, $outputFormat);
 
 		//Check we were able to generate a cache name
 		if ($cacheName === false)
@@ -1241,10 +1280,10 @@ class SecureImageResizer {
 		return $cacheName;
 	}
 	
-	public function getCachedImage($img, $size, $outputFormat){
+	public function getCachedImage($img, $size, $path, $outputFormat){
 		
 		//Check the cached image exists
-		$cacheName = $this->isCached($img, $size, $outputFormat);
+		$cacheName = $this->isCached($img, $size, $path, $outputFormat);
 		
 		//Is the cached image existant and up-to-date
 		if ($cacheName===false )
@@ -1254,7 +1293,7 @@ class SecureImageResizer {
 		return new CachedImage($this->_config['cachePath'].$cacheName);
 	}
 	
-	protected function _generateCacheName($img, $size, $outputFormat){
+	protected function _generateCacheName($img, $size, $path, $outputFormat){
 		
 		//If they passed the name of a size, try to get it
 		if (is_string($size))
@@ -1264,11 +1303,15 @@ class SecureImageResizer {
 		if (!is_array($size))
 			return false;
 		
+		//Check we managed to get the path array
+		if (!is_array($path))
+			return false;
+		
 		//Sort the array
 		array_multisort($size);
 		
 		//Hash everything into a filename
-		return md5(json_encode($img))."-".md5(json_encode($size).json_encode($outputFormat)).".cache";
+		return md5($this->_config['base'].$img)."-".md5(json_encode($size).json_encode($path).json_encode($outputFormat)).".cache";
 	}
 	
 	public function cleanCache($emptyCache=false){
@@ -1304,13 +1347,27 @@ class SecureImageResizer {
 
 }
 
+//TODO: implement these classes
 class Image {
 	private $_img;
 	private $_mime;
+	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
 	
-	public function __construct($img, $mime){
+	public function __construct($img, $mime=null){
 		//Detrmine if $img is path or data
-		
+		if (sizeof($img)<500 && is_file($img)){
+			//Try to read mime data
+			$newMime=strtolower(image_type_to_mime_type(exif_imagetype($img)));
+			
+			//Check allowed mime type
+			if (in_array($newMime, $this->_allowedOutputFormats)===false)
+				throw new Exception("Unable to load image. Unsupported mime-type: ".$newMime);
+			
+			//Load data
+			$img=file_get_contents($img);
+			$mime=$newMime;
+		}
+			
 		//populate data
 		$this->_img=$img;
 		$this->_mime=$mime;
