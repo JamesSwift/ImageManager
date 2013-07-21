@@ -5,7 +5,7 @@
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"defaultSize":"original",
-	"signedHash":"d404a6f7",
+	"signedHash":"30a3106b",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -35,7 +35,13 @@
 			"id":"200x300",
 			"method":"fill",
 			"width":200,
-			"height":300
+			"height":300,
+			"watermark":{
+				"path":"images/watermark.png",
+				"scale":1.5,
+				"vAlign":"top",
+				"opacity":80
+			}
 		}
 	},
 	"paths":{
