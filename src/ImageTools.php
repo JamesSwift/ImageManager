@@ -983,14 +983,20 @@ class SecureImageResizer {
 		//If not render a new version
 		
 		//load ImageResizer
-		$resizer = new ImageResizer();
+		$resizer = new ImageResizer($this->_config['base'].$img);
 
+		$resizer->load_image($this->_config['base'].$img);
+		
 		//Resize the image
+		
+		//TODO: fetch right quality
+		$resizer->quality=100;
 			
 		//render it in desired output
+		$resizedImage = $resizer->output_image($request['finalOutputFormat']);
 		
 		//Create new ResizedImage object, fill it with data and return it
-		return new ResizedImage($this->_config['base'].$img); 
+		return new ResizedImage($resizedImage); 
 	}
 	
 	public function validateRequest($img, $requestedSize=null, $outputFormat=null){
@@ -1223,13 +1229,20 @@ class SecureImageResizer {
 }
 
 class Image {
+	private $_img;
+	
 	public function __construct($img){
 		//Detrmine if $img is path or data
 		
 		//populate data
+		$this->_img=$img;
 	}
 		
-	public function outputHttp() {}
+	public function outputHttp() {
+		//temporary hack
+		header("Content-Type: image/jpeg");
+		print $this->_img;
+	}
 	public function save() {}	
 }
 
