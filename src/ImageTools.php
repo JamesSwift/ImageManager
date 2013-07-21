@@ -519,7 +519,7 @@ class SecureImageResizer {
 			$newConfig['signedHash'] = $this->_signConfig($newConfig);
 
 			//write it back to disk
-			file_put_contents($loadFrom, json_indent(json_encode($newConfig)));
+			file_put_contents($loadFrom, json_indent(\json_encode($newConfig)));
 		}
 
 		return $newConfig;
@@ -996,7 +996,7 @@ class SecureImageResizer {
 		$resizedImage = $resizer->output_image($request['finalOutputFormat']);
 		
 		//Create new ResizedImage object, fill it with data and return it
-		return new ResizedImage($resizedImage); 
+		return new ResizedImage($resizedImage, $request['finalOutputFormat']); 
 	}
 	
 	public function validateRequest($img, $requestedSize=null, $outputFormat=null){
@@ -1230,17 +1230,19 @@ class SecureImageResizer {
 
 class Image {
 	private $_img;
+	private $_mime;
 	
-	public function __construct($img){
+	public function __construct($img, $mime){
 		//Detrmine if $img is path or data
 		
 		//populate data
 		$this->_img=$img;
+		$this->_mime=$mime;
 	}
 		
 	public function outputHttp() {
 		//temporary hack
-		header("Content-Type: image/jpeg");
+		header("Content-Type: ".$this->_mime);
 		print $this->_img;
 	}
 	public function save() {}	
