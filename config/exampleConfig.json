@@ -5,7 +5,7 @@
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"defaultSize":"original",
-	"signedHash":"30a3106b",
+	"signedHash":"ba408cff",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -57,6 +57,7 @@
 		},
 		"images/original_scans/":{
 			"path":"images/original_scans/",
+			"defaultJpegQuality":100,
 			"denySizes":[
 				"original",
 				"2x"

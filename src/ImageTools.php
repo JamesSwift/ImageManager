@@ -721,7 +721,7 @@ class SecureImageResizer {
 
 			//Check required elements are there
 			if (isset($path['path'])===false || !is_string($path['path']) || $path['path']==="" )
-				throw new Exception("Cannot add path. The passed array must contain a non-empty 'path' element.");
+				throw new Exception("Cannot add unamed path. The passed array must contain a non-empty 'path' element pointing to a directory, which also serves as it's ID.");
 
 			//Create blank array for sanitized data
 			$newPath=&$newPaths[$path['path']];
@@ -741,6 +741,13 @@ class SecureImageResizer {
 					throw new Exception("Cannot add path '".$newPath['path']."'. The defaultOutputFormat you specified isn't allowed. It must be one of: ".implode(", ",$this->getAllowedOutputFormats()));
 				else
 					$newPath['defaultOutputFormat']=strtolower($path['defaultOutputFormat']);
+				
+			//If defaultJpegQuality defined, check it is allowed and add it
+			if (isset($path['defaultJpegQuality']))
+				if (!is_int($path['defaultJpegQuality']) || $path['defaultJpegQuality']<0 || $path['defaultJpegQuality']>100)
+					throw new Exception("Cannot add path '".$newPath['path']."'. The defaultJpegQuality must be between 0 and 100. You specified: ".$path['defaultJpegQuality']);
+				else
+					$newPath['defaultJpegQuality']=(int)$path['defaultJpegQuality'];
 			
 			//If allowSizes defined, remove any keys, convert to strings, and add it
 			if (isset($path['allowSizes']) && is_array($path['allowSizes']))
@@ -1011,10 +1018,10 @@ class SecureImageResizer {
 				return $cachedImage;
 		}
 		
-		//If not render a new version
+		//If no cached version, render a new version
 		
 		//Init ImageResizer
-		$resizer = new ImageResizer($this->_config['base'].$img);
+		$resizer = new ImageResizer();
 		
 		//Set JPEG Quality
 		$resizer->quality=(isset($request['size']['jpegQuality'])) ? $request['size']['jpegQuality'] : $this->_config['defaultJpegQuality']; //TODO: Perhaps allow directory-wide quality settings
@@ -1036,6 +1043,9 @@ class SecureImageResizer {
 			
 		//Render the image in desired output format
 		$resizedImage = $resizer->output_image($request['finalOutputFormat']);
+		
+		//Cache image if enabled
+		//TODO: sort out cache on.off priority
 		
 		//Create new ResizedImage object, fill it with data and return it
 		return new ResizedImage($resizedImage, $request['finalOutputFormat']); 
