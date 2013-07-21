@@ -1223,12 +1223,32 @@ class SecureImageResizer {
 	}
 	
 	public function cleanCache(){
-		//check cache location defined
-		//check directory exists
-		//check cache settings are sensible
-		//cycle through all files in cache directory
-			//check filemtime against cache time
-				//unlink if too old
+		//Check cached files are accessible
+		if (!isset($this->_config['cachePath']) || !is_dir($this->_config['cachePath']))
+			return false;
+		
+		//If cacheTime is infinte, there's no point scanning
+		if ($this->_config['cacheTime']===0)
+			return true;
+		
+		//Create an array of all files in the cache location
+		$files=scandir($this->_config['cachePath']);
+		
+		//If the array is empty then bug out, there's nothing to do
+		if (!is_array($files))
+			return true;
+		
+		//Cycle through each file in the directory
+		foreach($files as $file){
+			//Check file ends with .cache and isn't a directory
+			if (strtolower(substr($file,-6))!==".cache" || is_dir($file))
+				continue;
+			
+			//Check if file has expired, and unlink
+			if (filemtime($this->_config['cachePath']."/".$file) < time()-$this->_config['cacheTime'])
+				if (!unlink($this->_config['cachePath']."/".$file))
+					return false;
+		}
 		return true;
 		
 	}

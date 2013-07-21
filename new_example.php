@@ -35,14 +35,16 @@ try {
 		$new_image = $resizer->request($img, $size);
 
 		//Output the image to the user
-		$new_image->outputHttp();
+		//$new_image->outputHttp();
 		
 	} catch (\Exception $e){
 		//TODO: setup error codes so can return correct http response
 		print "Sorry, your request couldn't be processed:<br/>";
 		print $e->getMessage();
 	}
-
+	
+	//Clean the cache (optional)
+	var_dump($resizer->cleanCache());
 	
 //Catch configuration errors
 } catch (\Exception $e){
