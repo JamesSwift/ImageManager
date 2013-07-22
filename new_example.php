@@ -12,7 +12,7 @@
  */
 
 //Load dependencies
-require("src/ImageTools.php");
+require("src/ImageManager.php");
 
 //Register GET variables
 $size	= (isset($_GET['size'])) ?	$_GET['size']	: null;	//Requested output size

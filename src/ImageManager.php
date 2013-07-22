@@ -1,6 +1,6 @@
 <?php
 /**
- * James Swift - Image Tools
+ * James Swift - Image Manager
  * 
  * The following code allows you to automate the resizing of images on your website. 
  * 
@@ -24,7 +24,7 @@
  * 
  * @author James Swift <me@james-swift.com>
  * @version v0.3.0
- * @package James-Swift/ImageTools
+ * @package James-Swift/ImageManager
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
@@ -439,7 +439,7 @@ class SecureImageResizer {
 			"defaultOutputFormat"=>"original",
 			"defaultJpegQuality"=>90
 		);
-		$this->set("cachePath",$this->sanitizePath(\sys_get_temp_dir()."/James-Swift/ImageTools/imageCache/", false, true));
+		$this->set("cachePath",$this->sanitizePath(\sys_get_temp_dir()."/James-Swift/ImageManager/imageCache/", false, true));
 		$this->_paths=array();
 		$this->_sizes=array(); 	
 	}
