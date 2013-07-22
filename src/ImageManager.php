@@ -23,7 +23,7 @@
  * https://github.com/James-Swift/SWDF_image_resizer
  * 
  * @author James Swift <me@james-swift.com>
- * @version v0.3.0
+ * @version v0.4.0
  * @package James-Swift/ImageManager
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
@@ -371,7 +371,7 @@ class ImageResizer {
 
 
 class SecureImageResizer {
-	const   VERSION = "v0.3.0";
+	const   VERSION = "v0.4.0";
 	protected $_config;
 	protected $_paths;
 	protected $_sizes;

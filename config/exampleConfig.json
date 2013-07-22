@@ -5,7 +5,7 @@
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"defaultSize":"original",
-	"signedHash":"ba408cff",
+	"signedHash":"6e07c447",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -38,7 +38,7 @@
 			"height":300,
 			"watermark":{
 				"path":"images/watermark.png",
-				"scale":1.5,
+				"scale":0.9,
 				"vAlign":"top",
 				"opacity":80
 			}
