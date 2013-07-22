@@ -1,7 +1,7 @@
 Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
 https://github.com/James-Swift/SWDF_image_resizer
 
-This file provides some example implementations of the SWDF_image_resizer tool.
+This file provides some example implementations of the ImageManager tool.
 
 The tool is split into two main parts:
 
@@ -18,7 +18,7 @@ manage all the images on a web site. It can restrict access to certain folders o
 sizes, it supports caching of resized images to ease server load and even supports 
 features like automatically water-marking certain images in certain folders.
 
-The intended purpose of the SWDF_image_resizer tool is primarily this later function, 
+The intended purpose of the ImageManager tool is primarily this later function, 
 but the resizing class itself is left exposed in case you wish to write your own 
 security system or simply want an easy way to resize images on the fly.
 
@@ -30,7 +30,7 @@ Some usage examples are described below:
 
 The following example shows the most common use of the SecureImageResizer class:
 
-#File: new_example.php
+#File: example.php
 
 What's happening in that file? Basically it allows you to resize images on the fly. 
 
@@ -39,16 +39,16 @@ produce photos that are far too large to sensibly embed on a web-page. Before yo
 upload them, you could batch resize them all with a tool on your computer, but what 
 if at a later date you wanted the photos a slightly different size?
 
-With the new_example.php setup you could simply upload all your photos to the server, 
+With the example.php setup you could simply upload all your photos to the server, 
 specify a size for them in the config file, then embed them on your pages like so:
 
-<img src="new_example.php?size=MY_SIZE&img=PATH_TO_IMG" />
+<img src="example.php?size=MY_SIZE&img=PATH_TO_IMG" />
 
 You could perhaps specify a thumbnail size as well, and do:
 
 <a href="link_to_album.html">
 	My Holiday Album:<br/>
-	<img src="new_example.php?size=thumbnail&img=images/album/holiday_pic_001.jpg" />
+	<img src="new_example.php?size=thumbnail&img=images/album/holiday_001.jpg" />
 </a>
 
 The point is, the script will resize the images for you on the fly. It also has the 
@@ -57,8 +57,8 @@ watermark to some images, add an overlay etc. just by changing one setting in th
 config file, instead of finding your source files then manually adjusting them all 
 and re-uploading everything.
 
-Hopefully, this has given you an idea of how the swdf\SecureImageResizer class can 
-be used.
+Hopefully, this has given you an idea of how the \JamesSwift\SecureImageResizer class 
+can be used.
 
 ####################################################################################
 ####################################################################################
