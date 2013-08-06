@@ -32,9 +32,10 @@ namespace JamesSwift;
 
 
 class Exception extends \Exception {
-	//Nothing to do here
+	//Nothing to do here yet
 }
 
+//TODO: Completely rewrite class, add phpDoc
 class ImageResizer {
 
 	private $source;
@@ -369,15 +370,16 @@ class ImageResizer {
 	}
 }
 
-
+//TODO: Add phpDoc
 class SecureImageResizer {
-	const   VERSION = "v0.4.0";
+	const VERSION = "v0.4.0";
 	protected $_config;
 	protected $_paths;
 	protected $_sizes;
 	protected $_allowedOutputFormats = array("original","image/jpeg","image/jp2","image/png","image/gif");
 	protected $_allowedMethods = array("original","fit","fill","stretch","scale");
 		
+	//TODO: Add phpDoc
 	public function __construct($config=null){
 		//Load default config
 		$this->loadDefaultConfig();
@@ -390,6 +392,7 @@ class SecureImageResizer {
 		}
 	}
 	
+	//TODO: Add phpDoc
 	public function sanitizePath($path, $removeLeading=false, $addTrailing=false){
 
 		//Check we're dealing with a path
@@ -417,6 +420,7 @@ class SecureImageResizer {
 	
 	}
 	
+	//TODO: Add phpDoc
 	protected function _loadConfigFromFile($file){
 		
 		//Does the file exist?
@@ -430,6 +434,7 @@ class SecureImageResizer {
 		return ($config === null) ? false : $config;
 	}
 	
+	//TODO: Add phpDoc
 	public function loadDefaultConfig(){
 		$this->_config=array(
 			"base"=>$this->sanitizePath(dirname(__FILE__), false, true),
@@ -444,6 +449,7 @@ class SecureImageResizer {
 		$this->_sizes=array(); 	
 	}
 	
+	//TODO: Add phpDoc
 	protected function _loadSignedConfig($config, $clearOld=false){
 		
 		//Check we're dealing with a signed config
@@ -468,6 +474,7 @@ class SecureImageResizer {
 		
 	}
 	
+	//TODO: Add phpDoc
 	public function loadConfig($loadFrom, $clearOld=false, $saveChanges=true){
 
 		//If they called this function with no config, just return null
@@ -526,6 +533,7 @@ class SecureImageResizer {
 		return $newConfig;
 	}
 	
+	//TODO: Add phpDoc
 	public function getConfig(){
 		//Load basic config
 		$config=$this->_config;
@@ -537,6 +545,7 @@ class SecureImageResizer {
 		return $config;
 	}
 	
+	//TODO: Add phpDoc
 	public function getSignedConfig(){
 		
 		//Get config to sign
@@ -549,6 +558,7 @@ class SecureImageResizer {
 		return $config;
 	}
 	
+	//TODO: Add phpDoc
 	protected function _signConfig($config){
 		
 		//Check the config array actually exists
@@ -567,7 +577,7 @@ class SecureImageResizer {
 			);
 	}
 	
-
+	//TODO: Add phpDoc
 	public function saveConfig($file, $overwrite=false, $format="json", $varName="SecureImageResizer_config_array"){
 		
 		if ($overwrite===false && is_file($file)) 
@@ -585,6 +595,7 @@ class SecureImageResizer {
 		throw new Exception("An unknown error occured and the settings could not be saved to file: ".$file, 6);
 	}
 	
+	//TODO: Add phpDoc
 	public function set($setting, $value){
 		
 		//Perform sanitization/standardization
@@ -680,6 +691,7 @@ class SecureImageResizer {
 		
 	}
 	
+	//TODO: Add phpDoc
 	public function get($setting){
 		if (isset($setting) && isset($this->_config[$setting])){
 			return $this->_config[$setting];
@@ -687,6 +699,7 @@ class SecureImageResizer {
 		return null;
 	}
 	
+	//TODO: Add phpDoc
 	public function getAllowedOutputFormats(){
 		return $this->_allowedOutputFormats;
 	}
@@ -694,7 +707,8 @@ class SecureImageResizer {
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+	
+	//TODO: Add phpDoc
 	public function addPath(array $path /*, $path, $path, $path ... */){
 		
 		//Get list of arguments
@@ -775,6 +789,7 @@ class SecureImageResizer {
 		return $newPaths;
 	}
 	
+	//TODO: Add phpDoc
 	public function getPath($path){
 		//Check path is string
 		if (!is_string($path))
@@ -791,15 +806,18 @@ class SecureImageResizer {
 		return false;
 	}
 	
+	//TODO: Add phpDoc
 	public function getPaths(){
 		return $this->_paths;
 	}
 	
+	//TODO: Add phpDoc
 	public function isPath($path){
 		if (isset($this->_paths[$path])) return true;
 		return false;
 	}
 	
+	//TODO: Add phpDoc
 	public function removePath($path){
 		if (isset($this->_paths[$path])){
 			unset($this->_paths[$path]);
@@ -810,7 +828,8 @@ class SecureImageResizer {
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		
+	
+	//TODO: Add phpDoc
 	public function addSize(array $size /*, $size, $size, $size ... */){
 		//Get list of arguments
 		$sizes = func_get_args();
@@ -854,8 +873,8 @@ class SecureImageResizer {
 			if (isset($size['width']))		$newSize['width']		= (int)$size['width'];
 			if (isset($size['height']))		$newSize['height']		= (int)$size['height'];
 			if (isset($size['scale']))		$newSize['scale']		= (float)$size['scale'];
-			if (isset($size['defaultOutputFormat']))	$newSize['defaultOutputFormat']	= strtolower($size['defaultOutputFormat']);
-			if (isset($size['jpegQuality']))	$newSize['jpegQuality']	= (int)$size['jpegQuality'];
+			if (isset($size['defaultOutputFormat']))$newSize['defaultOutputFormat']	= strtolower($size['defaultOutputFormat']);
+			if (isset($size['jpegQuality']))	$newSize['jpegQuality']		= (int)$size['jpegQuality'];
 			if (isset($size['disableCaching']))	$newSize['disableCaching']	= (bool)$size['disableCaching'];
 			
 			//Check id
@@ -904,6 +923,7 @@ class SecureImageResizer {
 		
 	}
 	
+	//TODO: Add phpDoc
 	protected function _checkWatermark($watermark){
 		
 		$newWatermark=array();
@@ -968,7 +988,7 @@ class SecureImageResizer {
 		
 	}
 
-
+	//TODO: Add phpDoc
 	public function getSize($size){
 		if (isset($this->_sizes[$size])){
 			return $this->_sizes[$size];
@@ -976,15 +996,18 @@ class SecureImageResizer {
 		return false;
 	}
 	
+	//TODO: Add phpDoc
 	public function getSizes(){
 		return $this->_sizes;
 	}
 	
+	//TODO: Add phpDoc
 	public function isSize($size){
 		if (isset($this->_sizes[$size])) return true;
 		return false;
 	}
 	
+	//TODO: Add phpDoc
 	public function removeSize($size){
 		if (isset($this->_sizes[$size])){
 			unset($this->_sizes[$size]);
@@ -996,6 +1019,7 @@ class SecureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
+	//TODO: Add phpDoc
 	public function request($img, $size=null, $outputFormat=null){ 
 		
 		//Validate the request. If invalid, an exception will be thrown and passed back up to the caller
@@ -1052,6 +1076,7 @@ class SecureImageResizer {
 		return new ResizedImage($resizedImage, $request['finalOutputFormat']); 
 	}
 	
+	//TODO: Add phpDoc
 	public function validateRequest($img, $requestedSize=null, $outputFormat=null){
 		
 		//Check "base" defined
@@ -1125,6 +1150,7 @@ class SecureImageResizer {
 		);
 	}
 	
+	//TODO: Add phpDoc
 	public function getApplicablePath($img){
 		
 		//Clean up path
@@ -1156,6 +1182,7 @@ class SecureImageResizer {
 		return null;
 	}
 	
+	//TODO: Add phpDoc
 	public function getAllowedSizes($forPath){
 		//Check path exists
 		if (!is_string($forPath) || !isset($this->_paths[$forPath]))
@@ -1184,6 +1211,7 @@ class SecureImageResizer {
 		return $allowedSizes;
 	}
 	
+	//TODO: Add phpDoc
 	public function getFinalOutputFormat($img, array $path, array $size, $outputFormat=null) {
 		
 		//Sanitize the image
@@ -1222,7 +1250,8 @@ class SecureImageResizer {
 		//A bad mime type was detected
 		throw new Exception("Unable to determine an allowed output mime-type for this request. Please check the server configuration. The requested mime-type was: ".$final);
 	}
-	
+
+	//TODO: Add phpDoc
 	public function getFinalJpegQuality($img, array $path, array $size) {
 		
 		//Sanitize the image
@@ -1252,6 +1281,7 @@ class SecureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
+	//TODO: Add phpDoc
 	public function isCached($img, $size, $path, $outputFormat){
 		
 		//Does the original image exist?
@@ -1280,6 +1310,7 @@ class SecureImageResizer {
 		return $cacheName;
 	}
 	
+	//TODO: Add phpDoc
 	public function getCachedImage($img, $size, $path, $outputFormat){
 		
 		//Check the cached image exists
@@ -1293,6 +1324,7 @@ class SecureImageResizer {
 		return new CachedImage($this->_config['cachePath'].$cacheName);
 	}
 	
+	//TODO: Add phpDoc
 	protected function _generateCacheName($img, $size, $path, $outputFormat){
 		
 		//If they passed the name of a size, try to get it
@@ -1314,6 +1346,7 @@ class SecureImageResizer {
 		return md5($this->_config['base'].$img)."-".md5(json_encode($size).json_encode($path).json_encode($outputFormat)).".cache";
 	}
 	
+	//TODO: Add phpDoc
 	public function cleanCache($emptyCache=false){
 		//Check cached files are accessible
 		if (!isset($this->_config['cachePath']) || !is_dir($this->_config['cachePath']))
@@ -1348,11 +1381,13 @@ class SecureImageResizer {
 }
 
 //TODO: implement these classes
+//TODO: Add phpDoc
 class Image {
 	private $_img;
 	private $_mime;
 	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
 	
+	//TODO: Add phpDoc
 	public function __construct($img, $mime=null){
 		//Detrmine if $img is path or data
 		if (sizeof($img)<500 && is_file($img)){
@@ -1373,23 +1408,31 @@ class Image {
 		$this->_mime=$mime;
 	}
 		
+	//TODO: Add phpDoc
 	public function outputHttp() {
 		//temporary hack
 		header("Content-Type: ".$this->_mime);
 		print $this->_img;
 	}
+	
+	//TODO: Add phpDoc
 	public function save() {}	
 }
 
+//TODO: Add phpDoc
 class ResizedImage extends Image {
 
 }
 
+//TODO: Add phpDoc
 class CachedImage extends Image {
+	
+	//TODO: Add phpDoc
 	public function getLocation(){
 		
 	}
 	
+	//TODO: Add phpDoc
 	public function delete(){
 		
 	}
