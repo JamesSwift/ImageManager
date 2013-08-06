@@ -98,7 +98,7 @@
 		"method"=>"original"
 	);
 	
-	//Size 1 - resizes the image to fit inside a 1000x1000 box and adds a copyright watermark
+	//Size 1 - resizes the image to fit inside a 800x600 box and adds a copyright watermark
 	$_SWDF['settings']['images']['sizes']['1']=Array(
 		"id"=>1,
 		"method"=>"fit",
