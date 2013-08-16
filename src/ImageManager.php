@@ -1454,9 +1454,19 @@ class Image {
 	}
 	
 	//TODO: Add phpDoc
-	public function outputHttp() {
+	public function outputHttp($headers=null) {
+		
+		//Output any additional headers
+		if (is_array($headers)===true){
+			foreach ($headers as $type=>$header){
+				header($type.": ".$header);
+			}
+		}
+		
+		//Output the image
 		header("Content-Type: ".$this->getMimeType());
 		$this->outputData();
+		
 		return true;
 	}
 	
