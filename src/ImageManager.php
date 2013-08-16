@@ -354,7 +354,7 @@ class ImageResizer {
 		}
 
 		//Return captured buffer
-		return new ResizedImage(ob_get_clean(),time());
+		return new ResizedImage(ob_get_clean(),null,time());
 	}
 
 	public function destory(){
@@ -1077,7 +1077,7 @@ class SecureImageResizer {
 		
 		//Create new ResizedImage object, fill it with data and return it
 		if ($request['useCache']===true)
-			$resizedImage->setExpires(time()+$this->_config['cacheTime']); 
+			$resizedImage->setExpires(time()+$this->_config['cacheTime']);
 		
 		return $resizedImage;
 	}
@@ -1454,16 +1454,18 @@ class Image {
 	
 	//TODO: Add phpDoc
 	public function setLastModified($lastModified=null, $setFromFile=false){
+
 		//Load the last modified from file?
 		if ($setFromFile===true){
 			if ($this->_originalLocation!==null)
 				$lastModified=filemtime($this->_originalLocation);
-		} else return false;
+			else return false;
+		}
 			
 		//Check we're storing a valid value
 		if (!ctype_digit($lastModified) && $lastModified!==null)
 			throw new Exception("Can't create set Last-Modified header, please specify a valid value (positive integer, or null).");
-		
+
 		//Store the value
 		$this->_lastModified=$lastModified;
 		return true;
