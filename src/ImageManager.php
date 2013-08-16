@@ -1383,10 +1383,10 @@ class SecureImageResizer {
 //TODO: implement these classes
 //TODO: Add phpDoc
 class Image {
-	private $_img;
-	private $_mime;
-	private $_originalLocation;
-	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
+	protected $_img;
+	protected $_mime;
+	protected $_originalLocation;
+	protected $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
 	
 	//TODO: Add phpDoc
 	public function __construct($img){
@@ -1407,7 +1407,9 @@ class Image {
 			$mime=$finfo->buffer($img);
 		}
 		
-		//Check mime type is allowed (and that the image was readable)			
+		//Check mime type is allowed (and that the image was readable)		
+		if ($mime==="text/plain")
+			throw new Exception("Unable to load image. Please check your are passing a valid path, or the content of a valid image file.");
 		if (in_array($mime, $this->_allowedOutputFormats)===false)
 			throw new Exception("Unable to load image. Unsupported mime-type: ".$mime);
 			
@@ -1471,15 +1473,12 @@ class ResizedImage extends Image {
 
 //TODO: Add phpDoc
 class CachedImage extends Image {
-
-	//TODO: Add phpDoc
-	public function getCachedLocation(){
-		
-	}
 	
 	//TODO: Add phpDoc
 	public function deleteCachedCopy(){
-		
+		if ($this->_originalLocation===null)
+			return false;
+		return unlink($this->_originalLocation);
 	}
 }
 
