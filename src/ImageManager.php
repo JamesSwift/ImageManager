@@ -709,7 +709,7 @@ class SecureImageResizer {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	//TODO: Add phpDoc
-	public function addPath(array $path /*, $path, $path, $path ... */){
+	public function addPath(array $path /*, $path, $path, $path ... , $allowOverwrite=false*/){
 		
 		//Get list of arguments
 		$paths = func_get_args();
@@ -747,7 +747,7 @@ class SecureImageResizer {
 
 			//Check path doesn't already exist
 			if ($this->isPath($newPath['path']) && $allowOverwrite!==true)
-				throw new Exception("Cannot add path '".$newPath['path']."'. It already exists.");
+				throw new Exception("Cannot add path '".$newPath['path']."'. It already exists and \$allowOverwrite, isn't set to true.");
 			
 			//If defaultOuputFormat defined, check it is allowed and add it
 			if (isset($path['defaultOutputFormat']))
@@ -769,8 +769,8 @@ class SecureImageResizer {
 					$newPath['allowSizes'][]=(string)$size;
 			
 			//If allowSizes is "all" set it
-			if (!isset($newPath['allowSizes']) && isset($path['allowSizes']) && is_string($path['allowSizes']) && strtolower($path['allowSizes'])==="all")
-				$newPath['allowSizes']="all";
+			if (!isset($newPath['allowSizes']) && isset($path['allowSizes']) && is_string($path['allowSizes']) && (strtolower($path['allowSizes'])==="all" || strtolower($path['allowSizes'])==="none"))
+				$newPath['allowSizes']=strtolower($path['allowSizes']);
 
 			//If denySizes defined, remove any keys, convert to string, and add it
 			if (isset($path['denySizes']) && is_array($path['denySizes']))
@@ -778,9 +778,9 @@ class SecureImageResizer {
 					$newPath['denySizes'][]=(string)$size;
 			
 			//If denySizes is "all" set it
-			if (!isset($newPath['denySizes']) && isset($path['denySizes']) && is_string($path['denySizes']) && strtolower($path['denySizes'])==="all")
-				$newPath['denySizes']="all";
-
+			if (!isset($newPath['denySizes']) && isset($path['denySizes']) && is_string($path['denySizes']) && (strtolower($path['denySizes'])==="all" || strtolower($path['denySizes'])==="none"))
+				$newPath['denySizes']=strtolower($path['denySizes']);
+			
 			//Store the new path
 			$this->_paths[$newPath['path']]=$newPath;
 		}
@@ -1124,7 +1124,7 @@ class SecureImageResizer {
 
 		//Check this size is allowed
 		if (in_array($size['id'], $allowedSizes)===false)
-			throw new Exception("The image size you requested is not allowed in this direcotry.", 403);
+			throw new Exception("The image size you requested is not allowed in this directory.", 403);
 		
 		//Check the outputFormat is allowed
 		if ($outputFormat!==null)
@@ -1196,23 +1196,23 @@ class SecureImageResizer {
 		
 		$path = $this->_paths[$forPath];
 		$allowedSizes = array();
-		
+
 		//By default load allowSizes (if they exists)
 		if (isset($path['allowSizes']) && is_array($path['allowSizes']))
 			$allowedSizes=$path['allowSizes'];
-		
+
 		//If allowSizes not defined (or set to "all"), set to be all sizes, else set to contents
 		if ( !isset($path['allowSizes']) || (is_array($path['allowSizes']) && sizeof($path['allowSizes'])<=0) || $path['allowSizes']==="all" )
 			$allowedSizes = array_keys($this->_sizes);
-		
+
 		//If denySizes defined, subtract from previous array
 		if (isset($path['denySizes']) && is_array($path['denySizes']) )
-			array_diff($allowedSizes, $path['denySizes']);
-		
+			$allowedSizes = array_diff($allowedSizes, $path['denySizes']);
+
 		//If denySizes set to "all", just return a blank array
 		if (isset($path['denySizes']) && is_string($path['denySizes']) && $path['denySizes']==="all")
 			$allowedSizes=array();
-		
+
 		//return array
 		return $allowedSizes;
 	}
