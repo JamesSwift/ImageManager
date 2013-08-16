@@ -354,7 +354,7 @@ class ImageResizer {
 		}
 
 		//Return captured buffer
-		return ob_get_clean();
+		return new ResizedImage(ob_get_clean(),time());
 	}
 
 	public function destory(){
@@ -1072,14 +1072,14 @@ class SecureImageResizer {
 		if ($request['useCache']===true){
 			$cacheName=$this->_generateCacheName($img, $request['size'], $request['path'], $request['finalOutputFormat']);
 			if ($cacheName!=false)
-				file_put_contents ($this->_config['cachePath'].$cacheName, $resizedImage);
+				$resizedImage->saveAs($this->_config['cachePath'].$cacheName);
 		}
 		
 		//Create new ResizedImage object, fill it with data and return it
 		if ($request['useCache']===true)
-			return new ResizedImage($resizedImage, time()+$this->_config['cacheTime']); 
-		else
-			return new ResizedImage($resizedImage); 
+			$resizedImage->setExpires(time()+$this->_config['cacheTime']); 
+		
+		return $resizedImage;
 	}
 	
 	//TODO: Add phpDoc
@@ -1386,7 +1386,6 @@ class SecureImageResizer {
 
 }
 
-//TODO: implement these classes
 //TODO: Add phpDoc
 class Image {
 	protected $_img;

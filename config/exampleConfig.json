@@ -1,11 +1,11 @@
 {
-	"enableCaching":true,
+	"enableCaching":false,
 	"cacheTime":2419200,
 	"defaultOutputFormat":"original",
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"defaultSize":"original",
-	"signedHash":"6e07c447",
+	"signedHash":"e7f0494e",
 	"sizes":{
 		"original":{
 			"id":"original",
