@@ -39,7 +39,9 @@ try {
 		$newImage->outputHTTP();
 		
 	} catch (\Exception $e){
-		//TODO: Update all error codes so this part can return correct http response
+		if (function_exists('http_response_code'))
+			http_response_code($e->getCode());
+		
 		print "Sorry, your request couldn't be processed:<br/>";
 		print $e->getMessage();
 	}
