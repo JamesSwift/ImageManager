@@ -484,7 +484,7 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 			}
 
 			//Render resized image
-			$output = $resizer->output_image(@$size['output']);
+			$output = $resizer->output_image(@$size['output'])->outputData();
 
 			//Save image to cache
 			if ($cache_file!==null && is_string($cache_file)){
