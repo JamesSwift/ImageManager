@@ -1062,7 +1062,7 @@ class SecureImageResizer {
 		
 		//Add watermark
 		if (isset($request['size']['watermark']) && is_array($request['size']['watermark'])){
-			$params=$request['size']['watermark']+array("path"=>null,"vAlign"=>null,"hAlign"=>null,"opacity"=>null,"scale"=>null,"repeat"=>null,"vPad"=>null,"hPad"=>null);
+			$params=$request['size']['watermark']+array("path"=>null,"vAlign"=>null,"hAlign"=>null,"opacity"=>$this->_config['defaultWatermarkOpacity'],"scale"=>null,"repeat"=>null,"vPad"=>null,"hPad"=>null);
 			$resizer->add_watermark($params['path'],$params['vAlign'],$params['hAlign'],$params['opacity'],$params['scale'],$params['repeat'],$params['vPad'],$params['hPad']);
 		}
 			
