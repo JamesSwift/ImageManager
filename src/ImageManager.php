@@ -1073,7 +1073,7 @@ class SecureImageResizer {
 		}
 		
 		//Create new ResizedImage object, fill it with data and return it
-		return new ResizedImage($resizedImage, $request['finalOutputFormat']); 
+		return new ResizedImage($resizedImage); 
 	}
 	
 	//TODO: Add phpDoc
@@ -1385,38 +1385,83 @@ class SecureImageResizer {
 class Image {
 	private $_img;
 	private $_mime;
+	private $_originalLocation;
 	private $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
 	
 	//TODO: Add phpDoc
-	public function __construct($img, $mime=null){
-		//Detrmine if $img is path or data
-		if (sizeof($img)<500 && is_file($img)){
+	public function __construct($img){
+		
+		//Load finfo to find the mime type of the passed file/string
+		$finfo = new \finfo(FILEINFO_MIME_TYPE);
+		
+		//If file was passed, load it into memory
+		if (is_file($img)){
 			//Try to read mime data
-			$newMime=strtolower(image_type_to_mime_type(exif_imagetype($img)));
-			
-			//Check allowed mime type
-			if (in_array($newMime, $this->_allowedOutputFormats)===false)
-				throw new Exception("Unable to load image. Unsupported mime-type: ".$newMime);
-			
+			$mime=$finfo->file($img);
+
 			//Load data
+			$this->_originalLocation=$img;
 			$img=file_get_contents($img);
-			$mime=$newMime;
+		} else {
+			//Try to read mime data from passed string
+			$mime=$finfo->buffer($img);
 		}
+		
+		//Check mime type is allowed (and that the image was readable)			
+		if (in_array($mime, $this->_allowedOutputFormats)===false)
+			throw new Exception("Unable to load image. Unsupported mime-type: ".$mime);
 			
-		//populate data
+		//Populate data
 		$this->_img=$img;
 		$this->_mime=$mime;
 	}
-		
+	
+	
 	//TODO: Add phpDoc
-	public function outputHttp() {
-		//temporary hack
-		header("Content-Type: ".$this->_mime);
-		print $this->_img;
+	public function getLocation(){
+		if ($this->_originalLocation!==null)
+			return $this->_originalLocation;
+		return false;
 	}
 	
 	//TODO: Add phpDoc
-	public function save() {}	
+	public function getMimeType(){
+		return $this->_mime;
+	}
+	
+	//TODO: Add phpDoc
+	public function getImageData(){
+		return $this->_img;
+	}
+	
+	//TODO: Add phpDoc
+	public function getSize(){
+		return strlen($this->getImageData());
+	}
+	
+	public function getImageDimensions(){
+		$img = imagecreatefromstring($this->getImageData());
+		if ($img===false) return false;
+		return array("width"=>imagesx($img),"height"=>imagesy($img));
+	}
+	
+	//TODO: Add phpDoc
+	public function outputData(){
+		print $this->getImageData();
+		return true;
+	}
+	
+	//TODO: Add phpDoc
+	public function outputHttp() {
+		header("Content-Type: ".$this->getMimeType());
+		$this->outputData();
+		return true;
+	}
+	
+	//TODO: Add phpDoc
+	public function saveAs($where) {
+		return file_put_contents($where, $this->getImageData());
+	}	
 }
 
 //TODO: Add phpDoc
@@ -1426,14 +1471,14 @@ class ResizedImage extends Image {
 
 //TODO: Add phpDoc
 class CachedImage extends Image {
-	
+
 	//TODO: Add phpDoc
-	public function getLocation(){
+	public function getCachedLocation(){
 		
 	}
 	
 	//TODO: Add phpDoc
-	public function delete(){
+	public function deleteCachedCopy(){
 		
 	}
 }
