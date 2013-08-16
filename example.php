@@ -39,9 +39,8 @@ try {
 		$newImage->outputHTTP();
 		
 	} catch (\Exception $e){
-		if (function_exists('http_response_code'))
-			http_response_code($e->getCode());
 		
+		if (function_exists('http_response_code')) http_response_code($e->getCode());
 		print "Sorry, your request couldn't be processed:<br/>";
 		print $e->getMessage();
 	}
@@ -52,7 +51,7 @@ try {
 //Catch configuration errors
 } catch (\Exception $e){
 	
-	//An error was found in your configuration
+	//In production it would be wise to silently log these errors rather than exposing them to the user
 	header($_SERVER['SERVER_PROTOCOL']." 500 Internal Server Error", true, 500);
 	print $e->getMessage();
 	

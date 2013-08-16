@@ -370,6 +370,7 @@ class ImageResizer {
 	}
 }
 
+//TODO: Add hook to secure paths with user-defined function
 //TODO: Add phpDoc
 class SecureImageResizer {
 	const VERSION = "v0.4.0";
