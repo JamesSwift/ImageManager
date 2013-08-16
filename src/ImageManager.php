@@ -1213,6 +1213,10 @@ class SecureImageResizer {
 		//If denySizes set to "all", just return a blank array
 		if (isset($path['denySizes']) && is_string($path['denySizes']) && $path['denySizes']==="all")
 			$allowedSizes=array();
+		
+		//If denySizes set to "none" set to be all sizes
+		if ( isset($path['denySizes']) && is_string($path['denySizes']) && $path['denySizes']==="none" )
+			$allowedSizes = array_keys($this->_sizes);
 
 		//return array
 		return $allowedSizes;
