@@ -1027,7 +1027,10 @@ class SecureImageResizer {
 		
 		//If requested original, just return the image
 		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$img)))===$request['finalOutputFormat'])
-			return new ResizedImage($this->_config['base'].$img); 
+			if ($request['useCache']===true)
+				return new Image($this->_config['base'].$img, time()+$this->_config['cacheTime']); 
+			else
+				return new Image($this->_config['base'].$img); 
 
 		//Check if we should use cached version
 		if ($request['useCache']===true){
@@ -1073,7 +1076,10 @@ class SecureImageResizer {
 		}
 		
 		//Create new ResizedImage object, fill it with data and return it
-		return new ResizedImage($resizedImage); 
+		if ($request['useCache']===true)
+			return new ResizedImage($resizedImage, time()+$this->_config['cacheTime']); 
+		else
+			return new ResizedImage($resizedImage); 
 	}
 	
 	//TODO: Add phpDoc
@@ -1321,7 +1327,7 @@ class SecureImageResizer {
 			return null;
 		
 		//Load data into new CachedImage
-		return new CachedImage($this->_config['cachePath'].$cacheName);
+		return new CachedImage($this->_config['cachePath'].$cacheName, filemtime($this->_config['cachePath'].$cacheName)+$this->_config['cacheTime']);
 	}
 	
 	//TODO: Add phpDoc
@@ -1395,30 +1401,30 @@ class Image {
 		
 		//Check expires is valid
 		if (!ctype_digit($expires) && $expires!==null)
-			throw new Exception("Can't create new Image class. Please specify a valid value for \$expires (positive integer, or null).");
+			throw new Exception("Can't create new Image object. Please specify a valid value for \$expires (positive integer, or null).");
 			
 		//Check lastModified is valid
 		if (!ctype_digit($lastModified) && $lastModified!==null)
-			throw new Exception("Can't create new Image class. Please specify a valid value for \$lastModified (positive integer, or null).");
+			throw new Exception("Can't create new Image object. Please specify a valid value for \$lastModified (positive integer, or null).");
 			
 		//Load finfo to find the mime type of the passed file/string
 		$finfo = new \finfo(FILEINFO_MIME_TYPE);
 		
 		//If a file reference was passed, load it into memory
 		if (is_file($img)){
-			
+		
 			//Try to read mime data
 			$mime=$finfo->file($img);
-
-			//Load caching info
-			if ($lastModified===null)
-				$lastModified=\filemtime($img);
-			
+	
 			//Load data
 			$this->_originalLocation=$img;
 			$img=file_get_contents($img);
 			
+			//Store Last Modified
+			$this->setLastModified(null,true);
 		} else {
+			//Store Last Modified
+			$this->setLastModified($lastModified);
 			
 			//Try to read mime data from passed string
 			$mime=$finfo->buffer($img);
@@ -1433,10 +1439,65 @@ class Image {
 		//Populate data
 		$this->_img=$img;
 		$this->_mime=$mime;
-		$this->_expires=$expires;
-		$this->_lastModified=$lastModified;
+		$this->setExpires($expires);
 	}
 	
+	//TODO: Add phpDoc
+	public function setExpires($expires=null){
+		//Check we're storing a valid value
+		if (!ctype_digit($expires) && $expires!==null)
+			throw new Exception("Can't create set Expires header, please specify a valid value (positive integer, or null).");
+		
+		//Store the value
+		$this->_expires=$expires;
+		return true;
+	}
+	
+	//TODO: Add phpDoc
+	public function setLastModified($lastModified=null, $setFromFile=false){
+		//Load the last modified from file?
+		if ($setFromFile===true){
+			if ($this->_originalLocation!==null)
+				$lastModified=filemtime($this->_originalLocation);
+		} else return false;
+			
+		//Check we're storing a valid value
+		if (!ctype_digit($lastModified) && $lastModified!==null)
+			throw new Exception("Can't create set Last-Modified header, please specify a valid value (positive integer, or null).");
+		
+		//Store the value
+		$this->_lastModified=$lastModified;
+		return true;
+	}
+	
+	//TODO: Add phpDoc
+	public function getExpires(){
+		return $this->_expires;
+	}
+	
+	//TODO: Add phpDoc
+	public function getLastModified(){
+		return $this->_lastModified;
+	}
+		
+	//TODO: Add phpDoc
+	public function addExpiresHeader(){
+		if ($this->_expires===null)
+			return false;
+		
+		header("Expires: ".gmdate('D, d M Y H:i:s', $this->_expires));
+		return true;
+	}
+	
+	
+	//TODO: Add phpDoc
+	public function addLastModifiedHeader(){
+		if ($this->_lastModified===null)
+			return false;
+
+		header("Last-Modified: ".gmdate('D, d M Y H:i:s', $this->_lastModified));
+		return true;
+	}
 	
 	//TODO: Add phpDoc
 	public function getLocation(){
@@ -1468,24 +1529,6 @@ class Image {
 	}
 	
 	//TODO: Add phpDoc
-	public function setLastModifiedHeader(){
-		if ($this->_lastModified===null)
-			return false;
-
-		header("Last-Modified: ".gmdate('D, d M Y H:i:s', $this->_lastModified));
-		return true;
-	}
-	
-	//TODO: Add phpDoc
-	public function setExpiresHeader($humanReadable=false){
-		if ($this->_expires===null || $this->_lastModified===null)
-			return false;
-		
-		header("Expires: ".gmdate('D, d M Y H:i:s', $this->_lastModified+$this->_expires));
-		return true;
-	}
-	
-	//TODO: Add phpDoc
 	public function outputData(){
 		print $this->getImageData();
 		return true;
@@ -1502,8 +1545,8 @@ class Image {
 		}
 		
 		//Output caching variables
-		$this->setLastModifiedHeader();
-		$this->setExpiresHeader();
+		$this->addLastModifiedHeader();
+		$this->addExpiresHeader();
 		
 		//Output the image
 		header("Content-Type: ".$this->getMimeType());
