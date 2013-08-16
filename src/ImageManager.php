@@ -801,7 +801,7 @@ class SecureImageResizer {
 			$path.="/";
 		
 		//Check path exists
-		if (isset($this->_paths[(string)$path]))
+		if (isset($this->_paths[$path]))
 			return $this->_paths[$path];
 
 		return false;
@@ -1165,7 +1165,7 @@ class SecureImageResizer {
 		
 		//Create array of path parts
 		$path=explode("/",$img);
-		
+
 		//Check array of use
 		if (!is_array($path) || sizeof($path)<=1)
 			return null;
@@ -1177,7 +1177,7 @@ class SecureImageResizer {
 		$pathSize=sizeof($path);$i=0;
 		while($i<$pathSize){
 			//Does this path exist
-			if (isset($this->_paths[implode("/", $path)])."/")
+			if (isset($this->_paths[implode("/", $path)."/"]))
 				return $this->getPath(implode("/", $path)."/");
 				
 			//No, so move up a directory
