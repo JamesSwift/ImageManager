@@ -450,7 +450,7 @@ class SecureImageResizer {
 	}
 	
 	//TODO: Add phpDoc
-	protected function _loadSignedConfig($config, $clearOld=false){
+	protected function _loadSignedConfig($config){
 		
 		//Check we're dealing with a signed config
 		if (!isset($config['signedHash']))
