@@ -1481,7 +1481,7 @@ class Image {
 	}
 		
 	//TODO: Add phpDoc
-	public function addExpiresHeader(){
+	public function outputExpiresHeader(){
 		if ($this->_expires===null)
 			return false;
 		
@@ -1491,7 +1491,7 @@ class Image {
 	
 	
 	//TODO: Add phpDoc
-	public function addLastModifiedHeader(){
+	public function outputLastModifiedHeader(){
 		if ($this->_lastModified===null)
 			return false;
 
@@ -1545,8 +1545,8 @@ class Image {
 		}
 		
 		//Output caching variables
-		$this->addLastModifiedHeader();
-		$this->addExpiresHeader();
+		$this->outputLastModifiedHeader();
+		$this->outputExpiresHeader();
 		
 		//Output the image
 		header("Content-Type: ".$this->getMimeType());
