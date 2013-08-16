@@ -36,7 +36,7 @@ try {
 		$newImage = $resizer->request($img, $size, $format);
 
 		//Output the image to the user
-		$newImage->outputHttp();
+		$newImage->outputHTTP();
 		
 	} catch (\Exception $e){
 		//TODO: Update all error codes so this part can return correct http response

@@ -1454,7 +1454,7 @@ class Image {
 	}
 	
 	//TODO: Add phpDoc
-	public function outputHttp($headers=null) {
+	public function outputHTTP($headers=null) {
 		
 		//Output any additional headers
 		if (is_array($headers)===true){
@@ -1462,6 +1462,7 @@ class Image {
 				header($type.": ".$header);
 			}
 		}
+		//Output caching variables
 		
 		//Output the image
 		header("Content-Type: ".$this->getMimeType());
