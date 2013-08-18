@@ -1027,11 +1027,11 @@ class SecureImageResizer {
 		$request = $this->validateRequest($img, $size, $outputFormat);
 		
 		//If requested original, just return the image
-		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$img)))===$request['finalOutputFormat'])
+		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$request['img'])))===$request['finalOutputFormat'])
 			if ($request['useCache']===true)
-				return new Image($this->_config['base'].$img, time()+$this->_config['cacheTime']); 
+				return new Image($this->_config['base'].$request['img'], time()+$this->_config['cacheTime']); 
 			else
-				return new Image($this->_config['base'].$img); 
+				return new Image($this->_config['base'].$request['img']); 
 
 		//Check if we should use cached version
 		if ($request['useCache']===true){
@@ -1052,7 +1052,7 @@ class SecureImageResizer {
 		$resizer->quality=$request['finalJpegQuality'];
 		
 		//Load the image to be resized
-		$resizer->load_image($this->_config['base'].$img);
+		$resizer->load_image($this->_config['base'].$request['img']);
 				
 		//Resize the image
 		if ($request['size']['method']!=="original") {
@@ -1071,7 +1071,7 @@ class SecureImageResizer {
 		
 		//Cache image if enabled
 		if ($request['useCache']===true){
-			$cacheName=$this->_generateCacheName($img, $request['size'], $request['path'], $request['finalOutputFormat']);
+			$cacheName=$this->_generateCacheName($request['img'], $request['size'], $request['path'], $request['finalOutputFormat']);
 			if ($cacheName!=false)
 				$resizedImage->saveAs($this->_config['cachePath'].$cacheName);
 		}
@@ -1082,7 +1082,7 @@ class SecureImageResizer {
 		
 		//Clean the cache (as in theory new images won't be generated very often)
 		$this->cleanCache();
-		
+
 		return $resizedImage;
 	}
 	
