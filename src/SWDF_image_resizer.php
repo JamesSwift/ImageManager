@@ -414,7 +414,6 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 
 		//Work out where the cached image will be/is stored
 		$cache_file=null;
-		
 		//Is caching enabled? (both globally and for this size)
 		if ( isset($_SWDF['settings']['images']['cache_resized']) && 
 		     isset($_SWDF['paths']['images_cache']) &&
@@ -422,8 +421,8 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 		     @$size['disable_caching']!==true
 		){
 			//Create path to cached file
-			$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.implode("".$size))."].cache";
-			
+			$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.json_encode($size))."].cache";
+
 			//Check if a cached version exists (and it hasn't expired)
 			if ( is_file($cache_file) && 
 			     filemtime($cache_file)>filemtime($orig_img_path) && 
@@ -484,10 +483,12 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 			}
 
 			//Render resized image
-			$output = $resizer->output_image(@$size['output'])->outputData();
+			$output = $resizer->output_image(@$size['output'])->getImageData();
 
 			//Save image to cache
 			if ($cache_file!==null && is_string($cache_file)){
+				if (!is_dir($_SWDF['paths']['images_cache']))
+					mkdir($_SWDF['paths']['images_cache'], 0777, true);
 				file_put_contents($cache_file,$output);
 			}
 
@@ -513,7 +514,7 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 			}
 			
 			//Tell the user where the cached version lives
-			$return['cahce_location']=$cache_file;
+			$return['cache_location']=$cache_file;
 
 			//Return the image
 			$return['data']=$output;

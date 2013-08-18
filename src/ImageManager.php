@@ -338,21 +338,21 @@ class ImageResizer {
 
 		//Output the image
 		if ($output_type=="image/jpeg" || $output_type=="image/jp2"){
-			if (!$output=imagejpeg($this->img['main']['stream'], null, $this->quality)){
+			if (!imagejpeg($this->img['main']['stream'], null, $this->quality)){
 				return false;
 			}
 		}
 		if ($output_type=="image/png"){
-			if (!$output=imagepng($this->img['main']['stream'])){
+			if (!imagepng($this->img['main']['stream'])){
 				return false;
 			}
 		}
 		if ($output_type=="image/gif"){
-			if (!$output=imagegif($this->img['main']['stream'])){
+			if (!imagegif($this->img['main']['stream'])){
 				return false;
 			}
 		}
-
+		
 		//Return captured buffer
 		return new ResizedImage(ob_get_clean(),null,time());
 	}
