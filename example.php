@@ -45,9 +45,6 @@ try {
 		print $e->getMessage();
 	}
 	
-	//Clean the cache (optional)
-	$resizer->cleanCache();
-	
 //Catch configuration errors
 } catch (\Exception $e){
 	

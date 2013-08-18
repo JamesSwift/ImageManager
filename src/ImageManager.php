@@ -1080,6 +1080,9 @@ class SecureImageResizer {
 		if ($request['useCache']===true)
 			$resizedImage->setExpires(time()+$this->_config['cacheTime']);
 		
+		//Clean the cache (as in theory new images won't be generated very often)
+		$this->cleanCache();
+		
 		return $resizedImage;
 	}
 	
