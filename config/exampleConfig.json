@@ -5,7 +5,7 @@
 	"defaultJpegQuality":90,
 	"defaultWatermarkOpacity":10,
 	"defaultSize":"original",
-	"signedHash":"9e38ba26",
+	"signedHash":"daa2ddc2",
 	"sizes":{
 		"original":{
 			"id":"original",
@@ -46,7 +46,16 @@
 	},
 	"paths":{
 		"images/":{
-			"path":"images/"
+			"path":"images/",
+			"alias":[
+				"test/"
+			],
+			"auth":{
+				"call":"secure_path",
+				"data":{
+					"key":"secret_key"
+				}
+			}
 		},
 		"images/products/":{
 			"path":"images/products/",

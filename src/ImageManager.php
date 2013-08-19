@@ -675,7 +675,7 @@ class SecureImageResizer {
 			//check type
 			if (gettype($value)!=="string")
 				throw new Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting]."'", 500);
-			
+		
 		//Ignore signedHash
 		} else if ($setting==="signedHash"){
 			//Ignore me
@@ -781,6 +781,15 @@ class SecureImageResizer {
 			//If denySizes is "all" set it
 			if (!isset($newPath['denySizes']) && isset($path['denySizes']) && is_string($path['denySizes']) && (strtolower($path['denySizes'])==="all" || strtolower($path['denySizes'])==="none"))
 				$newPath['denySizes']=strtolower($path['denySizes']);
+			
+			//TODO: Aliases
+			if (isset($path['alias']) && is_array($path['alias']))
+				foreach($path['alias'] as $alias)
+					$newPath['alias'][]=(string)$alias;
+			
+			//TODO: Security
+			if (isset($path['auth']) && is_array($path['auth']))
+				$newPath['auth']=$path['auth'];
 			
 			//Store the new path
 			$this->_paths[$newPath['path']]=$newPath;
