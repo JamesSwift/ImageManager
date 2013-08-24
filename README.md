@@ -5,6 +5,13 @@
 I'm moving towards releasing v0.5.0 (hence the develop branch being branded v0.5.0-dev). Please 
 test out the code in this branch and submit bug reports and pull requests.
 
+**I'm currently working on:**
++ Adding an alias system
++ Adding a security hook system to allow paths to call a user-defined function which can do additional security checks.
+
+**Ideas that I'll be working on soon:**
++ Adding a hook to catch failed `path` matches (to allow declaring paths on the fly for individual users)
+
 <h1>
 ImageManager v0.5.0-dev 
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US" style="float:right;"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a>
