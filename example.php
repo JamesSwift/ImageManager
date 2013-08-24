@@ -1,56 +1,46 @@
 <?php
 /*
  * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
- * https://github.com/James-Swift/SWDF_image_resizer
+ * https://github.com/James-Swift/ImageManager
  * 
- * This file implements a way to resize images by passing settings in a URL. 
- * Examples:
  * 
- * "new_example.php?size=product_image&img=images/example.jpg"
- * "new_example.php?size=2x&img=images/example.jpg"
+ * Use this file like this:
+ * <img src="example.php?size=SIZE&img=PATH_TO_IMAGE" />
  * 
  */
 
+//Define absolute path to the root of your project (must end with /)
+$_SWDF['paths']['root']=str_replace(Array('\\',"\\","//"),"/",dirname(__FILE__)."/");
+
+//Load GET variables
+$size=@$_GET['size'];
+$img=@$_GET['img'];
+
 //Load dependencies
 require("src/ImageManager.php");
+require("config/exampleConfig.php");
 
-//Register GET variables
-$size	= (isset($_GET['size'])) ?	$_GET['size']	: null;	//Requested output size
-$img	= (isset($_GET['img'])) ?	$_GET['img']	: null;	//Path (relative to "base" defined in config) of image to be resized
-$format = (isset($_GET['format'])) ?	$_GET['format'] : null;	//[optional] The mime-type of output (e.g. image/jpeg)
+//Make resize request
+$result=\JamesSwift\image_resizer_request($img,$size,false);
 
-//Catch configuration errors
-try {
-	//Load the resizer
-	$resizer=new \JamesSwift\SecureImageResizer();
-	
-	//Define the base (other specified paths are now relative to this point)
-	$resizer->set("base", dirname(__FILE__) );
-	
-	//Load the configuration
-	$resizer->loadConfig("config/exampleConfig.json");
-	
-	//Catch errors while resizing
-	try {
-		//Resize the requested image
-		$newImage = $resizer->request($img, $size, $format);
+//Handle returned data, mapping headers etc. and output image
+if (isset($result['status'])){
+	//Set HTTP status Code
+	header(":",null,$result['status']);
 
-		//Output the image to the user
-		$newImage->outputHTTP();
-		
-	} catch (\Exception $e){
-		
-		if (function_exists('http_response_code')) http_response_code($e->getCode());
-		print "Sorry, your request couldn't be processed:<br/>";
-		print $e->getMessage();
+	//Set headers
+	if (isset($result['headers']) && is_array($result['headers'])){
+		foreach($result['headers'] as $header){
+			header($header);
+		}
 	}
-	
-//Catch configuration errors
-} catch (\Exception $e){
-	
-	//In production it would be wise to silently log these errors rather than exposing them to the user
-	header($_SERVER['SERVER_PROTOCOL']." 500 Internal Server Error", true, 500);
-	print $e->getMessage();
-	
+
+	//Output image
+	if (isset($result['data'])){
+		print $result['data'];
+	}
+} else {
+	//Something went wrong, trigger a 500 error
+	header(":",null,500);
 }
 ?>

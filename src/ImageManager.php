@@ -1,15 +1,12 @@
 <?php
 /**
- * James Swift - Image Manager
+ * SWDF_image_resizer
  * 
- * The following code allows you to automate the resizing of images on your website. 
+ * This script allows you to automate the resizing of images on your website. 
  * 
- * The ImageResizer class uses the GD2 PHP library and allows you to make simple
- * modifications to images in your filesystem. 
- * 
- * The SecureImageResizer class implements a system for managing all images
- * on a website, both securing them and resizing/watermarking them as needed 
- * using the ImageResizer class.
+ * The ImageManager uses the GD2 PHP library, and wraps it up in a simple
+ * little class. It also contains a system for managing all images on a website, 
+ * both securing them and resizing/watermarking them as needed.
  * 
  * For a quick start, see examples.txt.
  * 
@@ -20,15 +17,606 @@
  * keep the message below intact:
  * 
  * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
- * https://github.com/James-Swift/SWDF_image_resizer
+ * https://github.com/James-Swift/ImageManager
  * 
  * @author James Swift <me@james-swift.com>
  * @version v0.4.0
- * @package James-Swift/ImageManager
+ * @package ImageManager
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
 namespace JamesSwift;
+
+
+
+/**
+ * Control access the image resizer's acces to specified directory, with the specified settings.
+ * 
+ * The function takes a single config/data array which can have any of the follwing elements:
+ * 
+ * "path"		string		The path (relative to $_SWDF['paths']['root']) to the directory to be secured.<br/>
+ * "allow_sizes"	array|string	Sizes to allow. All other sizes will be blocked unless otherwise specified. To allow all sizes, set to string "all". Default is "all".<br/>
+ * "deny_sizes"		array|string	Sizes to deny. All other sizes will be allowed unless otherwise specified. To block all sizes, set to string "all". By default, none are blocked.<br/>
+ * "require_auth"	bool		When true, image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.<br/>
+ * 
+ * @example "example_config.php" See example usage.
+ * 
+ * @param mixed[] $data	<p>An array containing the path to be added and settings to controll access to it.</p>
+ *			<p>[path=>string, allow_sizes=>array|string, deny_sizes=>array|string, require_auth=>bool]</p>
+ * 
+ * @return bool		<p>Returns `true` on success. Triggers a warning and returns false if the data array is mal-formed.
+ */
+function add_img_path($data){
+	global $_SWDF;
+	
+	//Check integrety of data
+	if (isset($data) && is_array($data) && isset($data['path']) && $data['path']!==null){
+		//Normalize path to end with a /
+		$data['path'].="/";
+		$data['path']=str_replace(Array("\\","//"),"/",$data['path']);
+		
+		//Store the data in the settings array
+		$_SWDF['settings']['images']['paths'][$data['path']]=$data;
+		return true;
+	}
+	
+	//Warn user if unable to add path data, as it may lead to a security breach
+	if (isset($data['path'])){
+		trigger_error("A misconfigured settings file has lead to an error while trying to add image path settings for path: ".$data['path']." Please check your SWDF_image_resizer settings, as this misconfiguration may lead to a security breach.", E_USER_WARNING);
+	} else {
+		trigger_error("A misconfigured settings file has lead to an error while trying to add image path settings. Please check your SWDF_image_resizer settings, as this misconfiguration may lead to a security breach." , E_USER_WARNING);
+	}
+	return false;
+}
+
+/**
+ * Persistantly control access to specified path, with the specified settings.
+ * 
+ * This function is like add_img_path, but instead of loading the data you 
+ * send into the $_SWDF settings variable, the data will be stored in the 
+ * $_SESSION['_SWDF'] settings variable. This allows directory settings specific 
+ * to a user's session to be persistantly stored between requests.
+ * 
+ * PLEASE NOTE: For security, settings in this vairable aren't automatically 
+ * loaded when using any of the * functions. You must explicitly call 
+ * load_user_img_paths() before using the functions, otherwise the user 
+ * paths you have defined will be ignored.
+ * 
+ * The function takes a single config/data array which can have any of the follwing elements:
+ * 
+ * "path"		string		The path (relative to $_SWDF['paths']['root']) to the directory to be secured.<br/>s
+ * "allow_sizes"	array|string	Sizes to allow. All other sizes will be blocked unless otherwise specified. To allow all sizes, set to string "all". Default is "all".<br/>
+ * "deny_sizes"		array|string	Sizes to deny. All other sizes will be allowed unless otherwise specified. To block all sizes, set to string "all". By default, none are blocked.<br/>
+ * "require_auth"	bool		When true, image_resizer_request() must be called with the "authorized" argument set to true, to allow resizing in this path.<br/>
+ * 
+ * 
+ * @param mixed[] $data	<p>An array containing the path to be added and settings to controll access to it.</p>
+ *			<p>[path=>string, allow_sizes=>array|string, deny_sizes=>array|string, require_auth=>bool]</p>
+ * 
+ * @return bool		<p>Returns true on success. If session has not been initiated or is disabled, or if the $data array is malformed will return false.</p>
+ */
+function add_user_img_path($data){
+	//check if session has been initiated
+	if (session_active() && isset($_SESSION)){
+		
+		//Check integrety of data
+		if (isset($data) && is_array($data) && isset($data['path']) && $data['path']!==null){
+			
+			//Normalize path to end with a /
+			$data['path'].="/";
+			$data['path']=str_replace(Array("\\","//"),"/",$data['path']);
+
+			//Store the data in the session
+			$_SESSION['_SWDF']['images']['paths'][$data['path']]=$data;
+
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Loads user-specific directory security settings related to image resizing.
+ * 
+ * When you have added user-specific security settings with add_user_img_path()
+ * function, you need to call this function to load the settings before the
+ * image_resizer_request() functions will take note of them. They are not 
+ * loaded by default as an added security measure.
+ * 
+ * @global array $_SWDF
+ * @return boolean	<p>Returns false if session hasn't been initiated or is disabled.</p>
+ *			<p>Returns true if all paths were added.</p>
+ *			<p> If one path fails to load, a warrning will be triggered and the 
+ *			function will return false (after attempting to load any remaining 
+ *			user paths).</p>
+ */
+function load_user_img_paths(){
+	global $_SWDF;
+	//check if session has been initiated
+	if (session_active() && isset($_SESSION)){
+		
+		//Check $_SWDF has been loaded
+		if (!isset($_SWDF)){
+			$_SWDF=array();
+		}
+		
+		//Even if no paths were defined, return true
+		$return=true;
+		
+		//Check some paths are defined
+		if (isset($_SESSION['_SWDF']['images']['paths']) && is_array($_SESSION['_SWDF']['images']['paths'])){
+			foreach ($_SESSION['_SWDF']['images']['paths'] as $path){
+				//If one of the paths fails, return false
+				if (!add_img_path($path)){
+					$return=false;
+				}
+			}
+		}
+		
+		return $return;
+	}
+	
+	return false;
+}
+
+/**
+ * Finds which security settings apply to a particular image and returns them.
+ * 
+ * The function starts at the deepest level of your image's path, then progressivley works it way up a directory at a time, testing each level until it finds a matching path from the ones you predefined earlier.
+ * 
+ * @param string $image	The image (including relative path from to $_SWDF['paths']['root']) to find infomartion about. 
+ * 
+ * @return bool|mixed[]	If the image exists and matches a predefined path, the settings for that path will be returned. Otherwise, returns false.
+ */
+function get_img_path_info($image){
+	global $_SWDF;
+
+	//First, check all needed data exists, and that image exists
+	if (
+		isset($_SWDF) && 
+		isset($_SWDF['paths']['root']) && 
+		isset($image) && $image!=null && 
+		isset($_SWDF['settings']['images']['paths']) &&
+		is_file($_SWDF['paths']['root'].$image)
+	){
+		
+		//Remove the image from the path, and normalize the path
+		$image_path=str_replace(Array("\\","//"),"/",dirname($image));
+		$image_path_parts=explode("/",$image_path);
+		
+		//Find closest matching predefined path
+		if (is_array($image_path_parts)){
+			
+			foreach ($image_path_parts as $part){
+				
+				if (sizeof($image_path_parts)>0){
+					
+					//Combine $image_path_parts into a new path
+					$new_path_level=implode("/",$image_path_parts)."/";
+
+					//Check if this new path is explicetly defined
+					if (isset($_SWDF['settings']['images']['paths'][$new_path_level]) && is_array($_SWDF['settings']['images']['paths'][$new_path_level])){
+						
+						//A match was found, return the data for that path
+						return $_SWDF['settings']['images']['paths'][$new_path_level];
+						
+					//If no match found, move up one level and try again
+					} else array_pop($image_path_parts);
+				}
+			}
+		}
+
+	}
+	
+	//Something went wrong
+	return false;
+}
+
+/**
+ * Process a path's settings and produce an array of sizes that are definitely allowed (and that really exist).
+ * 
+ * Please ensure you have specified your paths and sizes first, otherwise the function will return false. Allowed sizes are added first, then any sizes defined in "deny_sizes" are then removed from the list.
+ * 
+ * @param string $path The path you want to check.
+ * @return boolean|array Returns an array of size ids on success. If the path cannot be found or no global sizes are specified, will return false.
+ */
+function get_allowed_sizes($path){
+	global $_SWDF;
+
+	//Check needed resources are available
+	if (!(	isset($path) && 
+		$path !== null &&
+		isset($_SWDF) &&
+		isset($_SWDF['settings']['images']['paths']) &&
+		isset($_SWDF['settings']['images']['paths'][$path]) &&
+		is_array($_SWDF['settings']['images']['paths'][$path]) &&
+		isset($_SWDF['settings']['images']['sizes']) &&
+		is_array($_SWDF['settings']['images']['sizes'])
+	)) return false;
+	
+	//Create shortcut to path settings
+	$path=$_SWDF['settings']['images']['paths'][$path];
+	
+	$allowed_sizes=Array();
+	
+	//If "allow_sizes" was left blank or set to all, populate the array with all available sizes
+	if ($path['allow_sizes']==="all" || $path['allow_sizes']===NULL){
+		foreach($_SWDF['settings']['images']['sizes'] as $id=>$size){
+			$allowed_sizes[$id]=$id;
+		}
+		
+	//If "allow_sizes" was an array instead, populate the array with those sizes
+	} else if ($path['allow_sizes']!=NULL && is_array($path['allow_sizes'])){
+		foreach($path['allow_sizes'] as $id){
+			//Check each size actually exists first
+			if (isset($_SWDF['settings']['images']['sizes'][$id])){
+				$allowed_sizes[$id]=$id;
+			}
+		}
+	}
+	
+	//Now remove any sizes explicitly denied
+	if (isset($path['deny_sizes']) && $path['deny_sizes']==="all"){
+		//All sizes are denied, set the array to blank
+		$allowed_sizes=Array();
+		
+	//Just some sizes are denied
+	} else if (isset($path['deny_sizes']) && is_array($path['deny_sizes'])){
+		foreach ($path['deny_sizes'] as $id){
+			if (isset($_SWDF['settings']['images']['sizes'][$id]) && isset($allowed_sizes[$id])){
+				unset($allowed_sizes[$id]);
+			}
+		}
+	}
+	
+	//Return the array of allowed sizes
+	return $allowed_sizes;
+
+}
+
+/**
+ * Check the user is allowed to resize the specified image to the size they requested.
+ * 
+ * Note: This function doesn't by default take note of paths stored by add_user_img_path(). 
+ * You must explicitly call load_user_img_paths() before calling this function if you want
+ * them to be taken into account when granting a request.
+ * 
+ * @param  string	   $image	Required. The path, relative to $_SWDF['paths']['root'], to the image you wish to resize.
+ * 
+ * @param  string|null	   $size	Optional. The id of the size you wish to resize the image to. If not specified, 
+ *					$_SWDF['settings']['images']['default_size'] will be used (if configured).
+ * 
+ * @param  bool		   $authorized	Optional. If the path the image falls under has it's "require_auth" property set to true, 
+ *					the resize request will fail unless you set this argument to true. It's primarily intended 
+ *					as a saftey-net for building your own security system on top of the SWDF_image_resizer.
+ * 
+ * @return boolean|mixed[]		<p>If the request is allowed, an array containing the details of the requested size will be returned.</p>
+ *					<p>If request is not authorized or you have failed to define any sizes or paths, will return false</p>
+ */
+function validate_resize_request($image,$size=null,$authorized=false){
+	global $_SWDF;
+
+	//Check needed resources are available
+	if (!(	isset($_SWDF) &&
+		isset($_SWDF['paths']['root']) &&
+		isset($_SWDF['settings']['images']) &&
+		isset($_SWDF['settings']['images']['sizes']) &&
+		isset($_SWDF['settings']['images']['paths']) &&
+		isset($image) &&
+		is_string($image)
+	)) return false;
+	
+	//Load default size if none specified
+	if (isset($size) && !is_string($size)){
+		if (isset($_SWDF['settings']['images']['default_size'])){
+			$size=$_SWDF['settings']['images']['default_size'];
+		} else {
+			//If default size wasn't specified, bail out
+			return false;
+		}
+	}
+
+	//Normalize the $image request, and prevent back-references
+	$image=str_replace(Array("\\","//"),"/",$image);
+	$image=str_replace(Array("../","./"),"",$image);
+
+	//First, check file exists before other checks.
+	if (is_file($_SWDF['paths']['root'].$image)){
+		
+		//Get security settings for the path the image is in
+		$path=get_img_path_info($image);
+		
+		//Check path is allowed
+		if ($path!==false){
+			
+			//Find the allowed sizes for the path the image is in
+			$sizes=get_allowed_sizes($path['path']);
+			
+			//Check whether requested size is allowed
+			if (is_array($sizes)){
+				
+				if (in_array($size,$sizes)===true && is_array($_SWDF['settings']['images']['sizes'][$size])){
+					
+					//Size is allowed, just one final thing. Check we are authorized to render
+					
+					//Authorization required
+					if (isset($path['require_auth']) && $path['require_auth']===true){
+						if ($authorized===true){
+							return $_SWDF['settings']['images']['sizes'][$size];
+						}
+						
+					//No authorization required, just return the size to be rendered
+					} else {
+						return $_SWDF['settings']['images']['sizes'][$size];
+					}
+				}
+			}
+		}
+	}
+	
+	//Something went wrong
+	return false;
+}
+
+/**
+ * Resize an image according to the settings you earlier specified
+ * 
+ * You must specify your settings in the $_SWDF variable as per the documentation before calling this function. It will then check your user's request to see if the file they have requested can be displayed to them at the size they requested. If so, it will resize it and return the raw image data for your to display.
+ * 
+ * @param string $img The path (relative to $_SWDF['paths']['root']) of the image to be resized.
+ * @param string $requested_size The id of a size specified in $_SWDF['settings']['images']['sizes'] that the user whiches to resize the image to.
+ * @param bool $authorized Whether this request has been authorized. Normally you can ignor this variable, it's only needed if you have added your own security layer ontop of the SWDF_image_resizer tool.
+ * 
+ * @return bool|mixed[] <p>If required dependancies could not be loaded (E.G. $_SWDF), the function will return false.</p><br/>
+ *			<p>If the request cannot be processed because, for example, the file cannot be found or access is denied, the function will return an array similar to this:<br/>
+ *			array("status"=>"404","data"=>"File not found");</p><br/>
+ *			<p>If the request was successful, the function will return an array similar to this:<br/>
+ *			array(<br/>
+ *				"status"=>"200",<br/>
+ *				"headers"=>array("Last-Modified"=>"Wed, 27 Mar 2013 00:47:53 GMT", "Content-Type"=>"image/jpeg"),<br/>
+ *				"cache_location"=>"/tmp/1.jpg[aabbccddeeff].cache",<br/>
+ *				"data"=>RAW_IMAGE_DATA<br/>
+ *			);<br/>
+ *			You can choose to use the data in the header section to render the image directly to the user, or ignore it do something different with the returned image data.</p>
+ */
+function image_resizer_request($img, $requested_size=null, $authorized=false){
+	global $_SWDF;
+	
+	//Check all dependancies are loaded
+	if (!(
+		isset($_SWDF) &&
+		isset($_SWDF['paths']['root']) &&
+		isset($_SWDF['settings']['images']) &&
+		isset($_SWDF['settings']['images']['sizes']) &&
+		isset($_SWDF['settings']['images']['paths'])
+	)) return false;
+	
+	//This function returns an array. Initiate it.
+	$return = array();
+
+	//Get details of requested size
+	$size=validate_resize_request($img,$requested_size,$authorized);
+
+	//Check whether to proceed with resize request
+	if ($size!==false && is_array($size)){
+
+		//Get absolute path to image
+		$img_path=$_SWDF['paths']['root'].$img;
+		
+		//Normalize path
+		$img_path=str_replace(Array("\\","//"),"/",$img_path);
+		
+		//Prevent direcotry traversal
+		$img_path=str_replace(Array("../","./"),"",$img_path);
+		
+		//Note for later use
+		$orig_img_path=$img_path;
+
+		//Work out where the cached image will be/is stored
+		$cache_file=null;
+		//Is caching enabled? (both globally and for this size)
+		if ( isset($_SWDF['settings']['images']['cache_resized']) && 
+		     isset($_SWDF['paths']['images_cache']) &&
+		     $_SWDF['settings']['images']['cache_resized']===true && 
+		     @$size['disable_caching']!==true
+		){
+			//Create path to cached file
+			$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.json_encode($size))."].cache";
+
+			//Check if a cached version exists (and it hasn't expired)
+			if ( is_file($cache_file) && 
+			     filemtime($cache_file)>filemtime($orig_img_path) && 
+			     filemtime($cache_file)>time()-$_SWDF['settings']['images']['cache_expiry']
+			){
+				//It's valid, so let's forget about resizing and point straight to the cached version
+				$img_path=$cache_file;
+				$size=Array("method"=>"original");
+
+			//If the cache file exists, but is now out of date, remove it to keep the cache clean
+			} else if (is_file($cache_file)) {
+				unlink($cache_file);
+			}
+		}	
+
+		//Get properties of image to be resized
+		$properties=getimagesize($img_path);
+
+		//If method=original just pass the data straight through
+		if (isset($size['method']) && $size['method']==="original" && is_file($img_path)){
+			//Check file is an image
+			if ($properties!==false){
+				//just pass image through script
+				$return['status']=200;
+				$return['headers'][]="Content-type: {$properties['mime']}";
+				$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
+				$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
+				$return['data']=file_get_contents($img_path);
+			} else {
+				//Invalid image
+				$return['status']=404;
+			}
+
+		//If method is any other kind, make a SWDF_image_resizer() request
+		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true && is_file($img_path)) {
+
+			//Load resizer class
+			$resizer=new \JamesSwift\ImageResizer();
+
+			//Set JPEG quality
+			$resizer->quality=$_SWDF['settings']['images']['default_jpeg_quality'];
+			if (isset($size['quality']) && $size['quality']!=null){
+				$resizer->quality=$size['quality'];
+			}
+
+			//load source
+			$resizer->load_image($img_path);
+
+			//resize image
+			$resizer->resize($size['method'],@$size['width'],@$size['height'],@$size['scale']);
+
+			//add watermark
+			if (isset($size['watermark']) && is_array($size['watermark']) && isset($size['watermark']['path']) && is_file($size['watermark']['path']) ){
+				if (isset($size['watermark']['opacity']) && ctype_digit(isset($size['watermark']['opacity']))){
+					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
+				}
+				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],@$size['watermark']['opacity'],@$size['watermark']['scale'],@$size['watermark']['repeat'],5,5);
+			}
+
+			//Render resized image
+			$output = $resizer->output_image(@$size['output'])->getImageData();
+
+			//Save image to cache
+			if ($cache_file!==null && is_string($cache_file)){
+				if (!is_dir($_SWDF['paths']['images_cache']))
+					mkdir($_SWDF['paths']['images_cache'], 0777, true);
+				file_put_contents($cache_file,$output);
+			}
+
+			//Find data about original file
+			$properties=getimagesize($img_path);
+			
+			//Build return headers
+			$return['status']=200;
+			
+			//Find mime-type
+			if (isset($size['output']) && $size['output']!==null){
+				$return['headers'][]="Content-type: {$size['output']}";
+			} else if ($properties!==false){
+				$return['headers'][]="Content-type: {$properties['mime']}";
+			}
+			
+			//Last-modified
+			$return['headers'][]='Last-Modified: '.gmdate('D, d M Y H:i:s', filemtime($orig_img_path)).' GMT';
+			
+			//Expiry
+			if (isset($_SWDF['settings']['images']['cache_expiry'])){
+				$return['headers'][]='Expires: '.gmdate('D, d M Y H:i:s', time()+$_SWDF['settings']['images']['cache_expiry']).' GMT';
+			}
+			
+			//Tell the user where the cached version lives
+			$return['cache_location']=$cache_file;
+
+			//Return the image
+			$return['data']=$output;
+
+			//Clean the cache directory every now and then
+			if (rand(0,1)===1) clean_image_cache();
+		} else {
+			die("Invalid method specified for this size.");
+		}
+		
+	//If we ended up here, either the file is not found/access denied, or the resizing method doesn't exist
+	} else {
+		$return['status']=404;
+		$return['data']="File not found";
+	}
+
+	//Return the data
+	return $return;
+}
+
+/**
+ * Clean the resized images cache
+ * 
+ * If you are trying to delete all the cached versions of a particular image, you can specify it in the first argument and it will delete any cache file starting with that name.
+ * By default, this function will only opperate if caching is enabled, but you can force it to operate by setting the second argument to true.
+ * 
+ * @param string|null $delete_fname Optional. The name (NOT PATH) of an image (E.G. "hello.jpg"). Any time a cache file starting with that name is encountered it will be deleted, regardless of if it has expired or not.
+ * @param bool $force Optional. Force cleaning fo the image cache, even when caching has been disabled. (You must have specified $_SWDF['paths']['images_cache'] and $_SWDF['settings']['images']['cache_expiry'] for this to work)
+ * @return bool 
+ */
+function clean_image_cache($delete_fname=null, $force=false){
+	global $_SWDF;
+
+	//Has a file called $delete_fname been deleted in this sweep?
+	$deleted=false;
+		
+	//Check caching is enabled (and configured)
+	if ( isset($_SWDF) && ($force===true || ( 
+	      isset($_SWDF['settings']['images']['cache_resized']) && 
+	      $_SWDF['settings']['images']['cache_resized']===true && 
+	      isset($_SWDF['settings']['images']['cache_expiry']) && 
+	      $_SWDF['settings']['images']['cache_expiry']!=null
+	    ) )
+	){
+
+		//Check cache directory exists
+		if (isset($_SWDF['paths']['images_cache']) && $_SWDF['paths']['images_cache']!==null && is_dir($_SWDF['paths']['images_cache']) && isset($_SWDF['settings']['images']['cache_expiry']) && ctype_digit($_SWDF['settings']['images']['cache_expiry'])) {
+
+			//Create list of files in cache directory
+			$dir=scandir($_SWDF['paths']['images_cache']);
+
+			//Cycle through files and delete if appropriate
+			if (is_array($dir)){
+				foreach($dir as $file){
+					//Work out file-name
+					$fname=substr($file, 0, strpos($file, "["));
+
+					//Determine whether to delete or not
+					if (is_file($_SWDF['paths']['images_cache'].$file) && 
+					    substr($file,-5,5)=="cache" &&
+					    (
+					     filemtime($_SWDF['paths']['images_cache'].$file)<time()-$_SWDF['settings']['images']['cache_expiry'] || 
+					     $fname===$delete_fname
+					    )
+					){
+						unlink($_SWDF['paths']['images_cache'].$file);
+						if ($fname===$delete_fname) $deleted=true;
+					}
+				}
+				
+				//If the user was specifically trying to delete one file, return true or false
+				if ($delete_fname!==null){
+					return $deleted;
+				}
+				
+				//Else, the scan was successful. return true
+				return true;
+			}
+		}
+	}
+
+	//Hmm, something went wrong
+	return false;
+}
+
+//Make backwards compatible with earlier version of PHP
+//This isn't a perfect test for whether a session is active or not, but 
+if (!function_exists('session_status')){
+    function session_active(){
+        return defined('SID');   
+    }
+} else {
+    function session_active(){
+        return (session_status() === 2);   
+    }        
+}
+
+
+
+
+#############################################################################################################
+
 
 
 class Exception extends \Exception {
@@ -370,1038 +958,14 @@ class ImageResizer {
 	}
 }
 
-//TODO: Add hook to secure paths with user-defined function
-//TODO: Add phpDoc
-class SecureImageResizer {
-	const VERSION = "v0.4.0";
-	protected $_config;
-	protected $_paths;
-	protected $_sizes;
-	protected $_allowedOutputFormats = array("original","image/jpeg","image/jp2","image/png","image/gif");
-	protected $_allowedMethods = array("original","fit","fill","stretch","scale");
-		
-	//TODO: Add phpDoc
-	public function __construct($config=null){
-		//Load default config
-		$this->loadDefaultConfig();
-			
-		//Allow passing config straight through constructor
-		if ($config!==null){
-			if ($this->loadConfig($config)===false){
-				throw new Exception("Unable to load passed config.",500);
-			}
-		}
-	}
-	
-	//TODO: Add phpDoc
-	public function sanitizePath($path, $removeLeading=false, $addTrailing=false){
 
-		//Check we're dealing with a path
-		if (!isset($path) || !is_string($path) || $path==="")
-			throw new Exception("Cannot sanitize file-path. It must be a non-empty string.",500);
-		
-		//Add trailing slash
-		if ($addTrailing===true) $path=$path."/";
-		
-		//Turn all slashes round the same way
-		$path=str_replace(Array("\\","/",'\\',"//"),"/",$path);
-		
-		//Remove redundant references to ./
-		$path=substr(str_replace("/./","/",$path."/"), 0, -1);
 
-		//Check path for directory traversing
-		if (strpos("/".$path."/", "/../")!==false)
-			throw new Exception("Cannot sanitize file path: '".$path."'. It appears to contain an attempt at directory traversal which may be a security breach.",422);
 
-		//Remove leading slash
-		if ($removeLeading===true && substr($path,0,1)==="/")
-			$path=substr($path,1);
-		
-		return $path;
-	
-	}
-	
-	//TODO: Add phpDoc
-	protected function _loadConfigFromFile($file){
-		
-		//Does the file exist?
-		if (!is_file($file))
-			return false;
 
-		//Atempt to decode it
-		$config = json_decode(file_get_contents($file),true);
-		
-		//Return false on failure
-		return ($config === null) ? false : $config;
-	}
-	
-	//TODO: Add phpDoc
-	public function loadDefaultConfig(){
-		$this->_config=array(
-			"base"=>$this->sanitizePath(dirname(__FILE__), false, true),
-			"enableCaching"=>true,
-			"cacheTime"=>60*60, //1 Hour
-			"defaultWatermarkOpacity"=>50,
-			"defaultOutputFormat"=>"original",
-			"defaultJpegQuality"=>90
-		);
-		$this->set("cachePath",$this->sanitizePath(\sys_get_temp_dir()."/James-Swift/ImageManager/imageCache/", false, true));
-		$this->_paths=array();
-		$this->_sizes=array(); 	
-	}
-	
-	//TODO: Add phpDoc
-	protected function _loadSignedConfig($config){
-		
-		//Check we're dealing with a signed config
-		if (!isset($config['signedHash']))
-			return false;
 
-		//Recheck hash to see if it is valid
-		if ($this->_signConfig($config)!==$config['signedHash'])
-			return false;
 
-		//Load the signed (previously checked) paths and sizes
-		$this->_sizes=$config['sizes']+$this->_sizes;
-		$this->_paths=$config['paths']+$this->_paths;
 
-		//Unset value we don't want in our $this->_config array;
-		unset($config['paths'],$config['sizes'],$config['signedHash']);
-		
-		//Load the signed config settings
-		$this->_config=$config+$this->_config;
 
-		return true;
-		
-	}
-	
-	//TODO: Add phpDoc
-	public function loadConfig($loadFrom, $clearOld=false, $saveChanges=true){
-
-		//If they called this function with no config, just return null
-		if ($loadFrom===null) return null;
-				
-		//If we have been passed an array, load that
-		if (is_array($loadFrom)) {
-			$config=$loadFrom;
-			
-		//If not, try to load from JSON file
-		} else if (is_string($loadFrom) && is_file($loadFrom)) {
-			$config=$this->_loadConfigFromFile($loadFrom);
-			if ($config===false)
-				throw new Exception("Unable to parse config file: ".$loadFrom, 500);
-		}
-		
-		//Were we able to load $config from somewhere?
-		if (!isset($config)) 
-			throw new Exception("Unable to load configuration. Please pass a config array or a valid absolute path to a JSON file.", 500);
-
-		//Reset the class if requested
-		if ($clearOld===true) 
-			$this->loadDefaultConfig();
-		
-		//Has this configuration been signed previously? (if so load it without error checking to save CPU cycles)
-		if (isset($config['signedHash']) && $this->_loadSignedConfig($config) )
-			return $config;
-
-		//Process configuration
-		$newConfig=array();
-
-		//Set the settings
-		foreach ($config as $name=>$setting){
-			if ($name!=="paths" && $name!=="sizes")
-				$newConfig[$name] = $this->set($name,$setting);
-		}
-
-		//Call $this->addSize with all sizes as arguments
-		if (isset($config['sizes'])===true && is_array($config['sizes']))
-			$newConfig['sizes']=call_user_func_array(array($this, "addSize"), $config['sizes']);
-
-		//Call $this->addPath with all paths as arguments
-		if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0)
-			$newConfig['paths']=call_user_func_array(array($this, "addPath"), $config['paths']);
-
-		//Check if we should save changes back to the file
-		if ($saveChanges===true && is_string($loadFrom)){
-
-			//Sign this new config
-			$newConfig['signedHash'] = $this->_signConfig($newConfig);
-
-			//write it back to disk
-			file_put_contents($loadFrom, json_indent(\json_encode($newConfig)));
-		}
-
-		return $newConfig;
-	}
-	
-	//TODO: Add phpDoc
-	public function getConfig(){
-		//Load basic config
-		$config=$this->_config;
-		
-		//Load paths and sizes (Remove IDs)
-		$config['paths']=$this->_paths;
-		$config['sizes']=$this->_sizes;
-		
-		return $config;
-	}
-	
-	//TODO: Add phpDoc
-	public function getSignedConfig(){
-		
-		//Get config to sign
-		$config = $this->getConfig();
-
-		//Sign the config
-		$config['signedHash'] = $this->_signConfig($config);
-		
-		//Sign and return it
-		return $config;
-	}
-	
-	//TODO: Add phpDoc
-	protected function _signConfig($config){
-		
-		//Check the config array actually exists
-		if (!(isset($config) && is_array($config)))
-			return false;
-		
-		//Remove any previous signature
-		unset($config['signedHash']);
-	
-		//Stringify it and hash it
-		return	hash("crc32",
-				var_export($config, true).
-				" <- Compatible config file for James-Swift/SecureImageResizer ".
-				self::VERSION.
-				" by James Swift"
-			);
-	}
-	
-	//TODO: Add phpDoc
-	public function saveConfig($file, $overwrite=false, $format="json", $varName="SecureImageResizer_config_array"){
-		
-		if ($overwrite===false && is_file($file)) 
-			throw new Exception("Unable to save settings. File '".$file."' already exists, and method is in non-overwrite mode.", 500);
-		
-		if ($format==="json"){
-			if (file_put_contents($file, json_indent(json_encode($this->getSignedConfig())) )!==false )
-				return true;
-		
-		} else if ($format==="php"){
-			if (file_put_contents($file, "<"."?php \$".$varName." =\n".var_export($this->getSignedConfig(), true).";\n?".">")!==false )
-				return true;
-		}
-		
-		throw new Exception("An unknown error occured and the settings could not be saved to file: ".$file, 500);
-	}
-	
-	//TODO: Add phpDoc
-	public function set($setting, $value){
-		
-		//Perform sanitization/standardization
-		
-		//Base path
-		if ($setting==="base"){
-			//Check type
-			if (is_string($value)!==true || $value==="")
-				throw new Exception("Cannot set '".$setting."'. Must be non-null string.", 500);
-			
-			//Use correct slash and add trailing slash
-			$value=$this->sanitizePath($value, false, true);
-			
-			//Check directory exists
-			if (is_dir($value)===false)	
-				throw new Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.", 500);
-			
-			
-			
-		//Cache Path
-		} else if ($setting==="cachePath"){
-			//Check type
-			if (is_string($value)!==true || $value==="")
-				throw new Exception("Cannot set '".$setting."'. Must be non-null string.", 500);
-			
-			//Use correct slash and add trailing slash
-			$value=$this->sanitizePath($value, false, true);
-			
-			//Check directory exists (and create it if it doesn't)
-			if (is_dir($value)===false)
-				if (!mkdir($value, 0777, true) || is_dir($value)===false) 
-					throw new Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.", 500);
-			
-				
-		//Enable Caching
-		} else if ($setting==="enableCaching"){
-			//Check type
-			if (is_bool($value)===false)
-				throw new Exception("Cannot set '".$setting."'. Must be of type boolean. Type give is ".gettype($value), 500);
-			
-			
-		//Cache Time - maximum age of cache files
-		} else if ($setting==="cacheTime"){
-			if (ctype_digit($value)===false)
-				throw new Exception("Cannot set '".$setting."'. Must be positive integar. Given value was: '".$value."'.", 500);
-			$value=(int)$value;
-			
-			
-			
-		//Default JPEG quality
-		} else if ($setting==="defaultJpegQuality"){
-			$value=(int)$value;
-			if ($value<0 || $value>100)
-				throw new Exception("Cannot set '".$setting."'. Must be between 0 and 100", 500);
-		
-		//Default watermark opacity
-		} else if ($setting==="defaultWatermarkOpacity"){
-			$value=(int)$value;
-			if ($value<0 || $value>100)
-				throw new Exception("Cannot set '".$setting."'. Must be between 0 and 100", 500);
-		
-		//Default output format
-		} else if ($setting==="defaultOutputFormat"){
-			//Check type
-			if (gettype($value)!=="string")
-				throw new Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting]."'", 500);
-			
-			$value=strtolower($value);
-			
-			//Check value
-			if (in_array($value,$this->getAllowedOutputFormats())===false && $value!=="original")
-				throw new Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()), 500);
-		
-		//Default output size
-		} else if ($setting==="defaultSize"){
-			//check type
-			if (gettype($value)!=="string")
-				throw new Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting]."'", 500);
-		
-		//Ignore signedHash
-		} else if ($setting==="signedHash"){
-			//Ignore me
-		
-		//Catch unknown settings
-		} else {
-			throw new Exception("Cannot set '".$setting."'. Specified setting doesn't exist.", 501);
-		}
-		
-		//Store the verfied setting
-		$this->_config[$setting]=$value;
-		
-		return $value;
-		
-	}
-	
-	//TODO: Add phpDoc
-	public function get($setting){
-		if (isset($setting) && isset($this->_config[$setting])){
-			return $this->_config[$setting];
-		}
-		return null;
-	}
-	
-	//TODO: Add phpDoc
-	public function getAllowedOutputFormats(){
-		return $this->_allowedOutputFormats;
-	}
-	
-
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	//TODO: Add phpDoc
-	public function addPath(array $path /*, $path, $path, $path ... , $allowOverwrite=false*/){
-		
-		//Get list of arguments
-		$paths = func_get_args();
-		
-		//Check for last variable being $allowOverwrite
-		$allowOverwrite=false;
-		if (is_array($paths) && sizeof($paths>1) && is_bool(end($paths)) )
-			$allowOverwrite=array_pop($paths);
-		
-		//Check we're dealing with an non-empty array
-		if (!isset($paths) || !is_array($paths) || sizeof($paths)<1)
-			throw new Exception("Cannot add path(s). You must pass one or more non-empty arrays as arguments to this method.", 500);
-		
-		//Create blank array to hold sanitized data
-		$newPaths=array();
-		
-		//loop through paths and add them
-		foreach($paths as $path){
-
-			//Check type
-			if (!is_array($path) || sizeof($path)===0)
-				throw new Exception("Cannot add path. Paths must be non-empty arrays", 500);
-
-			//Check required elements are there
-			if (isset($path['path'])===false || !is_string($path['path']) || $path['path']==="" )
-				throw new Exception("Cannot add unamed path. The passed array must contain a non-empty 'path' element pointing to a directory, which also serves as it's ID.", 500);
-
-			//Create blank array for sanitized data
-			$newPath=&$newPaths[$path['path']];
-			
-			//Sanitize variables
-			$newPath['path']=$this->sanitizePath($path['path'],true,true);
-			if (isset($path['disableCaching']))
-				$newPath['disableCaching']=(bool)$path['disableCaching'];
-
-			//Check path doesn't already exist
-			if ($this->isPath($newPath['path']) && $allowOverwrite!==true)
-				throw new Exception("Cannot add path '".$newPath['path']."'. It already exists and \$allowOverwrite, isn't set to true.", 500);
-			
-			//If defaultOuputFormat defined, check it is allowed and add it
-			if (isset($path['defaultOutputFormat']))
-				if (!is_string($path['defaultOutputFormat']) || in_array(strtolower($path['defaultOutputFormat']), $this->getAllowedOutputFormats())===false)
-					throw new Exception("Cannot add path '".$newPath['path']."'. The defaultOutputFormat you specified isn't allowed. It must be one of: ".implode(", ",$this->getAllowedOutputFormats()), 500);
-				else
-					$newPath['defaultOutputFormat']=strtolower($path['defaultOutputFormat']);
-				
-			//If defaultJpegQuality defined, check it is allowed and add it
-			if (isset($path['defaultJpegQuality']))
-				if (!is_int($path['defaultJpegQuality']) || $path['defaultJpegQuality']<0 || $path['defaultJpegQuality']>100)
-					throw new Exception("Cannot add path '".$newPath['path']."'. The defaultJpegQuality must be between 0 and 100. You specified: ".$path['defaultJpegQuality'], 500);
-				else
-					$newPath['defaultJpegQuality']=(int)$path['defaultJpegQuality'];
-			
-			//If allowSizes defined, remove any keys, convert to strings, and add it
-			if (isset($path['allowSizes']) && is_array($path['allowSizes']))
-				foreach($path['allowSizes'] as $size)
-					$newPath['allowSizes'][]=(string)$size;
-			
-			//If allowSizes is "all" set it
-			if (!isset($newPath['allowSizes']) && isset($path['allowSizes']) && is_string($path['allowSizes']) && (strtolower($path['allowSizes'])==="all" || strtolower($path['allowSizes'])==="none"))
-				$newPath['allowSizes']=strtolower($path['allowSizes']);
-
-			//If denySizes defined, remove any keys, convert to string, and add it
-			if (isset($path['denySizes']) && is_array($path['denySizes']))
-				foreach($path['denySizes'] as $size)
-					$newPath['denySizes'][]=(string)$size;
-			
-			//If denySizes is "all" set it
-			if (!isset($newPath['denySizes']) && isset($path['denySizes']) && is_string($path['denySizes']) && (strtolower($path['denySizes'])==="all" || strtolower($path['denySizes'])==="none"))
-				$newPath['denySizes']=strtolower($path['denySizes']);
-			
-			//TODO: Aliases
-			if (isset($path['alias']) && is_array($path['alias']))
-				foreach($path['alias'] as $alias)
-					$newPath['alias'][]=(string)$alias;
-			
-			//TODO: Security
-			if (isset($path['auth']) && is_array($path['auth']))
-				$newPath['auth']=$path['auth'];
-			
-			//Store the new path
-			$this->_paths[$newPath['path']]=$newPath;
-		}
-		
-		//Returned the sanitized data
-		return $newPaths;
-	}
-	
-	//TODO: Add phpDoc
-	public function getPath($path){
-		//Check path is string
-		if (!is_string($path))
-			return false;
-		
-		//Add slash if missing
-		if (substr($path, -1, 1)!=="/")
-			$path.="/";
-		
-		//Check path exists
-		if (isset($this->_paths[$path]))
-			return $this->_paths[$path];
-
-		return false;
-	}
-	
-	//TODO: Add phpDoc
-	public function getPaths(){
-		return $this->_paths;
-	}
-	
-	//TODO: Add phpDoc
-	public function isPath($path){
-		if (isset($this->_paths[$path])) return true;
-		return false;
-	}
-	
-	//TODO: Add phpDoc
-	public function removePath($path){
-		if (isset($this->_paths[$path])){
-			unset($this->_paths[$path]);
-			return true;
-		} 
-		return false;
-	}
-	
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	//TODO: Add phpDoc
-	public function addSize(array $size /*, $size, $size, $size ... */){
-		//Get list of arguments
-		$sizes = func_get_args();
-		
-		//Check for last variable being $allowOverwrite
-		$allowOverwrite=false;
-		if (is_array($sizes) && sizeof($sizes>1) && is_bool(end($sizes))){
-			$allowOverwrite=array_pop($sizes);
-		}
-
-		//Check we're dealing with an array
-		if (!isset($sizes) || !is_array($sizes) || sizeof($sizes)<1)
-			throw new Exception("Cannot add size(s). You must pass one or more non-empty arrays to this method.", 500);
-
-		//Create array to hold sanitized data
-		$newSizes=array();
-		
-		//loop through sizes and add them
-		foreach($sizes as $size){
-
-			//Check type
-			if (!is_array($size) || sizeof($size)===0)
-				throw new Exception("Cannot add size. Paths must be non-empty arrays", 500);
-
-			//Check required elements are there
-			if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||				
-				isset($size['method'])===false	|| $size['method']==="" || !is_string($size['method'])
-			){
-				if (isset($size['id']))
-					throw new Exception("Cannot add size '".(string)$size['id']."'. The passed array must contain non-empty 'id' and 'method' elements.", 500);
-				
-				throw new Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.", 500);						
-			}
-			
-			//Create array to hold sanitized data
-			$newSize=&$newSizes[$size['id']];
-			
-			//Sanitize data
-								$newSize['id']			= $size['id'];
-								$newSize['method']		= strtolower($size['method']);
-			if (isset($size['width']))		$newSize['width']		= (int)$size['width'];
-			if (isset($size['height']))		$newSize['height']		= (int)$size['height'];
-			if (isset($size['scale']))		$newSize['scale']		= (float)$size['scale'];
-			if (isset($size['defaultOutputFormat']))$newSize['defaultOutputFormat']	= strtolower($size['defaultOutputFormat']);
-			if (isset($size['jpegQuality']))	$newSize['jpegQuality']		= (int)$size['jpegQuality'];
-			if (isset($size['disableCaching']))	$newSize['disableCaching']	= (bool)$size['disableCaching'];
-			
-			//Check id
-			if (preg_match("/[^0-9a-zA-Z_\-]/", $size['id'])!==0)
-				throw new Exception("Cannot add size. '".$size['id']."'. The id element must contain only numbers, letters, underscores or dashes.", 500);	
-
-			//Check method exists
-			if (in_array($newSize['method'], $this->_allowedMethods)===false)
-				throw new Exception("Cannot add size. '".$newSize['id']."'. It has an invalid method element. Valid methods are: ".implode(", ", $this->allowedMethods), 500);	
-			
-			//Checks for methods "fit", "fill", "stretch"
-			if ($newSize['method']==="fit" || $newSize['method']==="fill" || $newSize['method']==="stretch")
-				if (!isset($newSize['width']) || !isset($newSize['height']) )
-					throw new Exception("Cannot add size. '".$newSize['id']."'. Width and Height must be defined for method '".$newSize['method']."'", 500);	
-			
-			//Checks for method "scale""
-			if ($newSize['method']==="scale")
-				if (!isset($newSize['scale']) || $newSize['scale']<=0 )
-					throw new Exception("Cannot add size. '".$newSize['id']."'. Element 'scale' must be defined as a positive number when using method '".$newSize['method']."'", 500);	
-				
-			//Check output format
-			if (isset($newSize['defaultOutputFormat']) && in_array($newSize['defaultOutputFormat'], $this->_allowedOutputFormats)===false)
-				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'defaultOutputFormat' must be one of: ".implode(", ",$this->_allowedOutputFormats).". Given output was: ".$newSize['defaultOutputFormat'], 500);	
-
-			//Check quality
-			if (isset($newSize['jpegQuality']) && ($newSize['jpegQuality']<0 || $newSize['jpegQuality']>100))
-				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'jpegQuality' must be between 0 and 100. Given was: ".$newSize['jpegQuality'], 500);	
-
-			//Check watermark
-			try {
-				if (isset($size['watermark'])){
-					$newWatermark=$this->_checkWatermark($size['watermark']);
-					$newSize['watermark']=$newWatermark;
-				}
-			} catch (Exception $e){
-				//Tweak the message
-				throw new Exception("Cannot add size '".$newSize['id']."'. Misconfigured watermark array: \n".$e->getMessage(), $e->getCode(), $e);
-			}
-			
-			//Discard any other elements and store the new path
-			$this->_sizes[$newSize['id']]=$newSize;
-
-		}
-		
-		return $newSizes;
-		
-	}
-	
-	//TODO: Add phpDoc
-	protected function _checkWatermark($watermark){
-		
-		$newWatermark=array();
-		
-		//Check we're dealing with something loosly resembling a watermark
-		if (!isset($watermark) || !is_array($watermark) || sizeof($watermark)===0)
-			return null;
-			
-		//Check for path
-		if (!isset($watermark['path']) && is_string($watermark['path']) && $watermark['path']!=="")
-			throw new Exception("No path specified for watermark image. Must be none empty string.", 500);
-		
-		//Sanitize path
-		$newWatermark['path']=$this->sanitizePath($watermark['path']);
-		
-		//Check it exists
-		if (!is_file($this->_config['base'].$watermark['path']))
-			throw new Exception("Cannot find watermark image at path: ".$watermark['path'], 500);
-		
-		//Sanitize other variables
-		if (isset($watermark['scale']))		$newWatermark['scale']	 = (float)$watermark['scale'];
-		if (isset($watermark['vAlign']))	$newWatermark['vAlign']	 = strtolower($watermark['vAlign']);
-		if (isset($watermark['hAlign']))	$newWatermark['hAlign']	 = strtolower($watermark['hAlign']);
-		if (isset($watermark['opacity']))	$newWatermark['opacity'] = (float)$watermark['opacity'];
-		if (isset($watermark['repeat']))	$newWatermark['repeat']	 = (bool)$watermark['repeat'];
-		if (isset($watermark['vPad']))		$newWatermark['vPad']	 = (int)$watermark['vPad'];
-		if (isset($watermark['hPad']))		$newWatermark['hPad']	 = (int)$watermark['hPad'];
-		
-		//Check vAlign and hAlign are valid (unless repeat=true)
-		if (!isset($newWatermark['repeat']) || $newWatermark['repeat']!==true ){
-			if ( isset($newWatermark['vAlign']) && ( in_array($newWatermark['vAlign'], array("top","center","bottom"))===false) )
-				throw new Exception("Watermark element 'vAlign' not correctly configured. Should be either: top, center or bottom.", 500);
-			if ( isset($newWatermark['hAlign']) && ( in_array($newWatermark['hAlign'], array("left","center","right"))===false) )
-				throw new Exception("Watermark element 'hAlign' not correctly configured. Should be either: left, center or right.", 500);
-		} else {
-			unset($newWatermark['vAlign'], $newWatermark['hAlign']);
-		}
-		
-		//Check vPad and hPad are in range
-		if (isset($newWatermark['repeat']) && $newWatermark['repeat']===true ){
-			//Get dimensions of watermark image
-			$properties=getimagesize($this->_config['base'].$newWatermark['path']);
-			if ($properties===false)
-				throw new Exception("Unable to read dimensions of watermark image. Please check the 'path' element is pointing to a valid image. Given path was: ".$this->_config['base'].$newWatermark['path'], 500);
-			
-			if (isset($newWatermark['vPad']) && $newWatermark['vPad']<=($properties[1]*-1) )
-				throw new Exception("Watermark element 'vPad' out of bounds. Minimum setting for given image is: ".(($properties[1]*-1)+1), 500);
-			
-			if (isset($newWatermark['hPad']) && $newWatermark['hPad']<=($properties[0]*-1) )
-				throw new Exception("Watermark element 'hPad' out of bounds. Minimum setting for given image is: ".(($properties[0]*-1)+1), 500);
-				
-			
-		} else {
-			unset($newWatermark['vPad'], $newWatermark['hPad']);
-		}
-		
-		//Check opacity
-		if (isset($newWatermark['opacity']) && ( $newWatermark['opacity']<0 || $newWatermark['opacity']>100) )
-			throw new Exception("Watermark opacity not correctly configured. Should be between 0 and 100. '".$newWatermark['opacity']."' given.", 500);
-		
-		return $newWatermark;
-		
-	}
-
-	//TODO: Add phpDoc
-	public function getSize($size){
-		if (isset($this->_sizes[$size])){
-			return $this->_sizes[$size];
-		}
-		return false;
-	}
-	
-	//TODO: Add phpDoc
-	public function getSizes(){
-		return $this->_sizes;
-	}
-	
-	//TODO: Add phpDoc
-	public function isSize($size){
-		if (isset($this->_sizes[$size])) return true;
-		return false;
-	}
-	
-	//TODO: Add phpDoc
-	public function removeSize($size){
-		if (isset($this->_sizes[$size])){
-			unset($this->_sizes[$size]);
-			return true;
-		}
-		return false;
-	}
-	
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	//TODO: Add phpDoc
-	public function request($img, $size=null, $outputFormat=null){ 
-		
-		//Validate the request. If invalid, an exception will be thrown and passed back up to the caller
-		$request = $this->validateRequest($img, $size, $outputFormat);
-		
-		//If requested original, just return the image
-		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$request['img'])))===$request['finalOutputFormat'])
-			if ($request['useCache']===true)
-				return new Image($this->_config['base'].$request['img'], time()+$this->_config['cacheTime']); 
-			else
-				return new Image($this->_config['base'].$request['img']); 
-
-		//Check if we should use cached version
-		if ($request['useCache']===true){
-			//Load cached version if it exists
-			$cachedImage = $this->getCachedImage($request['img'], $request['size'], $request['path'], $request['finalOutputFormat']);
-			
-			//If exists, return it
-			if ($cachedImage instanceof CachedImage)
-				return $cachedImage;
-		}
-		
-		//If no cached version, render a new version
-		
-		//Init ImageResizer
-		$resizer = new ImageResizer();
-
-		//Set JPEG Quality
-		$resizer->quality=$request['finalJpegQuality'];
-		
-		//Load the image to be resized
-		$resizer->load_image($this->_config['base'].$request['img']);
-				
-		//Resize the image
-		if ($request['size']['method']!=="original") {
-			$params=$request['size']+array("method"=>null,"width"=>null,"height"=>null,"scale"=>null);
-			$resizer->resize($params['method'],$params['width'],$params['height'],$params['scale']);
-		}
-		
-		//Add watermark
-		if (isset($request['size']['watermark']) && is_array($request['size']['watermark'])){
-			$params=$request['size']['watermark']+array("path"=>null,"vAlign"=>null,"hAlign"=>null,"opacity"=>$this->_config['defaultWatermarkOpacity'],"scale"=>null,"repeat"=>null,"vPad"=>null,"hPad"=>null);
-			$resizer->add_watermark($params['path'],$params['vAlign'],$params['hAlign'],$params['opacity'],$params['scale'],$params['repeat'],$params['vPad'],$params['hPad']);
-		}
-			
-		//Render the image in desired output format
-		$resizedImage = $resizer->output_image($request['finalOutputFormat']);
-		
-		//Cache image if enabled
-		if ($request['useCache']===true){
-			$cacheName=$this->_generateCacheName($request['img'], $request['size'], $request['path'], $request['finalOutputFormat']);
-			if ($cacheName!=false)
-				$resizedImage->saveAs($this->_config['cachePath'].$cacheName);
-		}
-		
-		//Create new ResizedImage object, fill it with data and return it
-		if ($request['useCache']===true)
-			$resizedImage->setExpires(time()+$this->_config['cacheTime']);
-		
-		//Clean the cache (as in theory new images won't be generated very often)
-		$this->cleanCache();
-
-		return $resizedImage;
-	}
-	
-	//TODO: Add phpDoc
-	public function validateRequest($img, $requestedSize=null, $outputFormat=null){
-		
-		//Check "base" defined
-		if (!isset($this->_config['base']))
-			throw new Exception("The base path hasn't been configured. Please configure it and try again. For help, consult the documentation.", 500);
-		
-		//If no size specified, load default size
-		if ($requestedSize===null || !is_string($requestedSize))
-			if (isset($this->_config['defaultSize']))
-				$requestedSize=$this->_config['defaultSize'];
-			else 
-				throw new Exception("No size specified, and no default size defined. Unable to process request.", 404);
-			
-		//Check size exists
-		$size = $this->getSize($requestedSize);
-		if (!isset($size) || !is_array($size) || sizeof($size)<=0)
-			throw new Exception("The size you requested doesn't exist. Unable to process request.", 404);
-		
-		//Check image defined
-		if (!isset($img) || !is_string($img) || $img==="")
-			throw new Exception("Please specify an image to resize.", 404);
-		
-		//Sanitize image path
-		$img = $this->sanitizePath($img,true);
-		
-		//Check image exists
-		if (!is_file($this->_config['base'].$img))
-			throw new Exception("The image you requested could not be located.", 404);
-			
-		//Find which path rule applies
-		$path = $this->getApplicablePath($img);
-		
-		//Check path allowed
-		if ($path===null)
-			throw new Exception("Access denied. Access to the directory containing the image you requested is restricted.", 403);
-		
-		//Get allowed sizes for this path
-		$allowedSizes = $this->getAllowedSizes($path['path']);
-
-		//Check this size is allowed
-		if (in_array($size['id'], $allowedSizes)===false)
-			throw new Exception("The image size you requested is not allowed in the image's directory.", 403);
-		
-		//Check the outputFormat is allowed
-		if ($outputFormat!==null)
-			if (!is_string($outputFormat) || in_array(strtolower($outputFormat), $this->getAllowedOutputFormats())===false)
-				throw new Exception("The image format you requested isn't supported. The following formats are supported: ".implode(", ",$this->getAllowedOutputFormats()), 404);
-			
-		//Check the final format is allowed
-		$finalOutputFormat = $this->getFinalOutputFormat($img, $path, $size, $outputFormat);
-		
-		//Work out final Jpeg Quality for this request
-		$finalJpegQuality = $this->getFinalJpegQuality($img, $path, $size);
-		
-		$useCache=false;
-		if (	isset($this->_config['enableCaching']) && $this->_config['enableCaching']===true &&
-			!(isset($path['disableCaching']) && $path['disableCaching']===true) && 
-			!(isset($size['disableCaching']) && $size['disableCaching']===true)
-		)
-			$useCache=true;
-		
-		//Return sanitized data
-		return array(
-			"img"=>$img,
-			"path"=>$path,
-			"size"=>$size,
-			"finalOutputFormat"=>strtolower($finalOutputFormat),
-			"finalJpegQuality"=>$finalJpegQuality,
-			"useCache"=>$useCache
-			
-		);
-	}
-	
-	//TODO: Add phpDoc
-	public function getApplicablePath($img){
-		
-		//Clean up path
-		$img = $this->sanitizePath($img,true);
-		
-		//Create array of path parts
-		$path=explode("/",$img);
-
-		//Check array of use
-		if (!is_array($path) || sizeof($path)<=1)
-			return null;
-		
-		//remove image from $path
-		array_pop($path);
-		
-		//Cycle through paths untill match is found
-		$pathSize=sizeof($path);$i=0;
-		while($i<$pathSize){
-			//Does this path exist
-			if (isset($this->_paths[implode("/", $path)."/"]))
-				return $this->getPath(implode("/", $path)."/");
-				
-			//No, so move up a directory
-			array_pop($path);
-			$i++;	
-		}
-		
-		//The path couldn't be found
-		return null;
-	}
-	
-	//TODO: Add phpDoc
-	public function getAllowedSizes($forPath){
-		//Check path exists
-		if (!is_string($forPath) || !isset($this->_paths[$forPath]))
-			return null;
-		
-		$path = $this->_paths[$forPath];
-		$allowedSizes = array();
-
-		//By default load allowSizes (if they exists)
-		if (isset($path['allowSizes']) && is_array($path['allowSizes']))
-			$allowedSizes=$path['allowSizes'];
-
-		//If allowSizes not defined (or set to "all"), set to be all sizes, else set to contents
-		if ( !isset($path['allowSizes']) || (is_array($path['allowSizes']) && sizeof($path['allowSizes'])<=0) || $path['allowSizes']==="all" )
-			$allowedSizes = array_keys($this->_sizes);
-
-		//If denySizes defined, subtract from previous array
-		if (isset($path['denySizes']) && is_array($path['denySizes']) )
-			$allowedSizes = array_diff($allowedSizes, $path['denySizes']);
-
-		//If denySizes set to "all", just return a blank array
-		if (isset($path['denySizes']) && is_string($path['denySizes']) && $path['denySizes']==="all")
-			$allowedSizes=array();
-		
-		//If denySizes set to "none" set to be all sizes
-		if ( isset($path['denySizes']) && is_string($path['denySizes']) && $path['denySizes']==="none" )
-			$allowedSizes = array_keys($this->_sizes);
-
-		//return array
-		return $allowedSizes;
-	}
-	
-	//TODO: Add phpDoc
-	public function getFinalOutputFormat($img, array $path, array $size, $outputFormat=null) {
-		
-		//Sanitize the image
-		$img = $this->sanitizePath($img, true);
-		
-		//Check the image exists
-		if (!is_file($this->_config['base'].$img))
-			throw new Exception("The image could not be located.", 404);
-
-		$final = $this->_config['defaultOutputFormat'];
-		
-		if (isset($path['defaultOutputFormat']))
-			$final=$path['defaultOutputFormat'];
-		
-		if (isset($size['defaultOutputFormat']))
-			$final=$size['defaultOutputFormat'];
-		
-		if ($outputFormat!==null)
-			$final=strtolower($outputFormat);
-		
-		//If we're in "original" mode, get the output type of the image
-		if ($final==="original"){
-			
-			//Read the mime type from the image
-			$final = strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$img)));
-
-			//Check the image was readable
-			if ($final===false)
-				throw new Exception("Couldn't read from the specified image. It may be corrupt.", 500);
-		}
-
-		//Check the detected mime type is allowed
-		if (in_array($final, $this->getAllowedOutputFormats())!==false && $final!=="original")
-			return $final;
-		
-		//A bad mime type was detected
-		throw new Exception("Unable to determine an allowed output mime-type for this request. Please check the server configuration. The requested mime-type was: ".$final, 500);
-	}
-
-	//TODO: Add phpDoc
-	public function getFinalJpegQuality($img, array $path, array $size) {
-		
-		//Sanitize the image
-		$img = $this->sanitizePath($img, true);
-		
-		//Check the image exists
-		if (!is_file($this->_config['base'].$img))
-			throw new Exception("The image could not be located.", 404);
-
-		if (isset($this->_config['defaultJpegQuality']))
-			$final = $this->_config['defaultJpegQuality'];
-		
-		if (isset($path['defaultJpegQuality']))
-			$final=$path['defaultJpegQuality'];
-		
-		if (isset($size['jpegQuality']))
-			$final=$size['jpegQuality'];
-	
-		if (isset($final))
-			return $final;
-		
-		//No quality specified anywhere. Something is seriously wrong.
-		throw new Exception("Unable to determine which JPEG quality should be used with this request. Please check your configuration files as this should be impossible.", 500);
-	}
-	
-	
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	//TODO: Add phpDoc
-	public function isCached($img, $size, $path, $outputFormat){
-		
-		//Does the original image exist?
-		if (!is_file($this->_config['base'].$img))
-			return false;
-		
-		//Stringify the settings for this image
-		$cacheName = $this->_generateCacheName($img, $size, $path, $outputFormat);
-
-		//Check we were able to generate a cache name
-		if ($cacheName === false)
-			return false;
-		
-		//Does a cached version of the image exist?
-		if (!is_file($this->_config['cachePath'].$cacheName))
-			return false;
-		
-		//Check the cache file isn't obsolete
-		if (filemtime($this->_config['base'].$img) > filemtime($this->_config['cachePath'].$cacheName))
-			return false;
-		
-		//Check the cached file hasn't expired
-		if ($this->_config['cacheTime']>0 && filemtime($this->_config['cachePath'].$cacheName) < time()-$this->_config['cacheTime'])
-			return false;
-		
-		return $cacheName;
-	}
-	
-	//TODO: Add phpDoc
-	public function getCachedImage($img, $size, $path, $outputFormat){
-		
-		//Check the cached image exists
-		$cacheName = $this->isCached($img, $size, $path, $outputFormat);
-		
-		//Is the cached image existant and up-to-date
-		if ($cacheName===false )
-			return null;
-		
-		//Load data into new CachedImage
-		return new CachedImage($this->_config['cachePath'].$cacheName, filemtime($this->_config['cachePath'].$cacheName)+$this->_config['cacheTime']);
-	}
-	
-	//TODO: Add phpDoc
-	protected function _generateCacheName($img, $size, $path, $outputFormat){
-		
-		//If they passed the name of a size, try to get it
-		if (is_string($size))
-			$size=$this->getSize($size);
-		
-		//Check we managed to get the size array
-		if (!is_array($size))
-			return false;
-		
-		//Check we managed to get the path array
-		if (!is_array($path))
-			return false;
-		
-		//Sort the array
-		array_multisort($size);
-		
-		//Hash everything into a filename
-		return md5($this->_config['base'].$img)."-".md5(json_encode($size).json_encode($path).json_encode($outputFormat)).".cache";
-	}
-	
-	//TODO: Add phpDoc
-	public function cleanCache($emptyCache=false){
-		//Check cached files are accessible
-		if (!isset($this->_config['cachePath']) || !is_dir($this->_config['cachePath']))
-			return false;
-		
-		//If cacheTime is infinte, there's no point scanning
-		if ($this->_config['cacheTime']===0)
-			return true;
-		
-		//Create an array of all files in the cache location
-		$files=scandir($this->_config['cachePath']);
-		
-		//If the array is empty then bug out, there's nothing to do
-		if (!is_array($files))
-			return true;
-		
-		//Cycle through each file in the directory
-		foreach($files as $file){
-			//Check file ends with .cache and isn't a directory
-			if (strtolower(substr($file,-6))!==".cache" || is_dir($file))
-				continue;
-			
-			//Check if file has expired, and unlink
-			if (filemtime($this->_config['cachePath']."/".$file) < time()-$this->_config['cacheTime'] || $emptyCache===true)
-				if (!unlink($this->_config['cachePath']."/".$file))
-					return false;
-		}
-		return true;
-		
-	}
-
-}
 
 //TODO: Add phpDoc
 class Image {
@@ -1593,69 +1157,5 @@ class CachedImage extends Image {
 			return false;
 		return unlink($this->_originalLocation);
 	}
-}
-
-
-
-
-
-
-
-
-
-/**
- * Indents a flat JSON string to make it more human-readable.
- * 
- * Slightly modified by James Swift 2013
- * 
- * @author Dave Perrett
- * @copyright Copyright Dave Perret 2008 - see http://www.daveperrett.com/articles/2008/03/11/format-json-with-php/
- * @param string $json The original JSON string to process.
- * @param string $indentStr The characters to use to indent. Default is "\t" for tab.
- * @param string $newLine The character to use to signify a new line. Defaultis "\n" for newline.
- * @param bool $unescapeSlashes By default json-encode escapes forward slashes even though it's not necesary. If you want to pretify your json, you can unescape them. This default to true.
- * @return string Indented version of the original JSON string.
- */
-function json_indent($json, $indentStr = "\t", $newLine = "\n", $unescapeSlashes=true) {
-
-	$json = str_replace(array("\n", "\r"), "", $json);
-	if ($unescapeSlashes===true) $json = str_replace('\/', "/", $json);
-	$result = '';
-	$pos = 0;
-	$strLen = strlen($json);
-	$prevChar = '';
-	$outOfQuotes = true;
-
-	for ($i = 0; $i <= $strLen; $i++) {
-
-		$char = substr($json, $i, 1);
-
-		if ($char == '"' && $prevChar != '\\') {
-			$outOfQuotes = !$outOfQuotes;
-		} else if (($char == '}' || $char == ']') && $outOfQuotes) {
-			$result .= $newLine;
-			$pos--;
-			for ($j = 0; $j < $pos; $j++) {
-				$result .= $indentStr;
-			}
-		}
-
-		$result .= $char;
-
-		if (($char == ',' || $char == '{' || $char == '[') && $outOfQuotes) {
-			$result .= $newLine;
-			if ($char == '{' || $char == '[') {
-				$pos++;
-			}
-
-			for ($j = 0; $j < $pos; $j++) {
-				$result .= $indentStr;
-			}
-		}
-
-		$prevChar = $char;
-	}
-
-	return $result;
 }
 ?>
