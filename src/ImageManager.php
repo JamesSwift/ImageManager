@@ -1,14 +1,12 @@
 <?php
 /**
- * SWDF Image Resier
+ * SWDF_image_resizer
  * 
  * This script allows you to automate the resizing of images on your website. 
  * 
- * The SWDF_image_resizer uses the GD2 PHP library, and wraps it up in a simple
+ * The ImageManager uses the GD2 PHP library, and wraps it up in a simple
  * little class. It also contains a system for managing all images on a website, 
  * both securing them and resizing/watermarking them as needed.
- * 
- * For a quick start, see examples.txt.
  * 
  * You are free to use, share and alter/remix this code, provided you distribute 
  * it under the same or a similar license as this work. Please clearly mark any
@@ -17,15 +15,15 @@
  * keep the message below intact:
  * 
  * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
- * https://github.com/James-Swift/SWDF_image_resizer
+ * https://github.com/James-Swift/ImageManager
  * 
  * @author James Swift <me@james-swift.com>
- * @version v0.3.0
- * @package SWDF_image_resizer
+ * @version v0.4.0
+ * @package ImageManager
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
-namespace SWDF;
+namespace JamesSwift;
 
 
 
@@ -414,7 +412,6 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 
 		//Work out where the cached image will be/is stored
 		$cache_file=null;
-		
 		//Is caching enabled? (both globally and for this size)
 		if ( isset($_SWDF['settings']['images']['cache_resized']) && 
 		     isset($_SWDF['paths']['images_cache']) &&
@@ -422,8 +419,8 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 		     @$size['disable_caching']!==true
 		){
 			//Create path to cached file
-			$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.implode("".$size))."].cache";
-			
+			$cache_file=$_SWDF['paths']['images_cache'].basename($img_path)."[".md5($img_path.json_encode($size))."].cache";
+
 			//Check if a cached version exists (and it hasn't expired)
 			if ( is_file($cache_file) && 
 			     filemtime($cache_file)>filemtime($orig_img_path) && 
@@ -461,7 +458,7 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true && is_file($img_path)) {
 
 			//Load resizer class
-			$resizer=new SWDF_image_resizer();
+			$resizer=new \JamesSwift\ImageResizer();
 
 			//Set JPEG quality
 			$resizer->quality=$_SWDF['settings']['images']['default_jpeg_quality'];
@@ -480,14 +477,16 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 				if (isset($size['watermark']['opacity']) && ctype_digit(isset($size['watermark']['opacity']))){
 					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
 				}
-				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],@$size['watermark']['opacity'],@$size['watermark']['scale'],@$size['watermark']['repeat'],50,50);
+				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],@$size['watermark']['opacity'],@$size['watermark']['scale'],@$size['watermark']['repeat'],5,5);
 			}
 
 			//Render resized image
-			$output = $resizer->output_image(@$size['output']);
+			$output = $resizer->output_image(@$size['output'])->getImageData();
 
 			//Save image to cache
 			if ($cache_file!==null && is_string($cache_file)){
+				if (!is_dir($_SWDF['paths']['images_cache']))
+					mkdir($_SWDF['paths']['images_cache'], 0777, true);
 				file_put_contents($cache_file,$output);
 			}
 
@@ -513,7 +512,7 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 			}
 			
 			//Tell the user where the cached version lives
-			$return['cahce_location']=$cache_file;
+			$return['cache_location']=$cache_file;
 
 			//Return the image
 			$return['data']=$output;
@@ -599,13 +598,31 @@ function clean_image_cache($delete_fname=null, $force=false){
 	return false;
 }
 
+//Make backwards compatible with earlier version of PHP
+//This isn't a perfect test for whether a session is active or not, but 
+if (!function_exists('session_status')){
+    function session_active(){
+        return defined('SID');   
+    }
+} else {
+    function session_active(){
+        return (session_status() === 2);   
+    }        
+}
+
+
 
 
 #############################################################################################################
 
 
 
-class SWDF_image_resizer {
+class Exception extends \Exception {
+	//Nothing to do here yet
+}
+
+//TODO: Completely rewrite class, add phpDoc
+class ImageResizer {
 
 	private $source;
 	private $stream;
@@ -614,27 +631,59 @@ class SWDF_image_resizer {
 	private $height;
 	private $img=array();
 
-	public $compatible_mime_types=Array("image/jpeg","image/jp2","image/png","image/gif");
+	private $compatible_mime_types=Array("image/jpeg","image/jp2","image/png","image/gif");
 	public $quality;
 
+	
+	public function filter_opacity($img_name, $opacity=100) {
 
-	public function __construct(){
+		if (!isset($this->img[$img_name]))
+			return false;
+		
+		$img=&$this->img[$img_name]['stream'];
+		$opacity /= 100;
 
+		//get image width and height
+		$w = imagesx($img);
+		$h = imagesy($img);
+
+		//turn alpha blending off
+		imagealphablending($img, false);
+
+		//find the most opaque pixel in the image (the one with the smallest alpha value)
+		$minAlpha = 127;
+		for ($x = 0; $x < $w; $x++) {
+			for ($y = 0; $y < $h; $y++) {
+				$alpha = ( imagecolorat($img, $x, $y) >> 24 ) & 0xFF;
+				if ($alpha < $minAlpha)
+					$minAlpha = $alpha;
+			}
+		}
+
+		//loop through image pixels and modify alpha for each
+		for ($x = 0; $x < $w; $x++) {
+			for ($y = 0; $y < $h; $y++) {
+				//get colors for this pixel
+				$pixel = imagecolorat($img, $x, $y);
+				$colors = imagecolorsforindex($img, $pixel);
+				
+				//calculate new alpha
+				if ($minAlpha !== 127){
+					$colors['alpha'] = 127 + ( ( (127 * $opacity) * ( $colors['alpha'] - 127 ) ) / ( 127 - $minAlpha ) );
+				} else {
+					$colors['alpha'] += 127 * $opacity;
+				}
+				
+				//get the color index with new alpha
+				$newPixel = imagecolorallocatealpha($img, $colors['red'],$colors['green'], $colors['blue'], $colors['alpha']);
+				
+				//set pixel with the new color + opacity
+				imagesetpixel($img, $x, $y, $newPixel);
+			}
+		}
+		
+		return true;
 	}
-
-	public function imagecopymerge_alpha($dst_im, $src_im, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h, $pct){ 
-	   // creating a cut resource 
-	   $cut = imagecreatetruecolor($src_w, $src_h); 
-
-	   // copying relevant section from background to the cut resource 
-	   imagecopy($cut, $dst_im, 0, 0, $dst_x, $dst_y, $src_w, $src_h); 
-
-	   // copying relevant section from watermark to the cut resource 
-	   imagecopy($cut, $src_im, 0, 0, $src_x, $src_y, $src_w, $src_h); 
-
-	   // insert cut resource to destination image 
-	   imagecopymerge($dst_im, $cut, $dst_x, $dst_y, 0, 0, $src_w, $src_h, $pct); 
-	} 		
 
 	public function load_image($source,$id="main"){
 		if (is_file($source)){
@@ -657,7 +706,7 @@ class SWDF_image_resizer {
 						}
 					}
 
-					imagealphablending($this->img[$id]['stream'], false);
+					imagealphablending($this->img[$id]['stream'], true);
 					imagesavealpha($this->img[$id]['stream'], true);
 
 					$this->img[$id]['source']=$source;
@@ -674,10 +723,11 @@ class SWDF_image_resizer {
 	}
 
 	public function resize($method,$n_width=null,$n_height=null,$scale=null,$img_id="main"){
+		
 		if ($method==="original"){
 			return true;
 		} else if ($method==="fit"){
-
+			
 			if ($this->img[$img_id]['width']>=$this->img[$img_id]['height']){
 				$scale=$n_width/$this->img[$img_id]['width'];
 				if ($scale*$this->img[$img_id]['height']>$n_height){
@@ -695,7 +745,12 @@ class SWDF_image_resizer {
 
 			//Create blank image
 			$this->img['temp']['stream']=imagecreatetruecolor($n_width,$n_height);
-			imagealphablending($this->img['temp']['stream'], false);
+			
+			//Make background transparent
+			imagefill($this->img['temp']['stream'], 0, 0, 2130706432);
+			
+			//Allow alpha to be used
+			imagealphablending($this->img['temp']['stream'], true);
 			imagesavealpha($this->img['temp']['stream'], true);
 
 			//resize image
@@ -711,7 +766,11 @@ class SWDF_image_resizer {
 		} else if ($method==="fill"){
 			//Create blank image
 			$this->img['temp']['stream']=imagecreatetruecolor($n_width,$n_height);
-			imagealphablending($this->img['temp']['stream'], false);
+			
+			//Make background transparent
+			imagefill($this->img['temp']['stream'], 0, 0, 2130706432);
+			
+			//imagealphablending($this->img['temp']['stream'], true);
 			imagesavealpha($this->img['temp']['stream'], true);
 
 			//Determine scale
@@ -745,7 +804,11 @@ class SWDF_image_resizer {
 
 		} else if ($method==="stretch"){
 			$this->img['temp']['stream']=imagecreatetruecolor($n_width,$n_height);
-			imagealphablending($this->img['temp']['stream'], false);
+			
+			//Make background transparent
+			imagefill($this->img['temp']['stream'], 0, 0, 2130706432);
+			
+			//imagealphablending($this->img['temp']['stream'], true);
 			imagesavealpha($this->img['temp']['stream'], true);
 
 			if (imagecopyresampled($this->img['temp']['stream'], $this->img[$img_id]['stream'], 0, 0, 0, 0, $n_width, $n_height, $this->img[$img_id]['width'], $this->img[$img_id]['height'])){
@@ -759,7 +822,9 @@ class SWDF_image_resizer {
 			$n_height = $this->img[$img_id]['height']*$scale;
 
 			$this->img['temp']['stream']=imagecreatetruecolor($n_width, $n_height);
-			imagealphablending($this->img['temp']['stream'], false);
+			//Make background transparent
+			imagefill($this->img['temp']['stream'], 0, 0, 2130706432);
+			//imagealphablending($this->img['temp']['stream'], true);
 			imagesavealpha($this->img['temp']['stream'], true);
 
 			if (imagecopyresampled($this->img['temp']['stream'], $this->img[$img_id]['stream'], 0, 0, 0, 0, $this->img[$img_id]['width']*$scale, $this->img[$img_id]['height']*$scale, $this->img[$img_id]['width'], $this->img[$img_id]['height'])){				
@@ -772,53 +837,76 @@ class SWDF_image_resizer {
 		return false;
 	}
 
-	public function add_watermark($path,$v="center",$h="center",$opacity=85,$scale=1,$repeat=false,$xpad=0,$ypad=0){
+	public function add_watermark($path,$vAlign="center",$h="center",$opacity=100,$scale=1,$repeat=false,$vPad=0,$hPad=0){
 		if ($this->load_image($path,"wm")){
 
 			if ($scale!="" && $scale!=1){
 				$this->resize("scale",null,null,$scale,"wm");
 			}
-
+			
+			if ($opacity!=100){
+				$this->filter_opacity("wm",$opacity);
+			}
+			
 			//Repeat the watermark in a pattern?
 			if ($repeat==false){
+				//Default center
+				$h_pos=($this->img['main']['width']/2)-($this->img['wm']['width']/2);
+				
 				if ($h=="left"){ $h_pos=0; }
-				if ($h=="center"){ $h_pos=($this->img['main']['width']/2)-($this->img['wm']['width']/2); }
 				if ($h=="right"){ $h_pos=$this->img['main']['width']-$this->img['wm']['width']; }
 
-				if ($v=="top"){ $v_pos=0; }
-				if ($v=="center"){ $v_pos=($this->img['main']['height']/2)-($this->img['wm']['height']/2); }
-				if ($v=="bottom"){ $v_pos=$this->img['main']['height']-$this->img['wm']['height']; }
+				//Default center
+				$v_pos=($this->img['main']['height']/2)-($this->img['wm']['height']/2);
+				if ($vAlign=="top"){ $v_pos=0; }
+				if ($vAlign=="bottom"){ $v_pos=$this->img['main']['height']-$this->img['wm']['height']; }
 
+				//Merge the watermark onto the background
+				imagecopy(	$this->img['main']['stream'],
+						$this->img['wm']['stream'],
+						$h_pos,
+						$v_pos,
+						0,
+						0,
+						$this->img['wm']['width'],
+						$this->img['wm']['height']
+				);
 
-				if ($this->imagecopymerge_alpha(	
-											$this->img['main']['stream'], $this->img['wm']['stream'],
-											$h_pos,$v_pos,
-											0, 0, 
-											$this->img['wm']['width'], $this->img['wm']['height'],
-											$opacity
-				)){
-					return true;
-				}
+				return true;
+				
 			} else {
-				$x=$xpad;$i=0;$y=0;
-				while ($x<$this->img['main']['width'] || $y<$this->img['main']['height']){
-					$this->imagecopymerge_alpha(	$this->img['main']['stream'], $this->img['wm']['stream'],
-												$x,$y,
-												0, 0, 
-												$this->img['wm']['width'], $this->img['wm']['height'],
-												$opacity
+				//Turn percentages into decimal
+				//$hPad=round( ($hPad/100)*$this->img['main']['width'] );
+				//$vPad=round( ($vPad/100)*$this->img['main']['height'] );
+				
+				$x=floor($hPad/2);
+				$y=floor($vPad/2);
+				$i=0;
+				while ($x<$this->img['main']['width'] && $y<$this->img['main']['height'] ){
+					//Place a watermark
+					imagecopy(	$this->img['main']['stream'],
+							$this->img['wm']['stream'],
+							$x,
+							$y,
+							0,
+							0,
+							$this->img['wm']['width'],
+							$this->img['wm']['height']
 					);
-					$i+=($this->img['wm']['width']/2);
-					if ($i>=($this->img['main']['width'])){
-						$i=0;
-					}
-					if ($x<$this->img['main']['width']){
-						$x=$x+$this->img['wm']['width']+$xpad;
-					} else {
-						$y=$y+$this->img['wm']['height']+$ypad;
-						$x=-$i;
+					
+					//Walk it right one step
+					$x+=$this->img['wm']['width']+$hPad;
+					
+					//Move down to a new line
+					if ($x>=$this->img['main']['width']){
+						
+						$y+=($this->img['wm']['height']+$vPad);
+						$i++;
+						//Offset the new line
+						$x=0-round( ($i%3)*(($this->img['wm']['width']+$hPad)/3) );
 					}
 				}
+								
 			}
 		}
 		return false;
@@ -829,28 +917,30 @@ class SWDF_image_resizer {
 			$output_type=$this->img['main']['type'];
 		}
 
+		imageinterlace($this->img['main']['stream'], true);
+		
 		//Start a new buffer
 		ob_start();
 
 		//Output the image
 		if ($output_type=="image/jpeg" || $output_type=="image/jp2"){
-			if (!$output=imagejpeg($this->img['main']['stream'], null, $this->quality)){
+			if (!imagejpeg($this->img['main']['stream'], null, $this->quality)){
 				return false;
 			}
 		}
 		if ($output_type=="image/png"){
-			if (!$output=imagepng($this->img['main']['stream'])){
+			if (!imagepng($this->img['main']['stream'])){
 				return false;
 			}
 		}
 		if ($output_type=="image/gif"){
-			if (!$output=imagegif($this->img['main']['stream'])){
+			if (!imagegif($this->img['main']['stream'])){
 				return false;
 			}
 		}
-
+		
 		//Return captured buffer
-		return ob_get_clean();
+		return new ResizedImage(ob_get_clean(),null,time());
 	}
 
 	public function destory(){
@@ -867,15 +957,203 @@ class SWDF_image_resizer {
 }
 
 
-//Make backwards compatible with earlier version of PHP
-//This isn't a perfect test for whether a session is active or not, but 
-if (!function_exists('session_status')){
-    function session_active(){
-        return defined('SID');   
-    }
-} else {
-    function session_active(){
-        return (session_status() === 2);   
-    }        
+
+
+
+
+
+
+
+
+//TODO: Add phpDoc
+class Image {
+	protected $_img;
+	protected $_mime;
+	protected $_originalLocation;
+	protected $_allowedOutputFormats = array("image/jpeg","image/jp2","image/png","image/gif");
+	protected $_expires;
+	protected $_lastModified;
+	
+	//TODO: Add phpDoc
+	public function __construct($img, $expires=null, $lastModified=null){
+		
+		//Check expires is valid
+		if (!ctype_digit($expires) && $expires!==null)
+			throw new Exception("Can't create new Image object. Please specify a valid value for \$expires (positive integer, or null).", 500);
+			
+		//Check lastModified is valid
+		if (!ctype_digit($lastModified) && $lastModified!==null)
+			throw new Exception("Can't create new Image object. Please specify a valid value for \$lastModified (positive integer, or null).", 500);
+			
+		//Load finfo to find the mime type of the passed file/string
+		$finfo = new \finfo(FILEINFO_MIME_TYPE);
+		
+		//If a file reference was passed, load it into memory
+		if (is_file($img)){
+		
+			//Try to read mime data
+			$mime=$finfo->file($img);
+	
+			//Load data
+			$this->_originalLocation=$img;
+			$img=file_get_contents($img);
+			
+			//Store Last Modified
+			$this->setLastModified(null,true);
+		} else {
+			//Store Last Modified
+			$this->setLastModified($lastModified);
+			
+			//Try to read mime data from passed string
+			$mime=$finfo->buffer($img);
+		}
+		
+		//Check mime type is allowed (and that the image was readable)		
+		if ($mime==="text/plain")
+			throw new Exception("Unable to load image. Please check your are passing a valid path, or the content of a valid image file.", 500);
+		if (in_array($mime, $this->_allowedOutputFormats)===false)
+			throw new Exception("Unable to load image. Unsupported mime-type: ".$mime, 500);
+			
+		//Populate data
+		$this->_img=$img;
+		$this->_mime=$mime;
+		$this->setExpires($expires);
+	}
+	
+	//TODO: Add phpDoc
+	public function setExpires($expires=null){
+		//Check we're storing a valid value
+		if (!ctype_digit($expires) && $expires!==null)
+			throw new Exception("Can't create set Expires header, please specify a valid value (positive integer, or null).", 500);
+		
+		//Store the value
+		$this->_expires=$expires;
+		return true;
+	}
+	
+	//TODO: Add phpDoc
+	public function setLastModified($lastModified=null, $setFromFile=false){
+
+		//Load the last modified from file?
+		if ($setFromFile===true){
+			if ($this->_originalLocation!==null)
+				$lastModified=filemtime($this->_originalLocation);
+			else return false;
+		}
+			
+		//Check we're storing a valid value
+		if (!ctype_digit($lastModified) && $lastModified!==null)
+			throw new Exception("Can't create set Last-Modified header, please specify a valid value (positive integer, or null).", 500);
+
+		//Store the value
+		$this->_lastModified=$lastModified;
+		return true;
+	}
+	
+	//TODO: Add phpDoc
+	public function getExpires(){
+		return $this->_expires;
+	}
+	
+	//TODO: Add phpDoc
+	public function getLastModified(){
+		return $this->_lastModified;
+	}
+		
+	//TODO: Add phpDoc
+	public function outputExpiresHeader(){
+		if ($this->_expires===null)
+			return false;
+		
+		header("Expires: ".gmdate('D, d M Y H:i:s', $this->_expires));
+		return true;
+	}
+	
+	
+	//TODO: Add phpDoc
+	public function outputLastModifiedHeader(){
+		if ($this->_lastModified===null)
+			return false;
+
+		header("Last-Modified: ".gmdate('D, d M Y H:i:s', $this->_lastModified));
+		return true;
+	}
+	
+	//TODO: Add phpDoc
+	public function getLocation(){
+		if ($this->_originalLocation!==null)
+			return $this->_originalLocation;
+		return false;
+	}
+	
+	//TODO: Add phpDoc
+	public function getMimeType(){
+		return $this->_mime;
+	}
+	
+	//TODO: Add phpDoc
+	public function getImageData(){
+		return $this->_img;
+	}
+	
+	//TODO: Add phpDoc
+	public function getSize(){
+		return strlen($this->getImageData());
+	}
+	
+	//TODO: Add phpDoc
+	public function getImageDimensions(){
+		$img = imagecreatefromstring($this->getImageData());
+		if ($img===false) return false;
+		return array("width"=>imagesx($img),"height"=>imagesy($img));
+	}
+	
+	//TODO: Add phpDoc
+	public function outputData(){
+		print $this->getImageData();
+		return true;
+	}
+	
+	//TODO: Add phpDoc
+	public function outputHTTP($headers=null) {
+		
+		//Output any additional headers
+		if (is_array($headers)===true){
+			foreach ($headers as $type=>$header){
+				header($type.": ".$header);
+			}
+		}
+		
+		//Output caching variables
+		$this->outputLastModifiedHeader();
+		$this->outputExpiresHeader();
+		
+		//Output the image
+		header("Content-Type: ".$this->getMimeType());
+		$this->outputData();
+		
+		return true;
+	}
+	
+	//TODO: Add phpDoc
+	public function saveAs($where) {
+		return file_put_contents($where, $this->getImageData());
+	}	
+}
+
+//TODO: Add phpDoc
+class ResizedImage extends Image {
+
+}
+
+//TODO: Add phpDoc
+class CachedImage extends Image {
+	
+	//TODO: Add phpDoc
+	public function deleteCachedCopy(){
+		if ($this->_originalLocation===null)
+			return false;
+		return unlink($this->_originalLocation);
+	}
 }
 ?>

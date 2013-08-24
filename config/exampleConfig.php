@@ -1,19 +1,19 @@
 <?php
 // Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
-// https://github.com/James-Swift/SWDF_image_resizer
+// https://github.com/James-Swift/ImageManager
 
 ////////////////////////////////////////////////////////////////
 // Basic Image Settings:
  
-	$_SWDF['settings']['images']['default_size']=0;					//Used by make_img_link() function to choose a size if none is specified.
-	$_SWDF['settings']['images']['default_watermark_opacity']=20;			//If not specified in a size, use this opacity for watermarks. Values: 0-100
-	$_SWDF['settings']['images']['default_jpeg_quality']=90;			//If not specified in a size, use this value for jpeg compression.
+	$_SWDF['settings']['images']['default_size']=0;								//Used by make_img_link() function to choose a size if none is specified.
+	$_SWDF['settings']['images']['default_watermark_opacity']=20;						//If not specified in a size, use this opacity for watermarks. Values: 0-100
+	$_SWDF['settings']['images']['default_jpeg_quality']=90;						//If not specified in a size, use this value for jpeg compression.
 	
-	$_SWDF['paths']['images_cache']=$_SWDF['paths']['root']."cache/";		//The absolute path to the image cache location.
-	$_SWDF['settings']['images']['cache_resized']=false;				//Whether to store cached resized images or re-generate each time (strongly reccomended to be set to true, as resizing images is a slow process). Normally only useful for debugging.
-	$_SWDF['settings']['images']['cache_expiry']=60*60*2;				//The time in seconds to keep (and use) cached images.
+	$_SWDF['paths']['images_cache']=sys_get_temp_dir()."/James-Swift/SWDF_image_resizer/imageCache/";	//The absolute path to the image cache location.
+	$_SWDF['settings']['images']['cache_resized']=true;							//Whether to store cached resized images or re-generate each time (strongly reccomended to be set to true, as resizing images is a slow process). Normally only useful for debugging.
+	$_SWDF['settings']['images']['cache_expiry']=60*60*2;							//The time in seconds to keep (and use) cached images.
 
-	$_SWDF['settings']['images']['settings_loaded']=true;				//Ignore this variable. It's just used by the SWDF to check this file has been loaded.
+	$_SWDF['settings']['images']['settings_loaded']=true;							//Ignore this variable. It's just used by the SWDF to check this file has been loaded.
 
 	
 ////////////////////////////////////////////////////////////////	
@@ -49,12 +49,12 @@
 ////////////////////////////////////////////////////////////////
 //Image Directories Options
 	
-	\SWDF\add_img_path(Array(
+	\JamesSwift\add_img_path(Array(
 		"path"=>"images/",
 		"allow_sizes"=>"all"
 	));
 	
-	\SWDF\add_img_path(Array(
+	\JamesSwift\add_img_path(Array(
 		"path"=>"images/restricted/",
 		"deny_sizes"=>Array("0","2")
 	));
@@ -98,18 +98,18 @@
 		"method"=>"original"
 	);
 	
-	//Size 1 - resizes the image to fit inside a 1000x1000 box and adds a copyright watermark
+	//Size 1 - resizes the image to fit inside a 800x600 box and adds a copyright watermark
 	$_SWDF['settings']['images']['sizes']['1']=Array(
 		"id"=>1,
 		"method"=>"fit",
-		"width"=>400,
-		"height"=>800,
+		"width"=>800,
+		"height"=>600,
 		"watermark"=>Array(
 			"path"=>$_SWDF['paths']['root']."images/watermark.png",
-			"scale"=>1.5,
-			"opacity"=>40,
+			"scale"=>1,
+			"opacity"=>100,
 			"repeat"=>true
-		),
+		)
 	);
 	
 	//Size 2 - Scales the image by 2x
@@ -117,6 +117,20 @@
 		"id"=>2,
 		"method"=>"scale",
 		"scale"=>2
+	);
+	
+	//Size 2 - Scales the image by 2x
+	$_SWDF['settings']['images']['sizes']['200x300']=Array(
+		"id"=>"200x300",
+		"method"=>"fill",
+		"width"=>200,
+		"height"=>300,
+		"watermark"=>Array(
+			"path"=>$_SWDF['paths']['root']."images/watermark.png",
+			"scale"=>0.9,
+			"opacity"=>80,
+			"v"=>"top"
+		)
 	);
 
 ////////////////////////////////////////////////////////////////	

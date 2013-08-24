@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
- * https://github.com/James-Swift/SWDF_image_resizer
+ * https://github.com/James-Swift/ImageManager
  * 
  * 
  * Use this file like this:
@@ -17,11 +17,11 @@ $size=@$_GET['size'];
 $img=@$_GET['img'];
 
 //Load dependencies
-require("SWDF_image_resizer.php");
-require("example_config.php");
+require("src/ImageManager.php");
+require("config/exampleConfig.php");
 
 //Make resize request
-$result=\SWDF\image_resizer_request($img,$size,false);
+$result=\JamesSwift\image_resizer_request($img,$size,false);
 
 //Handle returned data, mapping headers etc. and output image
 if (isset($result['status'])){
