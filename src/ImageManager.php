@@ -8,8 +8,6 @@
  * little class. It also contains a system for managing all images on a website, 
  * both securing them and resizing/watermarking them as needed.
  * 
- * For a quick start, see examples.txt.
- * 
  * You are free to use, share and alter/remix this code, provided you distribute 
  * it under the same or a similar license as this work. Please clearly mark any
  * modifications you make (if extensive, a summary at the begining of the file
