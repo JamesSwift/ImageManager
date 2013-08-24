@@ -15,12 +15,19 @@ implementation.
 
 The ImageManager comes with a ready to use example implementation. 
 
-To test it out, copy the repository into a directory accessible by your web-server. 
-In your web browser, you should then be able to navigate to:
+Copy the repository into a directory accessible by your web-server, then try this URL:
 
 `http://SERVER.COM/PATH_TO_REPO/example.php?size=200x300&img=images/example.jpg`
 
-This should produce a water-marked image using the two images in `images/`.
+Basically, the ImageManager works like this:
+
+- You define some `sizes` in the config. These control the output format, size, and watermarking.
+- You define some `paths` in the config. These dictate which sizes are allowed in which directories.
+
+You only have to do that once. From then on , when you want an image of a particular 
+size on your web page, you just pass the parameters in the `src` attribute of the `<img/>` tag, like so:
+
+	<img src="img.php?size=___ID-OF-SIZE___&img=___PATH-TO-IMAGE___" />
 
 Next, investigate the file `config/exampleConfig.php` and try creating new sizes.
 
