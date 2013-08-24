@@ -4,7 +4,7 @@
  * 
  * This script allows you to automate the resizing of images on your website. 
  * 
- * The SWDF_image_resizer uses the GD2 PHP library, and wraps it up in a simple
+ * The ImageManager uses the GD2 PHP library, and wraps it up in a simple
  * little class. It also contains a system for managing all images on a website, 
  * both securing them and resizing/watermarking them as needed.
  * 
@@ -17,11 +17,11 @@
  * keep the message below intact:
  * 
  * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
- * https://github.com/James-Swift/SWDF_image_resizer
+ * https://github.com/James-Swift/ImageManager
  * 
  * @author James Swift <me@james-swift.com>
- * @version v0.4.0
- * @package SWDF_image_resizer
+ * @version v0.5.0-dev
+ * @package ImageManager
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
@@ -288,7 +288,7 @@ function get_allowed_sizes($path){
  * 
  * @param  bool		   $authorized	Optional. If the path the image falls under has it's "require_auth" property set to true, 
  *					the resize request will fail unless you set this argument to true. It's primarily intended 
- *					as a saftey-net for building your own security system on top of the SWDF_image_resizer.
+ *					as a saftey-net for building your own security system on top of the ImageManager.
  * 
  * @return boolean|mixed[]		<p>If the request is allowed, an array containing the details of the requested size will be returned.</p>
  *					<p>If request is not authorized or you have failed to define any sizes or paths, will return false</p>
@@ -365,7 +365,7 @@ function validate_resize_request($image,$size=null,$authorized=false){
  * 
  * @param string $img The path (relative to $_SWDF['paths']['root']) of the image to be resized.
  * @param string $requested_size The id of a size specified in $_SWDF['settings']['images']['sizes'] that the user whiches to resize the image to.
- * @param bool $authorized Whether this request has been authorized. Normally you can ignor this variable, it's only needed if you have added your own security layer ontop of the SWDF_image_resizer tool.
+ * @param bool $authorized Whether this request has been authorized. Normally you can ignor this variable, it's only needed if you have added your own security layer ontop of the ImageManager tool.
  * 
  * @return bool|mixed[] <p>If required dependancies could not be loaded (E.G. $_SWDF), the function will return false.</p><br/>
  *			<p>If the request cannot be processed because, for example, the file cannot be found or access is denied, the function will return an array similar to this:<br/>

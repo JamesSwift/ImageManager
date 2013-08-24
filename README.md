@@ -1,4 +1,4 @@
-James Swift - Image Manager v0.4.0
+James Swift - Image Manager v0.5.0-dev
 ==================
 
 A PHP library to make automatically re-sizing images on your web site simple, safe and secure.
@@ -16,10 +16,10 @@ rewrite your configuration file to meet the new standards.
 
 To get a copy of the code, at your terminal type:
 
-`git clone git://github.com/James-Swift/SWDF_image_resizer.git`
+`git clone git://github.com/James-Swift/ImageManager.git`
 
 or alternatively you can 
-[download a zipped version](https://github.com/James-Swift/SWDF_image_resizer/archive/master.zip).
+[download a zipped version](https://github.com/James-Swift/ImageManager/archive/master.zip).
 
 ## Quick Start
 
@@ -40,7 +40,7 @@ The SWDF uses the branching/development model described
 [here](http://nvie.com/posts/a-successful-git-branching-model/).
 
 If you wish to test the latest development version, checkout branch 
-[develop](https://github.com/James-Swift/SWDF_image_resizer/tree/develop).
+[develop](https://github.com/James-Swift/ImageManager/tree/develop).
 
 ## Versioning
 
@@ -54,6 +54,6 @@ For more information please visit [http://semver.org/](http://semver.org/).
 
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US">
 <img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a>
-<br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">SWDF_Image_resizer</span> by 
-<a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/James-Swift/SWDF_image_resizer" property="cc:attributionName" rel="cc:attributionURL">James Swift</a>
+<br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">ImageManager</span> by 
+<a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/James-Swift/ImageManager" property="cc:attributionName" rel="cc:attributionURL">James Swift</a>
  is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.

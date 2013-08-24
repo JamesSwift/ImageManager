@@ -20,10 +20,10 @@
  * keep the message below intact:
  * 
  * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
- * https://github.com/James-Swift/SWDF_image_resizer
+ * https://github.com/James-Swift/ImageManager
  * 
  * @author James Swift <me@james-swift.com>
- * @version v0.4.0
+ * @version v0.5.0-dev
  * @package James-Swift/ImageManager
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
@@ -373,7 +373,7 @@ class ImageResizer {
 //TODO: Add hook to secure paths with user-defined function
 //TODO: Add phpDoc
 class SecureImageResizer {
-	const VERSION = "v0.4.0";
+	const VERSION = "v0.5.0-dev";
 	protected $_config;
 	protected $_paths;
 	protected $_sizes;

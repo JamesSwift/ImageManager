@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
- * https://github.com/James-Swift/SWDF_image_resizer
+ * https://github.com/James-Swift/ImageManager
  * 
  * 
  * Use this file like this:
