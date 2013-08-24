@@ -1,3 +1,10 @@
+##Development Branch
+
+**This is the `develop` branch. Using the code in this branch in production is NOT recommended!**
+
+I'm moving towards releasing v0.5.0 (hence the develop branch being branded v0.5.0-dev). Please 
+test out the code in this branch and submit bug reports and pull requests.
+
 <h1>
 ImageManager v0.5.0-dev 
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US" style="float:right;"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a>
