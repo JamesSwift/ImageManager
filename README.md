@@ -54,12 +54,12 @@ your namespace references to be able to continue to use your old implementation.
 + Files have been moved around a bit and renamed. Check your `include`s.
 + Transparent PNGs now blend properly on top of each other, maintaining the transparent background.
 + JPEGs are now progressive downloads (to make loading appear faster).
-+ The alignment of repeating watermarks in has changed slightly.
++ The alignment of repeating watermarks has changed slightly.
 + Caching now works correctly.
 + If the `$_SWDF['paths']['images_cache']` path doesn't exist, it will be created.
 + The array returned by `image_resizer_request()` now spells `cache_location` correctly.
 + The class `SWDF_image_resizer` has been renamed to `ImageResizer`.
-+ The `ImageResizer::output_image` method now returns an `Image()` object. (use $Image->outputData() to emulate the old behaviour).
++ The `ImageResizer::output_image` method now returns an `Image()` object. (use `output_image->outputData()` to emulate the old behaviour).
 + `ImageResizer::$compatible_mime_types` is now private.
 + `ImageResizer::imagecopymerge_alpha` has been removed.
 + `ImageResizer::add_watermark` Opacity now defaults to 100.
@@ -76,7 +76,7 @@ If you wish to test the latest development version, checkout branch
 
 Releases will be numbered with the following format: `<major>.<minor>.<patch>`
 
-But please note that during beta development we will remain at version v0.*.*
+But please note that during alpha development we will remain at version v0.*.*
 
 For more information please visit [http://semver.org/](http://semver.org/).
 
