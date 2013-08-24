@@ -28,10 +28,10 @@ Next, investigate the file `config/exampleConfig.php` and try creating new sizes
 
 To get a copy of the code, at your terminal type:
 
-`git clone git://github.com/James-Swift/SWDF_image_resizer.git`
+`git clone git://github.com/James-Swift/ImageManager.git`
 
 or alternatively you can 
-[download a zipped version](https://github.com/James-Swift/SWDF_image_resizer/archive/master.zip).
+[download a zipped version](https://github.com/James-Swift/ImageManager/archive/master.zip).
 
 ## Upgrade Notes
 
@@ -63,7 +63,7 @@ The SWDF uses the branching/development model described
 [here](http://nvie.com/posts/a-successful-git-branching-model/).
 
 If you wish to test the latest development version, checkout branch 
-[develop](https://github.com/James-Swift/SWDF_image_resizer/tree/develop).
+[develop](https://github.com/James-Swift/ImageManager/tree/develop).
 
 ## Versioning
 
@@ -76,5 +76,5 @@ For more information please visit [http://semver.org/](http://semver.org/).
 ## License
 
 <span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">ImageManager</span> by 
-<a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/James-Swift/SWDF_image_resizer" property="cc:attributionName" rel="cc:attributionURL">James Swift</a>
+<a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/James-Swift/ImageManager" property="cc:attributionName" rel="cc:attributionURL">James Swift</a>
  is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
