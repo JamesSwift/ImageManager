@@ -24,7 +24,7 @@ Basically, the ImageManager works like this:
 - You define some `sizes` in the config. These control output formats, dimensions, and watermarking.
 - You define some `paths` in the config. These dictate which sizes are allowed in which directories.
 
-You only have to do that once. From then on , when you want an image of a particular 
+You only have to do that once. From then on when you want an image of a particular 
 size on your web page, you just pass the parameters in the `src` attribute of the `<img/>` tag, like so:
 
 	<img src="img.php?size=___ID-OF-SIZE___&img=___PATH-TO-IMAGE___" />
