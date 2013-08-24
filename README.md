@@ -21,7 +21,7 @@ Copy the repository into a directory accessible by your web-server, then try thi
 
 Basically, the ImageManager works like this:
 
-- You define some `sizes` in the config. These control the output format, size, and watermarking.
+- You define some `sizes` in the config. These control output formats, dimensions, and watermarking.
 - You define some `paths` in the config. These dictate which sizes are allowed in which directories.
 
 You only have to do that once. From then on , when you want an image of a particular 
