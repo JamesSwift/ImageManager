@@ -1,0 +1,3 @@
+[submodule "src/submodules/PHPBootstrap"]
+	path = src/submodules/PHPBootstrap
+	url = git@github.com:James-Swift/PHPBootsrap.git

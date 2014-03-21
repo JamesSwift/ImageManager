@@ -30,7 +30,7 @@
 
 namespace JamesSwift\ImageManager;
 
-require "PHPBootstrap.php";
+require "submodules/PHPBootstrap/PHPBootstrap.php";
 
 class Exception extends \Exception {
 	//Nothing to do here yet
