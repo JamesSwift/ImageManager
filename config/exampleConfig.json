@@ -1,84 +1,86 @@
 {
-	"enableCaching":true,
-	"cacheTime":2419200,
-	"defaultOutputFormat":"original",
-	"defaultJpegQuality":90,
-	"defaultWatermarkOpacity":10,
-	"defaultSize":"original",
-	"signedHash":"fb017efb",
-	"sizes":{
-		"original":{
-			"id":"original",
-			"method":"original"
-		},
-		"product_image":{
-			"id":"product_image",
-			"method":"fit",
-			"width":400,
-			"height":300,
-			"defaultOutputFormat":"image/jpeg",
-			"watermark":{
-				"path":"images/watermark.png",
-				"opacity":20,
-				"repeat":true,
-				"vPad":-2,
-				"hPad":10
-			}
-		},
-		"2x":{
-			"id":"2x",
-			"method":"scale",
-			"scale":2,
-			"disableCaching":false
-		},
-		"200x300":{
-			"id":"200x300",
-			"method":"fill",
-			"width":200,
-			"height":300,
-			"watermark":{
-				"path":"images/watermark.png",
-				"scale":0.9,
-				"vAlign":"top",
-				"opacity":80
-			}
-		}
-	},
-	"paths":{
-		"images/":{
-			"path":"images/",
-			"alias":[
-				"test/"
-			],
-			"auth":{
-				"call":"secure_path",
-				"data":{
-					"key":"secret_key"
-				}
-			}
-		},
-		"images/products/":{
-			"path":"images/products/",
-			"allowSizes":[
-				"product_image",
-				"200x300"
-			]
-		},
-		"images/original_scans/":{
-			"path":"images/original_scans/",
-			"defaultJpegQuality":100,
-			"denySizes":[
-				"original",
-				"2x"
-			]
-		},
-		"images/webcam/":{
-			"path":"images/webcam/",
-			"disableCaching":true
-		},
-		"images/graphics/":{
-			"path":"images/graphics/",
-			"defaultOutputFormat":"image/gif"
-		}
-	}
+    "_config": {
+        "enableCaching": true,
+        "cacheTime": 2419200,
+        "defaultOutputFormat": "original",
+        "defaultJpegQuality": 90,
+        "defaultWatermarkOpacity": 10,
+        "defaultSize": "original"
+    },
+    "_sizes": {
+        "original": {
+            "id": "original",
+            "method": "original"
+        },
+        "product_image": {
+            "id": "product_image",
+            "method": "fit",
+            "width": 400,
+            "height": 300,
+            "defaultOutputFormat": "image\/jpeg",
+            "watermark": {
+                "path": "images\/watermark.png",
+                "opacity": 20,
+                "repeat": true,
+                "vPad": -2,
+                "hPad": 10
+            }
+        },
+        "2x": {
+            "id": "2x",
+            "method": "scale",
+            "scale": 2,
+            "disableCaching": false
+        },
+        "200x300": {
+            "id": "200x300",
+            "method": "fill",
+            "width": 200,
+            "height": 300,
+            "watermark": {
+                "path": "images\/watermark.png",
+                "scale": 0.9,
+                "vAlign": "top",
+                "opacity": 80
+            }
+        }
+    },
+    "_paths": {
+        "images\/": {
+            "path": "images\/",
+            "alias": [
+                "test\/"
+            ],
+            "auth": {
+                "call": "secure_path",
+                "data": {
+                    "key": "secret_key"
+                }
+            }
+        },
+        "images\/products\/": {
+            "path": "images\/products\/",
+            "allowSizes": [
+                "product_image",
+                "200x300"
+            ]
+        },
+        "images\/original_scans\/": {
+            "path": "images\/original_scans\/",
+            "defaultJpegQuality": 100,
+            "denySizes": [
+                "original",
+                "2x"
+            ]
+        },
+        "images\/webcam\/": {
+            "path": "images\/webcam\/",
+            "disableCaching": true
+        },
+        "images\/graphics\/": {
+            "path": "images\/graphics\/",
+            "defaultOutputFormat": "image\/gif"
+        }
+    },
+    "signedHash": "480dc925"
 }

@@ -30,6 +30,7 @@
 
 namespace JamesSwift\ImageManager;
 
+require "PHPBootstrap.php";
 
 class Exception extends \Exception {
 	//Nothing to do here yet
@@ -372,7 +373,8 @@ class ImageResizer {
 
 //TODO: Add hook to secure paths with user-defined function
 //TODO: Add phpDoc
-class SecureImageResizer {
+class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
+	
 	const VERSION = "v0.5.0-dev";
 	protected $_config;
 	protected $_paths;
@@ -380,61 +382,7 @@ class SecureImageResizer {
 	protected $_allowedOutputFormats = array("original","image/jpeg","image/jp2","image/png","image/gif");
 	protected $_allowedMethods = array("original","fit","fill","stretch","scale");
 		
-	//TODO: Add phpDoc
-	public function __construct($config=null){
-		//Load default config
-		$this->loadDefaultConfig();
-			
-		//Allow passing config straight through constructor
-		if ($config!==null){
-			if ($this->loadConfig($config)===false){
-				throw new Exception("Unable to load passed config.",500);
-			}
-		}
-	}
-	
-	//TODO: Add phpDoc
-	public function sanitizeFilePath($path, $removeLeading=false, $addTrailing=false){
-
-		//Check we're dealing with a path
-		if (!isset($path) || !is_string($path) || $path==="")
-			throw new Exception("Cannot sanitize file-path. It must be a non-empty string.",500);
 		
-		//Add trailing slash
-		if ($addTrailing===true) $path=$path."/";
-		
-		//Turn all slashes round the same way
-		$path=str_replace(Array("\\","/",'\\',"//"),"/",$path);
-		
-		//Remove redundant references to ./
-		$path=substr(str_replace("/./","/",$path."/"), 0, -1);
-
-		//Check path for directory traversing
-		if (strpos("/".$path."/", "/../")!==false)
-			throw new Exception("Cannot sanitize file path: '".$path."'. It appears to contain an attempt at directory traversal which may be a security breach.",422);
-
-		//Remove leading slash
-		if ($removeLeading===true && substr($path,0,1)==="/")
-			$path=substr($path,1);
-		
-		return $path;
-	
-	}
-	
-	//TODO: Add phpDoc
-	protected function _loadConfigFromFile($file){
-		
-		//Does the file exist?
-		if (!is_file($file))
-			return false;
-
-		//Atempt to decode it
-		$config = json_decode(file_get_contents($file),true);
-		
-		//Return false on failure
-		return ($config === null) ? false : $config;
-	}
-	
 	//TODO: Add phpDoc
 	public function loadDefaultConfig(){
 		$this->_config=array(
@@ -450,150 +398,29 @@ class SecureImageResizer {
 		$this->_sizes=array(); 	
 	}
 	
-	//TODO: Add phpDoc
-	protected function _loadSignedConfig($config){
-		
-		//Check we're dealing with a signed config
-		if (!isset($config['signedHash']))
-			return false;
-
-		//Recheck hash to see if it is valid
-		if ($this->_signConfig($config)!==$config['signedHash'])
-			return false;
-
-		//Load the signed (previously checked) paths and sizes
-		$this->_sizes=$config['sizes']+$this->_sizes;
-		$this->_paths=$config['paths']+$this->_paths;
-
-		//Unset value we don't want in our $this->_config array;
-		unset($config['paths'],$config['sizes'],$config['signedHash']);
-		
-		//Load the signed config settings
-		$this->_config=$config+$this->_config;
-
-		return true;
-		
-	}
+	
 	
 	//TODO: Add phpDoc
-	public function loadConfig($loadFrom, $clearOld=false, $saveChanges=true){
-
-		//If they called this function with no config, just return null
-		if ($loadFrom===null) return null;
-				
-		//If we have been passed an array, load that
-		if (is_array($loadFrom)) {
-			$config=$loadFrom;
-			
-		//If not, try to load from JSON file
-		} else if (is_string($loadFrom) && is_file($loadFrom)) {
-			$config=$this->_loadConfigFromFile($loadFrom);
-			if ($config===false)
-				throw new Exception("Unable to parse config file: ".$loadFrom, 500);
-		}
-		
-		//Were we able to load $config from somewhere?
-		if (!isset($config)) 
-			throw new Exception("Unable to load configuration. Please pass a config array or a valid absolute path to a JSON file.", 500);
-
-		//Reset the class if requested
-		if ($clearOld===true) 
-			$this->loadDefaultConfig();
-		
-		//Has this configuration been signed previously? (if so load it without error checking to save CPU cycles)
-		if (isset($config['signedHash']) && $this->_loadSignedConfig($config) )
-			return $config;
+	protected function _sanitizeConfig($config){
 
 		//Process configuration
 		$newConfig=array();
 
 		//Set the settings
-		foreach ($config as $name=>$setting){
+		foreach ($config['_config'] as $name=>$setting){
 			if ($name!=="paths" && $name!=="sizes")
-				$newConfig[$name] = $this->set($name,$setting);
+				$newConfig['_config'][$name] = $this->set($name,$setting);
 		}
 
 		//Call $this->addSize with all sizes as arguments
-		if (isset($config['sizes'])===true && is_array($config['sizes']))
-			$newConfig['sizes']=call_user_func_array(array($this, "addSize"), $config['sizes']);
+		if (isset($config['_sizes'])===true && is_array($config['_sizes']))
+			$newConfig['_sizes']=call_user_func_array(array($this, "addSize"), $config['_sizes']);
 
 		//Call $this->addPath with all paths as arguments
-		if (isset($config['paths'])===true && is_array($config['paths']) && sizeof($config['paths'])>0)
-			$newConfig['paths']=call_user_func_array(array($this, "addPath"), $config['paths']);
-
-		//Check if we should save changes back to the file
-		if ($saveChanges===true && is_string($loadFrom)){
-
-			//Sign this new config
-			$newConfig['signedHash'] = $this->_signConfig($newConfig);
-
-			//write it back to disk
-			file_put_contents($loadFrom, json_indent(\json_encode($newConfig)));
-		}
+		if (isset($config['_paths'])===true && is_array($config['_paths']) && sizeof($config['_paths'])>0)
+			$newConfig['_paths']=call_user_func_array(array($this, "addPath"), $config['_paths']);
 
 		return $newConfig;
-	}
-	
-	//TODO: Add phpDoc
-	public function getConfig(){
-		//Load basic config
-		$config=$this->_config;
-		
-		//Load paths and sizes (Remove IDs)
-		$config['paths']=$this->_paths;
-		$config['sizes']=$this->_sizes;
-		
-		return $config;
-	}
-	
-	//TODO: Add phpDoc
-	public function getSignedConfig(){
-		
-		//Get config to sign
-		$config = $this->getConfig();
-
-		//Sign the config
-		$config['signedHash'] = $this->_signConfig($config);
-		
-		//Sign and return it
-		return $config;
-	}
-	
-	//TODO: Add phpDoc
-	protected function _signConfig($config){
-		
-		//Check the config array actually exists
-		if (!(isset($config) && is_array($config)))
-			return false;
-		
-		//Remove any previous signature
-		unset($config['signedHash']);
-	
-		//Stringify it and hash it
-		return	hash("crc32",
-				var_export($config, true).
-				" <- Compatible config file for James-Swift/SecureImageResizer ".
-				self::VERSION.
-				" by James Swift"
-			);
-	}
-	
-	//TODO: Add phpDoc
-	public function saveConfig($file, $overwrite=false, $format="json", $varName="SecureImageResizer_config_array"){
-		
-		if ($overwrite===false && is_file($file)) 
-			throw new Exception("Unable to save settings. File '".$file."' already exists, and method is in non-overwrite mode.", 500);
-		
-		if ($format==="json"){
-			if (file_put_contents($file, json_indent(json_encode($this->getSignedConfig())) )!==false )
-				return true;
-		
-		} else if ($format==="php"){
-			if (file_put_contents($file, "<"."?php \$".$varName." =\n".var_export($this->getSignedConfig(), true).";\n?".">")!==false )
-				return true;
-		}
-		
-		throw new Exception("An unknown error occured and the settings could not be saved to file: ".$file, 500);
 	}
 	
 	//TODO: Add phpDoc
@@ -1593,69 +1420,5 @@ class CachedImage extends Image {
 			return false;
 		return unlink($this->_originalLocation);
 	}
-}
-
-
-
-
-
-
-
-
-
-/**
- * Indents a flat JSON string to make it more human-readable.
- * 
- * Slightly modified by James Swift 2013
- * 
- * @author Dave Perrett
- * @copyright Copyright Dave Perret 2008 - see http://www.daveperrett.com/articles/2008/03/11/format-json-with-php/
- * @param string $json The original JSON string to process.
- * @param string $indentStr The characters to use to indent. Default is "\t" for tab.
- * @param string $newLine The character to use to signify a new line. Defaultis "\n" for newline.
- * @param bool $unescapeSlashes By default json-encode escapes forward slashes even though it's not necesary. If you want to pretify your json, you can unescape them. This default to true.
- * @return string Indented version of the original JSON string.
- */
-function json_indent($json, $indentStr = "\t", $newLine = "\n", $unescapeSlashes=true) {
-
-	$json = str_replace(array("\n", "\r"), "", $json);
-	if ($unescapeSlashes===true) $json = str_replace('\/', "/", $json);
-	$result = '';
-	$pos = 0;
-	$strLen = strlen($json);
-	$prevChar = '';
-	$outOfQuotes = true;
-
-	for ($i = 0; $i <= $strLen; $i++) {
-
-		$char = substr($json, $i, 1);
-
-		if ($char == '"' && $prevChar != '\\') {
-			$outOfQuotes = !$outOfQuotes;
-		} else if (($char == '}' || $char == ']') && $outOfQuotes) {
-			$result .= $newLine;
-			$pos--;
-			for ($j = 0; $j < $pos; $j++) {
-				$result .= $indentStr;
-			}
-		}
-
-		$result .= $char;
-
-		if (($char == ',' || $char == '{' || $char == '[') && $outOfQuotes) {
-			$result .= $newLine;
-			if ($char == '{' || $char == '[') {
-				$pos++;
-			}
-
-			for ($j = 0; $j < $pos; $j++) {
-				$result .= $indentStr;
-			}
-		}
-
-		$prevChar = $char;
-	}
-
-	return $result;
 }
 ?>
