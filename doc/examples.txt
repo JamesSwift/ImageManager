@@ -57,8 +57,8 @@ watermark to some images, add an overlay etc. just by changing one setting in th
 config file, instead of finding your source files then manually adjusting them all 
 and re-uploading everything.
 
-Hopefully, this has given you an idea of how the \JamesSwift\SecureImageResizer class 
-can be used.
+Hopefully, this has given you an idea of how the 
+\JamesSwift\ImageManager\SecureImageResizer class can be used.
 
 ####################################################################################
 ####################################################################################

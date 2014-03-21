@@ -22,7 +22,7 @@ $format = (isset($_GET['format'])) ?	$_GET['format'] : null;	//[optional] The mi
 //Catch configuration errors
 try {
 	//Load the resizer
-	$resizer=new \JamesSwift\SecureImageResizer();
+	$resizer=new \JamesSwift\ImageManager\SecureImageResizer();
 	
 	//Define the base (other specified paths are now relative to this point)
 	$resizer->set("base", dirname(__FILE__) );

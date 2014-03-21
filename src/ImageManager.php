@@ -28,7 +28,7 @@
  * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
-namespace JamesSwift;
+namespace JamesSwift\ImageManager;
 
 
 class Exception extends \Exception {
