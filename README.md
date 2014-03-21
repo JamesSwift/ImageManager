@@ -49,7 +49,9 @@ To get started, investigate the file `config/exampleConfig.json` and try creatin
 
 To get a copy of the code, at your terminal type:
 
-`git clone git://github.com/James-Swift/ImageManager.git`
+```git clone git://github.com/James-Swift/ImageManager.git
+git submodule init
+git submodule update```
 
 or alternatively you can 
 [download a zipped version](https://github.com/James-Swift/ImageManager/archive/master.zip).
