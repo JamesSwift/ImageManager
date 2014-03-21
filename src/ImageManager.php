@@ -394,7 +394,7 @@ class SecureImageResizer {
 	}
 	
 	//TODO: Add phpDoc
-	public function sanitizePath($path, $removeLeading=false, $addTrailing=false){
+	public function sanitizeFilePath($path, $removeLeading=false, $addTrailing=false){
 
 		//Check we're dealing with a path
 		if (!isset($path) || !is_string($path) || $path==="")
@@ -438,14 +438,14 @@ class SecureImageResizer {
 	//TODO: Add phpDoc
 	public function loadDefaultConfig(){
 		$this->_config=array(
-			"base"=>$this->sanitizePath(dirname(__FILE__), false, true),
+			"base"=>$this->sanitizeFilePath(dirname(__FILE__), false, true),
 			"enableCaching"=>true,
 			"cacheTime"=>60*60, //1 Hour
 			"defaultWatermarkOpacity"=>50,
 			"defaultOutputFormat"=>"original",
 			"defaultJpegQuality"=>90
 		);
-		$this->set("cachePath",$this->sanitizePath(\sys_get_temp_dir()."/James-Swift/ImageManager/imageCache/", false, true));
+		$this->set("cachePath",$this->sanitizeFilePath(\sys_get_temp_dir()."/James-Swift/ImageManager/imageCache/", false, true));
 		$this->_paths=array();
 		$this->_sizes=array(); 	
 	}
@@ -608,7 +608,7 @@ class SecureImageResizer {
 				throw new Exception("Cannot set '".$setting."'. Must be non-null string.", 500);
 			
 			//Use correct slash and add trailing slash
-			$value=$this->sanitizePath($value, false, true);
+			$value=$this->sanitizeFilePath($value, false, true);
 			
 			//Check directory exists
 			if (is_dir($value)===false)	
@@ -623,7 +623,7 @@ class SecureImageResizer {
 				throw new Exception("Cannot set '".$setting."'. Must be non-null string.", 500);
 			
 			//Use correct slash and add trailing slash
-			$value=$this->sanitizePath($value, false, true);
+			$value=$this->sanitizeFilePath($value, false, true);
 			
 			//Check directory exists (and create it if it doesn't)
 			if (is_dir($value)===false)
@@ -742,7 +742,7 @@ class SecureImageResizer {
 			$newPath=&$newPaths[$path['path']];
 			
 			//Sanitize variables
-			$newPath['path']=$this->sanitizePath($path['path'],true,true);
+			$newPath['path']=$this->sanitizeFilePath($path['path'],true,true);
 			if (isset($path['disableCaching']))
 				$newPath['disableCaching']=(bool)$path['disableCaching'];
 
@@ -947,7 +947,7 @@ class SecureImageResizer {
 			throw new Exception("No path specified for watermark image. Must be none empty string.", 500);
 		
 		//Sanitize path
-		$newWatermark['path']=$this->sanitizePath($watermark['path']);
+		$newWatermark['path']=$this->sanitizeFilePath($watermark['path']);
 		
 		//Check it exists
 		if (!is_file($this->_config['base'].$watermark['path']))
@@ -1119,7 +1119,7 @@ class SecureImageResizer {
 			throw new Exception("Please specify an image to resize.", 404);
 		
 		//Sanitize image path
-		$img = $this->sanitizePath($img,true);
+		$img = $this->sanitizeFilePath($img,true);
 		
 		//Check image exists
 		if (!is_file($this->_config['base'].$img))
@@ -1173,7 +1173,7 @@ class SecureImageResizer {
 	public function getApplicablePath($img){
 		
 		//Clean up path
-		$img = $this->sanitizePath($img,true);
+		$img = $this->sanitizeFilePath($img,true);
 		
 		//Create array of path parts
 		$path=explode("/",$img);
@@ -1238,7 +1238,7 @@ class SecureImageResizer {
 	public function getFinalOutputFormat($img, array $path, array $size, $outputFormat=null) {
 		
 		//Sanitize the image
-		$img = $this->sanitizePath($img, true);
+		$img = $this->sanitizeFilePath($img, true);
 		
 		//Check the image exists
 		if (!is_file($this->_config['base'].$img))
@@ -1278,7 +1278,7 @@ class SecureImageResizer {
 	public function getFinalJpegQuality($img, array $path, array $size) {
 		
 		//Sanitize the image
-		$img = $this->sanitizePath($img, true);
+		$img = $this->sanitizeFilePath($img, true);
 		
 		//Check the image exists
 		if (!is_file($this->_config['base'].$img))
