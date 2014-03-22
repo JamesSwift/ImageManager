@@ -1,6 +1,6 @@
 <?php
 // Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
-// https://github.com/James-Swift/ImageManager
+// https://github.com/JamesSwift/ImageManager
 
 ////////////////////////////////////////////////////////////////
 // Basic Image Settings:
@@ -9,7 +9,7 @@
 	$_SWDF['settings']['images']['default_watermark_opacity']=20;					//If not specified in a size, use this opacity for watermarks. Values: 0-100
 	$_SWDF['settings']['images']['default_jpeg_quality']=90;					//If not specified in a size, use this value for jpeg compression.
 	
-	$_SWDF['paths']['images_cache']=sys_get_temp_dir()."/James-Swift/ImageManager/imageCache/";	//The absolute path to the image cache location.
+	$_SWDF['paths']['images_cache']=sys_get_temp_dir()."/JamesSwift/ImageManager/imageCache/";	//The absolute path to the image cache location.
 	$_SWDF['settings']['images']['cache_resized']=true;						//Whether to store cached resized images or re-generate each time (strongly reccomended to be set to true, as resizing images is a slow process). Normally only useful for debugging.
 	$_SWDF['settings']['images']['cache_expiry']=60*60*2;						//The time in seconds to keep (and use) cached images.
 
