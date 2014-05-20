@@ -97,7 +97,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			$value=$this->sanitizeFilePath($value, false, true);
 			
 			//Check directory exists
-			if (is_dir($value)===false)	
+			if (\is_dir($value)===false)	
 				throw new\Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.", 500);
 			
 			
@@ -112,7 +112,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			$value=$this->sanitizeFilePath($value, false, true);
 			
 			//Check directory exists (and create it if it doesn't)
-			if (is_dir($value)===false)
+			if (\is_dir($value)===false)
 				if (!mkdir($value, 0777, true) || is_dir($value)===false) 
 					throw new\Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.", 500);
 			
@@ -436,7 +436,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		$newWatermark['path']=$this->sanitizeFilePath($watermark['path']);
 		
 		//Check it exists
-		if (!is_file($this->_config['base'].$watermark['path']))
+		if (!\is_file($this->_config['base'].$watermark['path']))
 			throw new\Exception("Cannot find watermark image at path: ".$watermark['path'], 500);
 		
 		//Sanitize other variables
@@ -611,7 +611,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		$img = $this->sanitizeFilePath($img,true);
 		
 		//Check image exists
-		if (!is_file($this->_config['base'].$img))
+		if (!\is_file($this->_config['base'].$img))
 			throw new\Exception("The image you requested could not be located.", 404);
 			
 		//Find which path rule applies
@@ -730,7 +730,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		$img = $this->sanitizeFilePath($img, true);
 		
 		//Check the image exists
-		if (!is_file($this->_config['base'].$img))
+		if (!\is_file($this->_config['base'].$img))
 			throw new\Exception("The image could not be located.", 404);
 
 		$final = $this->_config['defaultOutputFormat'];
@@ -770,7 +770,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		$img = $this->sanitizeFilePath($img, true);
 		
 		//Check the image exists
-		if (!is_file($this->_config['base'].$img))
+		if (!\is_file($this->_config['base'].$img))
 			throw new\Exception("The image could not be located.", 404);
 
 		if (isset($this->_config['defaultJpegQuality']))
@@ -797,7 +797,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 	public function isCached($img, $size, $path, $outputFormat){
 		
 		//Does the original image exist?
-		if (!is_file($this->_config['base'].$img))
+		if (!\is_file($this->_config['base'].$img))
 			return false;
 		
 		//Stringify the settings for this image
@@ -808,7 +808,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			return false;
 		
 		//Does a cached version of the image exist?
-		if (!is_file($this->_config['cachePath'].$cacheName))
+		if (!\is_file($this->_config['cachePath'].$cacheName))
 			return false;
 		
 		//Check the cache file isn't obsolete

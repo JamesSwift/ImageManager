@@ -40,13 +40,13 @@ class Image {
 			}
 		
 			//Try to read mime data
-			$mime=image_type_to_mime_type(exif_imagetype($img));
+			$mime=\image_type_to_mime_type(\exif_imagetype($img));
 	
 			//Store image location
 			$this->_imgLocation=$img;
 			
 			//Find Last Modified
-			$lastModified=filemtime($img);
+			$lastModified=\filemtime($img);
 			
 		} else {
 			//Load finfo to find the mime type of the passed file/string
@@ -67,11 +67,11 @@ class Image {
 			throw new\Exception("Unable to load image. Unsupported mime-type: ".$mime, 500);
 			
 		//Check expires is valid
-		if (!ctype_digit($expires) && $expires!==null)
+		if ($expires!==null && !ctype_digit($expires))
 			throw new\Exception("Can't create new Image object. Please specify a valid value for \$expires (positive integer, or null).", 500);
 			
 		//Check lastModified is valid
-		if (!ctype_digit($lastModified) && $lastModified!==null)
+		if ( $lastModified!==null && !ctype_digit($lastModified))
 			throw new\Exception("Can't create new Image object. Please specify a valid value for \$lastModified (positive integer, or null).", 500);
 			
 		//Populate data
