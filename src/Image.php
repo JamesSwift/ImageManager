@@ -17,6 +17,8 @@
  * @copyright Copyright 2014 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
+namespace JamesSwift\ImageManager;
+
 //TODO: Add phpDoc
 class Image {
 	protected $_img;
@@ -168,7 +170,7 @@ class Image {
 	
 	//TODO: Add phpDoc
 	public function outputHTTP($headers=null) {
-		
+
 		//Output any additional headers
 		if (is_array($headers)===true){
 			foreach ($headers as $type=>$header){

@@ -24,6 +24,8 @@
 
 namespace JamesSwift\ImageManager;
 
+require "Image.php";
+
 //TODO: Completely rewrite class, add phpDoc
 class ImageResizer {
 
@@ -343,7 +345,8 @@ class ImageResizer {
 		}
 		
 		//Return captured buffer
-		return new ResizedImage(ob_get_clean(),null,time());
+		$image=ob_get_clean();
+		return new ResizedImage($image, null, time());
 	}
 
 	public function destory(){

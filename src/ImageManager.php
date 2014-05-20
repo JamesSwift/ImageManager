@@ -34,7 +34,4 @@ class Exception extends \Exception {
 	//Nothing to do here yet
 }
 
-require "submodules/PHPBootstrap/PHPBootstrap.php";
-require "Image.php";
-require "ImageResizer.php";
 require "SecureImageResizer.php";

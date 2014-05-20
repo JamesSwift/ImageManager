@@ -18,7 +18,7 @@ $img=@$_GET['img'];
 
 //Load dependencies
 require("src/SWDF_image_resizer.php");
-require("src/ImageManager.php");
+require("src/ImageResizer.php");
 require("config/old_example_config.php");
 
 //Make resize request

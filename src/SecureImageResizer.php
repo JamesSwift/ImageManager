@@ -27,6 +27,8 @@
 
 namespace JamesSwift\ImageManager;
 
+require "submodules/PHPBootstrap/PHPBootstrap.php";
+require "ImageResizer.php";
 
 //TODO: Add hook to secure paths with user-defined function
 //TODO: Add phpDoc
@@ -546,7 +548,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 		//Load the image to be resized
 		$resizer->load_image($this->_config['base'].$request['img']);
-				
+			
 		//Resize the image
 		if ($request['size']['method']!=="original") {
 			$params=$request['size']+array("method"=>null,"width"=>null,"height"=>null,"scale"=>null);
@@ -558,7 +560,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			$params=$request['size']['watermark']+array("path"=>null,"vAlign"=>null,"hAlign"=>null,"opacity"=>$this->_config['defaultWatermarkOpacity'],"scale"=>null,"repeat"=>null,"vPad"=>null,"hPad"=>null);
 			$resizer->add_watermark($params['path'],$params['vAlign'],$params['hAlign'],$params['opacity'],$params['scale'],$params['repeat'],$params['vPad'],$params['hPad']);
 		}
-			
+		
 		//Render the image in desired output format
 		$resizedImage = $resizer->output_image($request['finalOutputFormat']);
 		
