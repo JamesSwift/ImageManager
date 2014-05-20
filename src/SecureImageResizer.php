@@ -28,7 +28,7 @@
 namespace JamesSwift\ImageManager;
 
 require "submodules/PHPBootstrap/PHPBootstrap.php";
-require "ImageResizer.php";
+require "Image.php";
 
 //TODO: Add hook to secure paths with user-defined function
 //TODO: Add phpDoc
@@ -541,6 +541,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		//If no cached version, render a new version
 		
 		//Init ImageResizer
+		require "ImageResizer.php";
 		$resizer = new ImageResizer();
 
 		//Set JPEG Quality

@@ -28,7 +28,6 @@
 namespace swdf;
 
 
-
 /**
  * Control access the image resizer's acces to specified directory, with the specified settings.
  * 
@@ -460,6 +459,8 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 		} else if(in_array($size['method'], Array("original","fit","fill","stretch","scale"))===true && is_file($img_path)) {
 
 			//Load resizer class
+			require "ImageResizer.php";
+			require "Image.php";
 			$resizer=new \JamesSwift\ImageManager\ImageResizer();
 
 			//Set JPEG quality

@@ -12,7 +12,7 @@
  */
 
 //Load dependencies
-require("src/ImageManager.php");
+require("src/SecureImageResizer.php");
 
 //Register GET variables
 $size	= (isset($_GET['size'])) ?	$_GET['size']	: null;	//Requested output size

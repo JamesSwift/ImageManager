@@ -24,8 +24,6 @@
 
 namespace JamesSwift\ImageManager;
 
-require "Image.php";
-
 //TODO: Completely rewrite class, add phpDoc
 class ImageResizer {
 

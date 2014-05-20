@@ -6,7 +6,7 @@
 // Basic Image Settings:
  
 	$_SWDF['settings']['images']['default_size']=0;							//Used by make_img_link() function to choose a size if none is specified.
-	$_SWDF['settings']['images']['default_watermark_opacity']=20;					//If not specified in a size, use this opacity for watermarks. Values: 0-100
+	$_SWDF['settings']['images']['default_watermark_opacity']=10;					//If not specified in a size, use this opacity for watermarks. Values: 0-100
 	$_SWDF['settings']['images']['default_jpeg_quality']=90;					//If not specified in a size, use this value for jpeg compression.
 	
 	$_SWDF['paths']['images_cache']=sys_get_temp_dir()."/JamesSwift/ImageManager/imageCache/";	//The absolute path to the image cache location.
