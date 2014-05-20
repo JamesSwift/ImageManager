@@ -522,12 +522,22 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		$request = $this->validateRequest($img, $size, $outputFormat);
 		
 		//If requested original, just return the image
-		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$request['img'])))===$request['finalOutputFormat'])
-			if ($request['useCache']===true)
-				return new Image($this->_config['base'].$request['img'], time()+$this->_config['cacheTime']); 
-			else
-				return new Image($this->_config['base'].$request['img']); 
-
+		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$request['img'])))===$request['finalOutputFormat']) {
+			if ($request['useCache']===true) {
+				return new Image(	file_get_contents($this->_config['base'].$request['img']), 
+							time()+$this->_config['cacheTime'], 
+							filemtime($this->_config['base'].$request['img']), 
+							$this->_config['base'].$request['img']
+				); 
+			} else {
+				return new Image(	file_get_contents($this->_config['base'].$request['img']), 
+							null,
+							filemtime($this->_config['base'].$request['img']), 
+							$this->_config['base'].$request['img']
+				); 
+			}
+		}
+	
 		//Check if we should use cached version
 		if ($request['useCache']===true){
 			//Load cached version if it exists
@@ -831,7 +841,14 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			return null;
 		
 		//Load data into new CachedImage
-		return new CachedImage($this->_config['cachePath'].$cacheName, filemtime($this->_config['cachePath'].$cacheName)+$this->_config['cacheTime']);
+		$modified = filemtime($this->_config['cachePath'].$cacheName);
+		
+		return new CachedImage(
+			file_get_contents($this->_config['cachePath'].$cacheName), 
+			$modified+$this->_config['cacheTime'],
+			$modified,
+			$this->_config['cachePath'].$cacheName
+		);
 	}
 	
 	//TODO: Add phpDoc

@@ -29,7 +29,7 @@ class Image {
 	protected $_lastModified;
 	
 	//TODO: Add phpDoc
-	public function __construct($img, $expires=null, $lastModified=null){
+	public function __construct($img, $expires=null, $lastModified=null, $originalLocation=null){
 		
 		//Check expires is valid
 		if (!ctype_digit($expires) && $expires!==null)
@@ -41,26 +41,9 @@ class Image {
 			
 		//Load finfo to find the mime type of the passed file/string
 		$finfo = new \finfo(FILEINFO_MIME_TYPE);
-		
-		//If a file reference was passed, load it into memory
-		if (is_file($img)){
-		
-			//Try to read mime data
-			$mime=$finfo->file($img);
 	
-			//Load data
-			$this->_originalLocation=$img;
-			$img=file_get_contents($img);
-			
-			//Store Last Modified
-			$this->setLastModified(null,true);
-		} else {
-			//Store Last Modified
-			$this->setLastModified($lastModified);
-			
-			//Try to read mime data from passed string
-			$mime=$finfo->buffer($img);
-		}
+		//Try to read mime data from passed string
+		$mime=$finfo->buffer($img);
 		
 		//Check mime type is allowed (and that the image was readable)		
 		if ($mime==="text/plain")
@@ -71,14 +54,16 @@ class Image {
 		//Populate data
 		$this->_img=$img;
 		$this->_mime=$mime;
-		$this->setExpires($expires);
+		$this->_originalLocation=$originalLocation;
+		$this->_expires=$expires;
+		$this->_lastModified=$lastModified;
 	}
 	
 	//TODO: Add phpDoc
 	public function setExpires($expires=null){
 		//Check we're storing a valid value
 		if (!ctype_digit($expires) && $expires!==null)
-			throw new Exception("Can't create set Expires header, please specify a valid value (positive integer, or null).", 500);
+			throw new Exception("Can't set Expires header, please specify a valid value (positive integer, or null).", 500);
 		
 		//Store the value
 		$this->_expires=$expires;
@@ -86,14 +71,7 @@ class Image {
 	}
 	
 	//TODO: Add phpDoc
-	public function setLastModified($lastModified=null, $setFromFile=false){
-
-		//Load the last modified from file?
-		if ($setFromFile===true){
-			if ($this->_originalLocation!==null)
-				$lastModified=filemtime($this->_originalLocation);
-			else return false;
-		}
+	public function setLastModified($lastModified=null){
 			
 		//Check we're storing a valid value
 		if (!ctype_digit($lastModified) && $lastModified!==null)
