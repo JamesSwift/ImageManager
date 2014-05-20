@@ -31,9 +31,6 @@ class Image {
 	//TODO: Add phpDoc
 	public function __construct($img, $expires=null, $lastModified=null, $isFile=true){
 		
-		//Load finfo to find the mime type of the passed file/string
-		$finfo = new \finfo(FILEINFO_MIME_TYPE);
-		
 		//If a file reference was passed, load it into memory
 		if ($isFile===true){
 			
@@ -43,14 +40,18 @@ class Image {
 			}
 		
 			//Try to read mime data
-			$mime=$finfo->file($img);
+			$mime=image_type_to_mime_type(exif_imagetype($img));
 	
 			//Store image location
 			$this->_imgLocation=$img;
 			
 			//Find Last Modified
-			$lastModified=  filemtime($img);
+			$lastModified=filemtime($img);
+			
 		} else {
+			//Load finfo to find the mime type of the passed file/string
+			$finfo = new \finfo(FILEINFO_MIME_TYPE);
+		
 			//Try to read mime data from passed string
 			$mime=$finfo->buffer($img);
 			
