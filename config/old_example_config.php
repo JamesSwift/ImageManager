@@ -1,5 +1,5 @@
 <?php
-// Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
+// Copyright 2014 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
 // https://github.com/JamesSwift/ImageManager
 
 ////////////////////////////////////////////////////////////////

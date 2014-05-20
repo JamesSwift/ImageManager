@@ -16,13 +16,13 @@
  * is sufficient). If you redistribute, please include a copy of the LICENSE, 
  * keep the message below intact:
  * 
- * Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
+ * Copyright 2014 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  * https://github.com/JamesSwift/ImageManager
  * 
  * @author James Swift <me@james-swift.com>
  * @version v0.5.0-dev
  * @package ImageManager
- * @copyright Copyright 2013 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
+ * @copyright Copyright 2014 James Swift (Creative Commons: Attribution - Share Alike - 3.0)
  */
 
 namespace swdf;
