@@ -344,7 +344,7 @@ class ImageResizer {
 		
 		//Return captured buffer
 		$image=ob_get_clean();
-		return new ResizedImage($image, null, time());
+		return new ResizedImage($image, null, time(), false);
 	}
 
 	public function destory(){

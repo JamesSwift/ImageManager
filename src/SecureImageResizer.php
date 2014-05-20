@@ -91,14 +91,14 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		if ($setting==="base"){
 			//Check type
 			if (is_string($value)!==true || $value==="")
-				throw new Exception("Cannot set '".$setting."'. Must be non-null string.", 500);
+				throw new\Exception("Cannot set '".$setting."'. Must be non-null string.", 500);
 			
 			//Use correct slash and add trailing slash
 			$value=$this->sanitizeFilePath($value, false, true);
 			
 			//Check directory exists
 			if (is_dir($value)===false)	
-				throw new Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.", 500);
+				throw new\Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.", 500);
 			
 			
 			
@@ -106,7 +106,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		} else if ($setting==="cachePath"){
 			//Check type
 			if (is_string($value)!==true || $value==="")
-				throw new Exception("Cannot set '".$setting."'. Must be non-null string.", 500);
+				throw new\Exception("Cannot set '".$setting."'. Must be non-null string.", 500);
 			
 			//Use correct slash and add trailing slash
 			$value=$this->sanitizeFilePath($value, false, true);
@@ -114,20 +114,20 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			//Check directory exists (and create it if it doesn't)
 			if (is_dir($value)===false)
 				if (!mkdir($value, 0777, true) || is_dir($value)===false) 
-					throw new Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.", 500);
+					throw new\Exception("Cannot set '".$setting."'. Specified location '".$value."' is unreadable or doesn't exist.", 500);
 			
 				
 		//Enable Caching
 		} else if ($setting==="enableCaching"){
 			//Check type
 			if (is_bool($value)===false)
-				throw new Exception("Cannot set '".$setting."'. Must be of type boolean. Type give is ".gettype($value), 500);
+				throw new\Exception("Cannot set '".$setting."'. Must be of type boolean. Type give is ".gettype($value), 500);
 			
 			
 		//Cache Time - maximum age of cache files
 		} else if ($setting==="cacheTime"){
 			if (ctype_digit($value)===false)
-				throw new Exception("Cannot set '".$setting."'. Must be positive integar. Given value was: '".$value."'.", 500);
+				throw new\Exception("Cannot set '".$setting."'. Must be positive integar. Given value was: '".$value."'.", 500);
 			$value=(int)$value;
 			
 			
@@ -136,31 +136,31 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		} else if ($setting==="defaultJpegQuality"){
 			$value=(int)$value;
 			if ($value<0 || $value>100)
-				throw new Exception("Cannot set '".$setting."'. Must be between 0 and 100", 500);
+				throw new\Exception("Cannot set '".$setting."'. Must be between 0 and 100", 500);
 		
 		//Default watermark opacity
 		} else if ($setting==="defaultWatermarkOpacity"){
 			$value=(int)$value;
 			if ($value<0 || $value>100)
-				throw new Exception("Cannot set '".$setting."'. Must be between 0 and 100", 500);
+				throw new\Exception("Cannot set '".$setting."'. Must be between 0 and 100", 500);
 		
 		//Default output format
 		} else if ($setting==="defaultOutputFormat"){
 			//Check type
 			if (gettype($value)!=="string")
-				throw new Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting]."'", 500);
+				throw new\Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting]."'", 500);
 			
 			$value=strtolower($value);
 			
 			//Check value
 			if (in_array($value,$this->getAllowedOutputFormats())===false && $value!=="original")
-				throw new Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()), 500);
+				throw new\Exception ("Cannot set '".$setting."'. Invalid output format. Allowed formats are: ".implode(", ",$this->getAllowedOutputFormats()), 500);
 		
 		//Default output size
 		} else if ($setting==="defaultSize"){
 			//check type
 			if (gettype($value)!=="string")
-				throw new Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting]."'", 500);
+				throw new\Exception ("Cannot set '".$setting."'. Must be non-null string. Default is: '".$this->_defaultConfig[$setting]."'", 500);
 		
 		//Ignore signedHash
 		} else if ($setting==="signedHash"){
@@ -168,7 +168,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 		//Catch unknown settings
 		} else {
-			throw new Exception("Cannot set '".$setting."'. Specified setting doesn't exist.", 501);
+			throw new\Exception("Cannot set '".$setting."'. Specified setting doesn't exist.", 501);
 		}
 		
 		//Store the verfied setting
@@ -208,7 +208,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 		//Check we're dealing with an non-empty array
 		if (!isset($paths) || !is_array($paths) || sizeof($paths)<1)
-			throw new Exception("Cannot add path(s). You must pass one or more non-empty arrays as arguments to this method.", 500);
+			throw new\Exception("Cannot add path(s). You must pass one or more non-empty arrays as arguments to this method.", 500);
 		
 		//Create blank array to hold sanitized data
 		$newPaths=array();
@@ -218,11 +218,11 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 
 			//Check type
 			if (!is_array($path) || sizeof($path)===0)
-				throw new Exception("Cannot add path. Paths must be non-empty arrays", 500);
+				throw new\Exception("Cannot add path. Paths must be non-empty arrays", 500);
 
 			//Check required elements are there
 			if (isset($path['path'])===false || !is_string($path['path']) || $path['path']==="" )
-				throw new Exception("Cannot add unamed path. The passed array must contain a non-empty 'path' element pointing to a directory, which also serves as it's ID.", 500);
+				throw new\Exception("Cannot add unamed path. The passed array must contain a non-empty 'path' element pointing to a directory, which also serves as it's ID.", 500);
 
 			//Create blank array for sanitized data
 			$newPath=&$newPaths[$path['path']];
@@ -234,19 +234,19 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 
 			//Check path doesn't already exist
 			if ($this->isPath($newPath['path']) && $allowOverwrite!==true)
-				throw new Exception("Cannot add path '".$newPath['path']."'. It already exists and \$allowOverwrite, isn't set to true.", 500);
+				throw new\Exception("Cannot add path '".$newPath['path']."'. It already exists and \$allowOverwrite, isn't set to true.", 500);
 			
 			//If defaultOuputFormat defined, check it is allowed and add it
 			if (isset($path['defaultOutputFormat']))
 				if (!is_string($path['defaultOutputFormat']) || in_array(strtolower($path['defaultOutputFormat']), $this->getAllowedOutputFormats())===false)
-					throw new Exception("Cannot add path '".$newPath['path']."'. The defaultOutputFormat you specified isn't allowed. It must be one of: ".implode(", ",$this->getAllowedOutputFormats()), 500);
+					throw new\Exception("Cannot add path '".$newPath['path']."'. The defaultOutputFormat you specified isn't allowed. It must be one of: ".implode(", ",$this->getAllowedOutputFormats()), 500);
 				else
 					$newPath['defaultOutputFormat']=strtolower($path['defaultOutputFormat']);
 				
 			//If defaultJpegQuality defined, check it is allowed and add it
 			if (isset($path['defaultJpegQuality']))
 				if (!is_int($path['defaultJpegQuality']) || $path['defaultJpegQuality']<0 || $path['defaultJpegQuality']>100)
-					throw new Exception("Cannot add path '".$newPath['path']."'. The defaultJpegQuality must be between 0 and 100. You specified: ".$path['defaultJpegQuality'], 500);
+					throw new\Exception("Cannot add path '".$newPath['path']."'. The defaultJpegQuality must be between 0 and 100. You specified: ".$path['defaultJpegQuality'], 500);
 				else
 					$newPath['defaultJpegQuality']=(int)$path['defaultJpegQuality'];
 			
@@ -338,7 +338,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 
 		//Check we're dealing with an array
 		if (!isset($sizes) || !is_array($sizes) || sizeof($sizes)<1)
-			throw new Exception("Cannot add size(s). You must pass one or more non-empty arrays to this method.", 500);
+			throw new\Exception("Cannot add size(s). You must pass one or more non-empty arrays to this method.", 500);
 
 		//Create array to hold sanitized data
 		$newSizes=array();
@@ -348,16 +348,16 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 
 			//Check type
 			if (!is_array($size) || sizeof($size)===0)
-				throw new Exception("Cannot add size. Paths must be non-empty arrays", 500);
+				throw new\Exception("Cannot add size. Paths must be non-empty arrays", 500);
 
 			//Check required elements are there
 			if (	isset($size['id'])===false	|| $size['id']===""	|| !is_string($size['id']) ||				
 				isset($size['method'])===false	|| $size['method']==="" || !is_string($size['method'])
 			){
 				if (isset($size['id']))
-					throw new Exception("Cannot add size '".(string)$size['id']."'. The passed array must contain non-empty 'id' and 'method' elements.", 500);
+					throw new\Exception("Cannot add size '".(string)$size['id']."'. The passed array must contain non-empty 'id' and 'method' elements.", 500);
 				
-				throw new Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.", 500);						
+				throw new\Exception("Cannot add size. The passed array must contain non-empty 'id' and 'method' elements.", 500);						
 			}
 			
 			//Create array to hold sanitized data
@@ -375,29 +375,29 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			
 			//Check id
 			if (preg_match("/[^0-9a-zA-Z_\-]/", $size['id'])!==0)
-				throw new Exception("Cannot add size. '".$size['id']."'. The id element must contain only numbers, letters, underscores or dashes.", 500);	
+				throw new\Exception("Cannot add size. '".$size['id']."'. The id element must contain only numbers, letters, underscores or dashes.", 500);	
 
 			//Check method exists
 			if (in_array($newSize['method'], $this->_allowedMethods)===false)
-				throw new Exception("Cannot add size. '".$newSize['id']."'. It has an invalid method element. Valid methods are: ".implode(", ", $this->allowedMethods), 500);	
+				throw new\Exception("Cannot add size. '".$newSize['id']."'. It has an invalid method element. Valid methods are: ".implode(", ", $this->allowedMethods), 500);	
 			
 			//Checks for methods "fit", "fill", "stretch"
 			if ($newSize['method']==="fit" || $newSize['method']==="fill" || $newSize['method']==="stretch")
 				if (!isset($newSize['width']) || !isset($newSize['height']) )
-					throw new Exception("Cannot add size. '".$newSize['id']."'. Width and Height must be defined for method '".$newSize['method']."'", 500);	
+					throw new\Exception("Cannot add size. '".$newSize['id']."'. Width and Height must be defined for method '".$newSize['method']."'", 500);	
 			
 			//Checks for method "scale""
 			if ($newSize['method']==="scale")
 				if (!isset($newSize['scale']) || $newSize['scale']<=0 )
-					throw new Exception("Cannot add size. '".$newSize['id']."'. Element 'scale' must be defined as a positive number when using method '".$newSize['method']."'", 500);	
+					throw new\Exception("Cannot add size. '".$newSize['id']."'. Element 'scale' must be defined as a positive number when using method '".$newSize['method']."'", 500);	
 				
 			//Check output format
 			if (isset($newSize['defaultOutputFormat']) && in_array($newSize['defaultOutputFormat'], $this->_allowedOutputFormats)===false)
-				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'defaultOutputFormat' must be one of: ".implode(", ",$this->_allowedOutputFormats).". Given output was: ".$newSize['defaultOutputFormat'], 500);	
+				throw new\Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'defaultOutputFormat' must be one of: ".implode(", ",$this->_allowedOutputFormats).". Given output was: ".$newSize['defaultOutputFormat'], 500);	
 
 			//Check quality
 			if (isset($newSize['jpegQuality']) && ($newSize['jpegQuality']<0 || $newSize['jpegQuality']>100))
-				throw new Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'jpegQuality' must be between 0 and 100. Given was: ".$newSize['jpegQuality'], 500);	
+				throw new\Exception("Cannot add size. '".$newSize['id']."'. If defined, element 'jpegQuality' must be between 0 and 100. Given was: ".$newSize['jpegQuality'], 500);	
 
 			//Check watermark
 			try {
@@ -407,7 +407,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 				}
 			} catch (Exception $e){
 				//Tweak the message
-				throw new Exception("Cannot add size '".$newSize['id']."'. Misconfigured watermark array: \n".$e->getMessage(), $e->getCode(), $e);
+				throw new\Exception("Cannot add size '".$newSize['id']."'. Misconfigured watermark array: \n".$e->getMessage(), $e->getCode(), $e);
 			}
 			
 			//Discard any other elements and store the new path
@@ -430,14 +430,14 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			
 		//Check for path
 		if (!isset($watermark['path']) && is_string($watermark['path']) && $watermark['path']!=="")
-			throw new Exception("No path specified for watermark image. Must be none empty string.", 500);
+			throw new\Exception("No path specified for watermark image. Must be none empty string.", 500);
 		
 		//Sanitize path
 		$newWatermark['path']=$this->sanitizeFilePath($watermark['path']);
 		
 		//Check it exists
 		if (!is_file($this->_config['base'].$watermark['path']))
-			throw new Exception("Cannot find watermark image at path: ".$watermark['path'], 500);
+			throw new\Exception("Cannot find watermark image at path: ".$watermark['path'], 500);
 		
 		//Sanitize other variables
 		if (isset($watermark['scale']))		$newWatermark['scale']	 = (float)$watermark['scale'];
@@ -451,9 +451,9 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		//Check vAlign and hAlign are valid (unless repeat=true)
 		if (!isset($newWatermark['repeat']) || $newWatermark['repeat']!==true ){
 			if ( isset($newWatermark['vAlign']) && ( in_array($newWatermark['vAlign'], array("top","center","bottom"))===false) )
-				throw new Exception("Watermark element 'vAlign' not correctly configured. Should be either: top, center or bottom.", 500);
+				throw new\Exception("Watermark element 'vAlign' not correctly configured. Should be either: top, center or bottom.", 500);
 			if ( isset($newWatermark['hAlign']) && ( in_array($newWatermark['hAlign'], array("left","center","right"))===false) )
-				throw new Exception("Watermark element 'hAlign' not correctly configured. Should be either: left, center or right.", 500);
+				throw new\Exception("Watermark element 'hAlign' not correctly configured. Should be either: left, center or right.", 500);
 		} else {
 			unset($newWatermark['vAlign'], $newWatermark['hAlign']);
 		}
@@ -463,13 +463,13 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			//Get dimensions of watermark image
 			$properties=getimagesize($this->_config['base'].$newWatermark['path']);
 			if ($properties===false)
-				throw new Exception("Unable to read dimensions of watermark image. Please check the 'path' element is pointing to a valid image. Given path was: ".$this->_config['base'].$newWatermark['path'], 500);
+				throw new\Exception("Unable to read dimensions of watermark image. Please check the 'path' element is pointing to a valid image. Given path was: ".$this->_config['base'].$newWatermark['path'], 500);
 			
 			if (isset($newWatermark['vPad']) && $newWatermark['vPad']<=($properties[1]*-1) )
-				throw new Exception("Watermark element 'vPad' out of bounds. Minimum setting for given image is: ".(($properties[1]*-1)+1), 500);
+				throw new\Exception("Watermark element 'vPad' out of bounds. Minimum setting for given image is: ".(($properties[1]*-1)+1), 500);
 			
 			if (isset($newWatermark['hPad']) && $newWatermark['hPad']<=($properties[0]*-1) )
-				throw new Exception("Watermark element 'hPad' out of bounds. Minimum setting for given image is: ".(($properties[0]*-1)+1), 500);
+				throw new\Exception("Watermark element 'hPad' out of bounds. Minimum setting for given image is: ".(($properties[0]*-1)+1), 500);
 				
 			
 		} else {
@@ -478,7 +478,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 		//Check opacity
 		if (isset($newWatermark['opacity']) && ( $newWatermark['opacity']<0 || $newWatermark['opacity']>100) )
-			throw new Exception("Watermark opacity not correctly configured. Should be between 0 and 100. '".$newWatermark['opacity']."' given.", 500);
+			throw new\Exception("Watermark opacity not correctly configured. Should be between 0 and 100. '".$newWatermark['opacity']."' given.", 500);
 		
 		return $newWatermark;
 		
@@ -518,23 +518,15 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 	//TODO: Add phpDoc
 	public function request($img, $size=null, $outputFormat=null){ 
 		
-		//Validate the request. If invalid, an exception will be thrown and passed back up to the caller
+		//Validate the request. If invalid, an\Exception will be thrown and passed back up to the caller
 		$request = $this->validateRequest($img, $size, $outputFormat);
 		
 		//If requested original, just return the image
 		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$request['img'])))===$request['finalOutputFormat']) {
 			if ($request['useCache']===true) {
-				return new Image(	file_get_contents($this->_config['base'].$request['img']), 
-							time()+$this->_config['cacheTime'], 
-							filemtime($this->_config['base'].$request['img']), 
-							$this->_config['base'].$request['img']
-				); 
+				return new Image($this->_config['base'].$request['img'], time()+$this->_config['cacheTime']); 
 			} else {
-				return new Image(	file_get_contents($this->_config['base'].$request['img']), 
-							null,
-							filemtime($this->_config['base'].$request['img']), 
-							$this->_config['base'].$request['img']
-				); 
+				return new Image($this->_config['base'].$request['img']);
 			}
 		}
 	
@@ -597,49 +589,49 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 		//Check "base" defined
 		if (!isset($this->_config['base']))
-			throw new Exception("The base path hasn't been configured. Please configure it and try again. For help, consult the documentation.", 500);
+			throw new\Exception("The base path hasn't been configured. Please configure it and try again. For help, consult the documentation.", 500);
 		
 		//If no size specified, load default size
 		if ($requestedSize===null || !is_string($requestedSize))
 			if (isset($this->_config['defaultSize']))
 				$requestedSize=$this->_config['defaultSize'];
 			else 
-				throw new Exception("No size specified, and no default size defined. Unable to process request.", 404);
+				throw new\Exception("No size specified, and no default size defined. Unable to process request.", 404);
 			
 		//Check size exists
 		$size = $this->getSize($requestedSize);
 		if (!isset($size) || !is_array($size) || sizeof($size)<=0)
-			throw new Exception("The size you requested doesn't exist. Unable to process request.", 404);
+			throw new\Exception("The size you requested doesn't exist. Unable to process request.", 404);
 		
 		//Check image defined
 		if (!isset($img) || !is_string($img) || $img==="")
-			throw new Exception("Please specify an image to resize.", 404);
+			throw new\Exception("Please specify an image to resize.", 404);
 		
 		//Sanitize image path
 		$img = $this->sanitizeFilePath($img,true);
 		
 		//Check image exists
 		if (!is_file($this->_config['base'].$img))
-			throw new Exception("The image you requested could not be located.", 404);
+			throw new\Exception("The image you requested could not be located.", 404);
 			
 		//Find which path rule applies
 		$path = $this->getApplicablePath($img);
 		
 		//Check path allowed
 		if ($path===null)
-			throw new Exception("Access denied. Access to the directory containing the image you requested is restricted.", 403);
+			throw new\Exception("Access denied. Access to the directory containing the image you requested is restricted.", 403);
 		
 		//Get allowed sizes for this path
 		$allowedSizes = $this->getAllowedSizes($path['path']);
 
 		//Check this size is allowed
 		if (in_array($size['id'], $allowedSizes)===false)
-			throw new Exception("The image size you requested is not allowed in the image's directory.", 403);
+			throw new\Exception("The image size you requested is not allowed in the image's directory.", 403);
 		
 		//Check the outputFormat is allowed
 		if ($outputFormat!==null)
 			if (!is_string($outputFormat) || in_array(strtolower($outputFormat), $this->getAllowedOutputFormats())===false)
-				throw new Exception("The image format you requested isn't supported. The following formats are supported: ".implode(", ",$this->getAllowedOutputFormats()), 404);
+				throw new\Exception("The image format you requested isn't supported. The following formats are supported: ".implode(", ",$this->getAllowedOutputFormats()), 404);
 			
 		//Check the final format is allowed
 		$finalOutputFormat = $this->getFinalOutputFormat($img, $path, $size, $outputFormat);
@@ -739,7 +731,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 		//Check the image exists
 		if (!is_file($this->_config['base'].$img))
-			throw new Exception("The image could not be located.", 404);
+			throw new\Exception("The image could not be located.", 404);
 
 		$final = $this->_config['defaultOutputFormat'];
 		
@@ -760,7 +752,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 
 			//Check the image was readable
 			if ($final===false)
-				throw new Exception("Couldn't read from the specified image. It may be corrupt.", 500);
+				throw new\Exception("Couldn't read from the specified image. It may be corrupt.", 500);
 		}
 
 		//Check the detected mime type is allowed
@@ -768,7 +760,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			return $final;
 		
 		//A bad mime type was detected
-		throw new Exception("Unable to determine an allowed output mime-type for this request. Please check the server configuration. The requested mime-type was: ".$final, 500);
+		throw new\Exception("Unable to determine an allowed output mime-type for this request. Please check the server configuration. The requested mime-type was: ".$final, 500);
 	}
 
 	//TODO: Add phpDoc
@@ -779,7 +771,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 		//Check the image exists
 		if (!is_file($this->_config['base'].$img))
-			throw new Exception("The image could not be located.", 404);
+			throw new\Exception("The image could not be located.", 404);
 
 		if (isset($this->_config['defaultJpegQuality']))
 			$final = $this->_config['defaultJpegQuality'];
@@ -794,7 +786,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			return $final;
 		
 		//No quality specified anywhere. Something is seriously wrong.
-		throw new Exception("Unable to determine which JPEG quality should be used with this request. Please check your configuration files as this should be impossible.", 500);
+		throw new\Exception("Unable to determine which JPEG quality should be used with this request. Please check your configuration files as this should be impossible.", 500);
 	}
 	
 	
@@ -844,10 +836,8 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		$modified = filemtime($this->_config['cachePath'].$cacheName);
 		
 		return new CachedImage(
-			file_get_contents($this->_config['cachePath'].$cacheName), 
-			$modified+$this->_config['cacheTime'],
-			$modified,
-			$this->_config['cachePath'].$cacheName
+			$this->_config['cachePath'].$cacheName, 
+			$modified+$this->_config['cacheTime']
 		);
 	}
 	
