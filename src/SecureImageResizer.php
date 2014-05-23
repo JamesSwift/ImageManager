@@ -48,11 +48,11 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			"base"=>$this->sanitizeFilePath(dirname(__FILE__), false, true),
 			"enableCaching"=>true,
 			"cacheTime"=>60*60, //1 Hour
-			"cachePath"=>$this->sanitizeFilePath(\sys_get_temp_dir()."/JamesSwift/ImageManager/imageCache/", false, true),
 			"defaultWatermarkOpacity"=>50,
 			"defaultOutputFormat"=>"original",
 			"defaultJpegQuality"=>90
 		);
+		$this->set("cachePath", \sys_get_temp_dir()."/JamesSwift/ImageManager/imageCache/");
 		$this->_paths=array();
 		$this->_sizes=array(); 	
 	}
