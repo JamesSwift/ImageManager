@@ -436,8 +436,8 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		$newWatermark['path']=$this->sanitizeFilePath($watermark['path']);
 		
 		//Check it exists
-		if (!\is_file($this->_config['base'].$watermark['path']))
-			throw new\Exception("Cannot find watermark image at path: ".$watermark['path'], 500);
+		if (!\is_file($this->_config['base'].$newWatermark['path']))
+			throw new\Exception("Cannot find watermark image at path: ".$newWatermark['path'], 500);
 		
 		//Sanitize other variables
 		if (isset($watermark['scale']))		$newWatermark['scale']	 = (float)$watermark['scale'];
