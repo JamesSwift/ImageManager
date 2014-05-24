@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////
 // Basic Image Settings:
  
-	$_SWDF['settings']['images']['default_size']=0;							//Used by make_img_link() function to choose a size if none is specified.
+	$_SWDF['settings']['images']['default_size']="original";							//Used by make_img_link() function to choose a size if none is specified.
 	$_SWDF['settings']['images']['default_watermark_opacity']=10;					//If not specified in a size, use this opacity for watermarks. Values: 0-100
 	$_SWDF['settings']['images']['default_jpeg_quality']=90;					//If not specified in a size, use this value for jpeg compression.
 	
@@ -55,8 +55,21 @@
 	));
 	
 	\SWDF\add_img_path(Array(
-		"path"=>"images/restricted/",
-		"deny_sizes"=>Array("0","2")
+		"path"=>"images/products/",
+		"allow_sizes"=>Array("product_image","200x300")
+	));
+	
+	\SWDF\add_img_path(Array(
+		"path"=>"images/original_scans/",
+		"deny_sizes"=>Array("original","2x")
+	));
+	
+	\SWDF\add_img_path(Array(
+		"path"=>"images/webcam/"
+	));
+	
+	\SWDF\add_img_path(Array(
+		"path"=>"images/graphics/"
 	));
 	
 	
@@ -93,30 +106,31 @@
 // Image sizes
 
 	//Size 0 - just passed the image through untouched
-	$_SWDF['settings']['images']['sizes']['0']=Array(
-		"id"=>0,
+	$_SWDF['settings']['images']['sizes']['original']=Array(
+		"id"=>"original",
 		"method"=>"original"
 	);
 	
 	//Size 1 - resizes the image to fit inside a 800x600 box and adds a copyright watermark
-	$_SWDF['settings']['images']['sizes']['1']=Array(
-		"id"=>1,
+	$_SWDF['settings']['images']['sizes']['product_image']=Array(
+		"id"=>"product_image",
 		"method"=>"fit",
-		"width"=>800,
-		"height"=>600,
+		"width"=>400,
+		"height"=>300,
+		"output"=>"image/jpeg",
 		"watermark"=>Array(
 			"path"=>$_SWDF['paths']['root']."images/watermark.png",
-			"scale"=>1,
-			"opacity"=>100,
+			"opacity"=>20,
 			"repeat"=>true
 		)
 	);
 	
 	//Size 2 - Scales the image by 2x
-	$_SWDF['settings']['images']['sizes']['2']=Array(
-		"id"=>2,
+	$_SWDF['settings']['images']['sizes']['2z']=Array(
+		"id"=>"2x",
 		"method"=>"scale",
-		"scale"=>2
+		"scale"=>2,
+		"disable_caching"=>false
 	);
 	
 	//Size 2 - Scales the image by 2x
