@@ -524,9 +524,9 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		//If requested original, just return the image
 		if ($request['size']['method']==="original" && strtolower(image_type_to_mime_type(exif_imagetype($this->_config['base'].$request['img'])))===$request['finalOutputFormat']) {
 			if ($request['useCache']===true) {
-				return new Image($this->_config['base'].$request['img'], time()+$this->_config['cacheTime']); 
+				return new Image($this->_config['base'].$request['img'], $request['finalOutputFormat'], time()+$this->_config['cacheTime']); 
 			} else {
-				return new Image($this->_config['base'].$request['img']);
+				return new Image($this->_config['base'].$request['img'], $request['finalOutputFormat']);
 			}
 		}
 	
@@ -615,14 +615,14 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			throw new\Exception("The image you requested could not be located.", 404);
 			
 		//Find which path rule applies
-		$path = $this->getApplicablePath($img);
+		$path = $this->getApplicablePath($img, false);
 		
 		//Check path allowed
 		if ($path===null)
 			throw new\Exception("Access denied. Access to the directory containing the image you requested is restricted.", 403);
 		
 		//Get allowed sizes for this path
-		$allowedSizes = $this->getAllowedSizes($path['path']);
+		$allowedSizes = $this->getAllowedSizes($path['path'], false);
 
 		//Check this size is allowed
 		if (in_array($size['id'], $allowedSizes)===false)
@@ -634,10 +634,10 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 				throw new\Exception("The image format you requested isn't supported. The following formats are supported: ".implode(", ",$this->getAllowedOutputFormats()), 404);
 			
 		//Check the final format is allowed
-		$finalOutputFormat = $this->getFinalOutputFormat($img, $path, $size, $outputFormat);
+		$finalOutputFormat = $this->getFinalOutputFormat($img, $path, $size, $outputFormat, false);
 		
 		//Work out final Jpeg Quality for this request
-		$finalJpegQuality = $this->getFinalJpegQuality($img, $path, $size);
+		$finalJpegQuality = $this->getFinalJpegQuality($img, $path, $size, false);
 		
 		$useCache=false;
 		if (	isset($this->_config['enableCaching']) && $this->_config['enableCaching']===true &&
@@ -659,10 +659,12 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 	}
 	
 	//TODO: Add phpDoc
-	public function getApplicablePath($img){
+	public function getApplicablePath($img, $sanitizeFilePath=true){
 		
 		//Clean up path
-		$img = $this->sanitizeFilePath($img,true);
+		if ($sanitizeFilePath===true){
+			$img = $this->sanitizeFilePath($img,true);
+		}
 		
 		//Create array of path parts
 		$path=explode("/",$img);
@@ -724,10 +726,12 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 	}
 	
 	//TODO: Add phpDoc
-	public function getFinalOutputFormat($img, array $path, array $size, $outputFormat=null) {
+	public function getFinalOutputFormat($img, array $path, array $size, $outputFormat=null, $sanitizeFilePath=true) {
 		
-		//Sanitize the image
-		$img = $this->sanitizeFilePath($img, true);
+		//Clean up path
+		if ($sanitizeFilePath===true){
+			$img = $this->sanitizeFilePath($img,true);
+		}
 		
 		//Check the image exists
 		if (!\is_file($this->_config['base'].$img))
@@ -764,10 +768,12 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 	}
 
 	//TODO: Add phpDoc
-	public function getFinalJpegQuality($img, array $path, array $size) {
+	public function getFinalJpegQuality($img, array $path, array $size, $sanitizeFilePath=true) {
 		
-		//Sanitize the image
-		$img = $this->sanitizeFilePath($img, true);
+		//Clean up path
+		if ($sanitizeFilePath===true){
+			$img = $this->sanitizeFilePath($img,true);
+		}
 		
 		//Check the image exists
 		if (!\is_file($this->_config['base'].$img))
@@ -837,6 +843,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 		return new CachedImage(
 			$this->_config['cachePath'].$cacheName, 
+			$outputFormat,
 			$modified+$this->_config['cacheTime']
 		);
 	}

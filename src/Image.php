@@ -29,7 +29,7 @@ class Image {
 	protected $_lastModified;
 	
 	//TODO: Add phpDoc
-	public function __construct($img, $expires=null, $lastModified=null, $isFile=true){
+	public function __construct($img, $mimeType=null, $expires=null, $lastModified=null, $isFile=true){
 		
 		//If a file reference was passed, load it into memory
 		if ($isFile===true){
@@ -38,33 +38,36 @@ class Image {
 			if (!is_file($img)){
 				throw new\Exception("Unable to load image. File can not be found.", 500);
 			}
-		
-			//Try to read mime data
-			$mime=\image_type_to_mime_type(\exif_imagetype($img));
-	
-			//Store image location
-			$this->_imgLocation=$img;
 			
+						
 			//Find Last Modified
 			$lastModified=\filemtime($img);
 			
+			//Store image location
+			$this->_imgLocation=$img;
+			
+			if ($mimeType===null){
+				//Try to read mime data
+				$mimeType=\image_type_to_mime_type(\exif_imagetype($img));
+			}
+		
 		} else {
 			//Load finfo to find the mime type of the passed file/string
 			$finfo = new \finfo(FILEINFO_MIME_TYPE);
 		
 			//Try to read mime data from passed string
-			$mime=$finfo->buffer($img);
+			$mimeType=$finfo->buffer($img);
 			
 			//Save Data
 			$this->_imgData=$img;
 		}
 		
 		//Check mime type is allowed (and that the image was readable)		
-		if ($mime==="text/plain")
+		if ($mimeType==="text/plain")
 			throw new\Exception("Unable to load image. Please check your are passing a valid path, or the content of a valid image file.", 500);
 		
-		if (in_array($mime, $this->_allowedOutputFormats)===false)
-			throw new\Exception("Unable to load image. Unsupported mime-type: ".$mime, 500);
+		if (in_array($mimeType, $this->_allowedOutputFormats)===false)
+			throw new\Exception("Unable to load image. Unsupported mime-type: ".$mimeType, 500);
 			
 		//Check expires is valid
 		if ($expires!==null && !ctype_digit($expires))
@@ -75,7 +78,7 @@ class Image {
 			throw new\Exception("Can't create new Image object. Please specify a valid value for \$lastModified (positive integer, or null).", 500);
 			
 		//Populate data
-		$this->_mime=$mime;
+		$this->_mime=$mimeType;
 		$this->_expires=$expires;
 		$this->_lastModified=$lastModified;
 	}
