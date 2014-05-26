@@ -48,8 +48,9 @@
     "_paths": {
         "images\/": {
             "path": "images\/",
-            "alias": [
-                "test\/"
+            "aliases": [
+                "test\/",
+                "testing\/"
             ],
             "auth": {
                 "call": "secure_path",
@@ -82,5 +83,5 @@
             "defaultOutputFormat": "image\/gif"
         }
     },
-    "signedHash": "f5fc25f0"
+    "signedHash": "aa320cb1"
 }

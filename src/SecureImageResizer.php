@@ -37,11 +37,14 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 	const VERSION = "v0.5.0-dev";
 	protected $_config;
 	protected $_paths;
+	protected $_pathAliases;
 	protected $_sizes;
 	protected $_allowedOutputFormats = array("original","image/jpeg","image/jp2","image/png","image/gif");
 	protected $_allowedMethods = array("original","fit","fill","stretch","scale");
 		
-		
+	//////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Setup and extend PHPBoostrap (src/submodules/PHPBoostrap.php) to handle saving/loading config files
+	
 	//TODO: Add phpDoc
 	public function loadDefaultConfig(){
 		$this->_config=array(
@@ -54,7 +57,8 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		);
 		$this->set("cachePath", \sys_get_temp_dir()."/JamesSwift/ImageManager/imageCache/");
 		$this->_paths=array();
-		$this->_sizes=array(); 	
+		$this->_pathAliases=array();
+		$this->_sizes=array();
 	}
 	
 	
@@ -80,6 +84,58 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			$newConfig['_paths']=call_user_func_array(array($this, "addPath"), $config['_paths']);
 
 		return $newConfig;
+	}
+	
+	//TODO: Add phpDoc
+	protected function _forceMergeConfig($config){
+		
+		//When loadConfig() is called, it calls this method when loading signed config
+		//We need to extend PHPBootstrap to allow _generatePathAliases() to be called.
+		parent::_forceMergeConfig($config);
+		$this->_generatePathAliases();
+		
+	}
+	
+	//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	protected function _generatePathAliases(){
+		
+		//Check there are some paths defined
+		if (!isset($this->_paths) || !is_array($this->_paths) || sizeof($this->_paths)<1)
+			return true;
+		
+		//Reset Aliases
+		$this->_pathAliases=[];
+		
+		//Scan the paths to find aliases
+		foreach($this->_paths as $path){
+			
+			//Check this path defnied aliases
+			if (!isset($path['aliases']) || !is_array($path['aliases']) || sizeof($path['aliases'])<1){
+				continue;
+			}
+				
+			foreach ($path['aliases'] as $alias){
+
+				//Check for naming conflicts
+				if (isset($this->paths[$alias])){
+					throw new \Exception('Config error. Cannot add path alias "'.$alias.'". A path of this name already exists.', 500);
+				}
+
+				//Add the alias
+				$this->_pathAliases[$alias]=$path['path'];
+			}
+			
+		}
+		
+	}
+	
+	public function addPathAlias($path, $alias){
+		
+	}
+	
+	public function deletePathAlias($alias){
+		
 	}
 	
 	//TODO: Add phpDoc
@@ -228,7 +284,9 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			$newPath=&$newPaths[$path['path']];
 			
 			//Sanitize variables
+			
 			$newPath['path']=$this->sanitizeFilePath($path['path'],true,true);
+			
 			if (isset($path['disableCaching']))
 				$newPath['disableCaching']=(bool)$path['disableCaching'];
 
@@ -268,10 +326,31 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			if (!isset($newPath['denySizes']) && isset($path['denySizes']) && is_string($path['denySizes']) && (strtolower($path['denySizes'])==="all" || strtolower($path['denySizes'])==="none"))
 				$newPath['denySizes']=strtolower($path['denySizes']);
 			
-			//TODO: Aliases
-			if (isset($path['alias']) && is_array($path['alias']))
-				foreach($path['alias'] as $alias)
-					$newPath['alias'][]=(string)$alias;
+			//Aliases
+			if (isset($path['aliases']) && is_array($path['aliases'])){
+				
+				foreach($path['aliases'] as $alias){
+					
+					//Check it is valid
+					if (isset($alias)===false || !is_string($alias) || $alias==="" )
+						continue;
+
+					//Sanitize it
+					$alias=$this->sanitizeFilePath($alias,true,true);
+					
+					//Check for naming conflicts
+					if (isset($this->paths[$alias])){
+						throw new \Exception('Config error. Cannot add path alias "'.$alias.'". A path of this name already exists.', 500);
+					}
+					
+					//Add the alias
+					$this->_pathAliases[$alias]=$newPath['path'];
+					
+					//Sanitize the alias
+					$newPath['aliases'][]=(string)$alias;
+					
+				}
+			}
 			
 			//TODO: Security
 			if (isset($path['auth']) && is_array($path['auth']))
@@ -298,6 +377,10 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		//Check path exists
 		if (isset($this->_paths[$path]))
 			return $this->_paths[$path];
+		
+		//Check if alias exists
+		if (isset($this->_pathAliases[$newPath]))
+			$this->_paths[$this->_pathAliases[$newPath]];
 
 		return false;
 	}
@@ -602,6 +685,13 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		$size = $this->getSize($requestedSize);
 		if (!isset($size) || !is_array($size) || sizeof($size)<=0)
 			throw new\Exception("The size you requested doesn't exist. Unable to process request.", 404);
+			
+		//Find which path rule applies
+		$path = $this->getApplicablePath($img, false, true);
+
+		//Check path allowed
+		if ($path===null)
+			throw new\Exception("Access denied. Access to the directory containing the image you requested is restricted.", 403);
 		
 		//Check image defined
 		if (!isset($img) || !is_string($img) || $img==="")
@@ -613,14 +703,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		//Check image exists
 		if (!\is_file($this->_config['base'].$img))
 			throw new\Exception("The image you requested could not be located.", 404);
-			
-		//Find which path rule applies
-		$path = $this->getApplicablePath($img, false);
-		
-		//Check path allowed
-		if ($path===null)
-			throw new\Exception("Access denied. Access to the directory containing the image you requested is restricted.", 403);
-		
+
 		//Get allowed sizes for this path
 		$allowedSizes = $this->getAllowedSizes($path['path'], false);
 
@@ -659,7 +742,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 	}
 	
 	//TODO: Add phpDoc
-	public function getApplicablePath($img, $sanitizeFilePath=true){
+	public function getApplicablePath(&$img, $sanitizeFilePath=true, $updateImg=false){
 		
 		//Clean up path
 		if ($sanitizeFilePath===true){
@@ -679,14 +762,29 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		//Cycle through paths untill match is found
 		$pathSize=sizeof($path);$i=0;
 		while($i<$pathSize){
+			
+			$newPath=implode("/", $path)."/";
+			
 			//Does this path exist
-			if (isset($this->_paths[implode("/", $path)."/"]))
-				return $this->getPath(implode("/", $path)."/");
+			if (isset($this->_paths[$newPath]))
+				return $this->getPath($newPath);
+			
+			//How about an alias?
+			if (isset($this->_pathAliases[$newPath]))
+				
+				//Update the image location with the real path
+				if ($updateImg===true){
+					$img=str_replace($newPath,  $this->_paths[$this->_pathAliases[$newPath]]['path'], $img);
+				}
+				
+				return $this->getPath($this->_pathAliases[$newPath]);
 				
 			//No, so move up a directory
 			array_pop($path);
 			$i++;	
 		}
+		
+		//Ok,
 		
 		//The path couldn't be found
 		return null;
