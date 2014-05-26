@@ -6,12 +6,12 @@ I'm moving towards releasing v0.5.0 (hence the develop branch being branded v0.5
 test out the code in this branch and submit bug reports and pull requests.
 
 **I'm currently working on:**
-+ Performance optimizations (v0.5.0-dev is currently slower than v0.4.0)
 + Adding an alias system
 + Adding a security hook system to allow paths to call a user-defined function which can do additional security checks.
 
 **Ideas that I'll be working on soon:**
 + Adding a hook to catch failed `path` matches (to allow declaring paths on the fly for individual users)
++ Performance optimizations (v0.5.0-dev is currently slower than v0.4.0)
 
 <h1>
 ImageManager v0.5.0-dev 
