@@ -12,6 +12,7 @@ test out the code in this branch and submit bug reports and pull requests.
 **Ideas that I'll be working on soon:**
 + Adding a hook to catch failed `path` matches (to allow declaring paths on the fly for individual users)
 + Performance optimizations (v0.5.0-dev is currently slower than v0.4.0)
++ Adding a default .htaccess to allow neater URLs by default
 
 <h1>
 ImageManager v0.5.0-dev 
