@@ -65,7 +65,9 @@
                 "product_image",
                 "200x300"
             ],
-	    "aliases":["products/"]
+            "aliases": [
+                "products\/"
+            ]
         },
         "images\/original_scans\/": {
             "path": "images\/original_scans\/",
@@ -84,5 +86,5 @@
             "defaultOutputFormat": "image\/gif"
         }
     },
-    "signedHash": "aa320cb1"
+    "signedHash": "78997e47"
 }

@@ -70,94 +70,97 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		$newConfig=array();
 
 		//Set the settings
-		foreach ($config['_config'] as $name=>$setting){
-			if ($name!=="paths" && $name!=="sizes")
-				$newConfig['_config'][$name] = $this->set($name,$setting);
+		foreach ($config['_config'] as $name=>$setting) {
+			$newConfig['_config'][$name] = $this->set($name,$setting);
 		}
 
+		//Call $this->addPathAliases with aliases
+		if (isset($config['_pathAliases'])===true && is_array($config['_pathAliases']) && sizeof($config['_pathAliases'])>0) {
+			$newConfig['_pathAliases']=$this->addPathAliases($config['_pathAliases'], false);
+		}
+		
 		//Call $this->addSize with all sizes as arguments
-		if (isset($config['_sizes'])===true && is_array($config['_sizes']))
+		if (isset($config['_sizes'])===true && is_array($config['_sizes']) && sizeof($config['_sizes'])>0) {
 			$newConfig['_sizes']=call_user_func_array(array($this, "addSize"), $config['_sizes']);
+		}
 
 		//Call $this->addPath with all paths as arguments
-		if (isset($config['_paths'])===true && is_array($config['_paths']) && sizeof($config['_paths'])>0)
+		if (isset($config['_paths'])===true && is_array($config['_paths']) && sizeof($config['_paths'])>0) {
 			$newConfig['_paths']=call_user_func_array(array($this, "addPath"), $config['_paths']);
+		}
 
 		return $newConfig;
 	}
 	
-	//TODO: Add phpDoc
-	protected function _forceMergeConfig($config){
-		
-		//When loadConfig() is called, it calls this method when loading signed config
-		//We need to extend PHPBootstrap to allow _generatePathAliases() to be called.
-		parent::_forceMergeConfig($config);
-		$this->_generatePathAliases();
-		
-	}
-	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	protected function _generatePathAliases(){
+	public function addPathAlias($alias, $path, $sanitizePaths=true){
 		
-		//Check there are some paths defined
-		if (!isset($this->_paths) || !is_array($this->_paths) || sizeof($this->_paths)<1)
-			return true;
-		
-		//Reset Aliases
-		$this->_pathAliases=[];
-		
-		//Scan the paths to find aliases
-		foreach($this->_paths as $path){
-			
-			//Check this path defnied aliases
-			if (!isset($path['aliases']) || !is_array($path['aliases']) || sizeof($path['aliases'])<1){
-				continue;
-			}
-				
-			foreach ($path['aliases'] as $alias){
-
-				//Check for naming conflicts
-				if (isset($this->paths[$alias])){
-					throw new \Exception('Config error. Cannot add path alias "'.$alias.'". A path of this name already exists.', 500);
-				}
-
-				//Add the alias
-				$this->_pathAliases[$alias]=$path['path'];
-			}
-			
+		//Sanitize/standardize paths
+		if ($sanitizePaths===true){
+			$path=$this->sanitizeFilePath($path, true, true);
+			$alias=$this->sanitizeFilePath($alias, true, true);
 		}
 		
-	}
-	
-	public function addPathAlias($path, $alias){
+		//Check alias is correct
+		if ($path===$alias){
+			throw new \Exception('Error. Cannot add path alias "'.$alias.'". The path and the alias are identical.', 500);
+		}
+				
+		if (isset($this->_pathAliases[$alias])){
+			throw new \Exception('Error. Cannot add path alias "'.$alias.'". This alias has already been set.', 500);
+		}
+			
+		if (isset($this->_paths[$alias])){
+			throw new \Exception('Error. Cannot add path alias "'.$alias.'". This location is already specified as a path.', 500);
+		}
+		
+		if (is_dir($this->_config['base'].$alias)){
+			throw new \Exception('Error. Cannot add path alias "'.$alias.'". This alias location actually exists.', 500);
+		}
+		
+		//Add the alias
+		$this->_pathAliases[$alias]=$path;
+		
+		return array($alias=>$path);
 		
 	}
 	
-	public function getPathAliases($pathID=null){
+	public function addPathAliases($aliases, $sanitizePaths=true){
+		
+		//Check a valid array has been passed
+		if (!is_array($aliases) || sizeof($aliases)===0){
+			return false;
+		}
+		
+		//Collect results
+		$newAliases = array();
+		
+		//Cycle through aliases and add them
+		foreach ($aliases as $alias => $path){
+			
+			$newAliases = array_merge($newAliases, $this->addPathAlias($alias, $path, $sanitizePaths));
+						
+		}
+		
+		return $newAliases;
+		
+	}
+	
+	public function getPathAliases(){
 		
 		//Return all aliases
 		if ($pathID===null){
 			return $this->_pathAliases;
 		}
 		
-		//Return aliases just for one path
-		$path = $this->getPath($pathID);
-		
-		//Check path exists
-		if ($path===false){
-			return false;
-		}
-		
-		//return the aliases
-		return $path['aliases'];
 	}
 	
-	public function resolvePathAlias($alias){
+	public function getPathAlias($alias, $sanitizePath=true){
 		
 		//Add trailing slash if missing
-		if (substr($alias, -1, 1)!=="/"){
-			$alias.="/";
+		if ($sanitizePath===true){
+			$alias=$this->sanitizeFilePath($alias, true, true);
 		}
 	
 		if (isset($this->_pathAliases[$alias])){
@@ -167,11 +170,11 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		return false;
 	}
 	
-	public function deletePathAlias($alias){
+	public function deletePathAlias($alias, $sanitizePath=true){
 		
 		//Add trailing slash if missing
-		if (substr($alias, -1, 1)!=="/"){
-			$alias.="/";
+		if ($sanitizePath===true){
+			$alias=$this->sanitizeFilePath($alias, true, true);
 		}
 		
 		//Check alias exists
@@ -179,25 +182,15 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 			return false;
 		}
 		
-		//Find associated path
-		$path = $this->_pathAliases[$alias];
-		
-		
 		//Delete Alias
 		unset($this->_pathAliases[$alias]);
-		
-		//Find the key of the alias in the paths array
-		$key = array_search($alias, $this->_paths[$path]['aliases']);
-		
-		//Unset it
-		if ($key!==false){
-			unset($this->_paths[$path]['aliases'][$key]);
-		}
-		
+
 		return true;
 	}
 	
-	public function deletePathAliasesByPath($pathID, $onlyTheseAliases = null){
+	/*
+	 * public function deletePathAliasesByPath($pathID, $onlyTheseAliases = null){
+	 
 	
 		//Get Path
 		$path = $this->getPath($pathID);
@@ -238,6 +231,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		return $removedAliases;
 		
 	}
+	*/
 	
 	//TODO: Add phpDoc
 	public function set($setting, $value){
