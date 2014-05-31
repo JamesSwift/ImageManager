@@ -64,7 +64,8 @@
             "allowSizes": [
                 "product_image",
                 "200x300"
-            ]
+            ],
+	    "aliases":["products/"]
         },
         "images\/original_scans\/": {
             "path": "images\/original_scans\/",

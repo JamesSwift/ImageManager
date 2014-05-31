@@ -134,7 +134,108 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 	}
 	
+	public function getPathAliases($pathID=null){
+		
+		//Return all aliases
+		if ($pathID===null){
+			return $this->_pathAliases;
+		}
+		
+		//Return aliases just for one path
+		$path = $this->getPath($pathID);
+		
+		//Check path exists
+		if ($path===false){
+			return false;
+		}
+		
+		//return the aliases
+		return $path['aliases'];
+	}
+	
+	public function resolvePathAlias($alias){
+		
+		//Add trailing slash if missing
+		if (substr($alias, -1, 1)!=="/"){
+			$alias.="/";
+		}
+	
+		if (isset($this->_pathAliases[$alias])){
+			return $this->_pathAliases[$alias];
+		}
+		
+		return false;
+	}
+	
 	public function deletePathAlias($alias){
+		
+		//Add trailing slash if missing
+		if (substr($alias, -1, 1)!=="/"){
+			$alias.="/";
+		}
+		
+		//Check alias exists
+		if (!isset($this->_pathAliases[$alias])){
+			return false;
+		}
+		
+		//Find associated path
+		$path = $this->_pathAliases[$alias];
+		
+		
+		//Delete Alias
+		unset($this->_pathAliases[$alias]);
+		
+		//Find the key of the alias in the paths array
+		$key = array_search($alias, $this->_paths[$path]['aliases']);
+		
+		//Unset it
+		if ($key!==false){
+			unset($this->_paths[$path]['aliases'][$key]);
+		}
+		
+		return true;
+	}
+	
+	public function deletePathAliasesByPath($pathID, $onlyTheseAliases = null){
+	
+		//Get Path
+		$path = $this->getPath($pathID);
+		
+		//Check it exists
+		if ($path===false || !isset($path['aliases']) || sizeof($path['aliases'])<1 ){
+			return false;
+		}
+		
+		//Should we only delete certain aliases
+		$specificAliases = is_array($onlyTheseAliases);
+		
+		//Check for missing slashes
+		if ($specificAliases===true){
+			foreach($onlyTheseAliases as &$alias){
+				//Add trailing slash if missing
+				if (substr($alias, -1, 1)!=="/"){
+					$alias.="/";
+				}
+			}
+				
+		}
+		
+		//Record which aliases were deleted
+		$removedAliases = array();
+		
+		//cyle through aliases
+		foreach($path['aliases'] as $pathAlias){
+			//Check if this alias should be removed
+			if ($specificAliases===false || ($specificAliases==true && in_array(alias, $onlyTheseAliases)===true)){
+				//Delete the alias
+				if ($this->deletePathAlias($pathAlias)===true){
+					$removedAliases[]=$pathAlias;
+				}
+			}
+		}
+		
+		return $removedAliases;
 		
 	}
 	
@@ -380,7 +481,7 @@ class SecureImageResizer extends \JamesSwift\PHPBootstrap\PHPBootstrap {
 		
 		//Check if alias exists
 		if (isset($this->_pathAliases[$newPath]))
-			$this->_paths[$this->_pathAliases[$newPath]];
+			return $this->_paths[$this->_pathAliases[$newPath]];
 
 		return false;
 	}
