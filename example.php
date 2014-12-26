@@ -15,9 +15,9 @@
 require("src/SecureImageResizer.php");
 
 //Register GET variables
-$size	= (isset($_GET['size'])) ?	$_GET['size']	: null;	//Requested output size
-$img	= (isset($_GET['img'])) ?	$_GET['img']	: null;	//Path (relative to "base" defined in config) of image to be resized
-$format = (isset($_GET['format'])) ?	$_GET['format'] : null;	//[optional] The mime-type of output (e.g. image/jpeg)
+$size	= (isset($_GET['size'])) ?		$_GET['size']	: null;	//Requested output size
+$img	= (isset($_GET['img'])) ?		$_GET['img']	: null;	//Path (relative to "base" defined in config) of image to be resized
+$format = (isset($_GET['format'])) ?		$_GET['format'] : null;	//[optional] The mime-type of output (e.g. image/jpeg)
 
 //Catch configuration errors
 try {
