@@ -989,7 +989,7 @@ class Image {
 		$finfo = new \finfo(FILEINFO_MIME_TYPE);
 		
 		//If a file reference was passed, load it into memory
-		if (is_file($img)){
+		if (strlen($img)<1000 && ctype_print($img) && is_file($img)){
 		
 			//Try to read mime data
 			$mime=$finfo->file($img);
