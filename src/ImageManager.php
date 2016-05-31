@@ -474,7 +474,7 @@ function image_resizer_request($img, $requested_size=null, $authorized=false){
 
 			//add watermark
 			if (isset($size['watermark']) && is_array($size['watermark']) && isset($size['watermark']['path']) && is_file($size['watermark']['path']) ){
-				if (isset($size['watermark']['opacity']) && ctype_digit(isset($size['watermark']['opacity']))){
+				if (empty($size['watermark']['opacity'])){
 					$size['watermark']['opacity']=$_SWDF['settings']['images']['default_watermark_opacity'];
 				}
 				$resizer->add_watermark($size['watermark']['path'],@$size['watermark']['v'],@$size['watermark']['h'],@$size['watermark']['opacity'],@$size['watermark']['scale'],@$size['watermark']['repeat'],5,5);
